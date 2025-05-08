@@ -1,0 +1,20 @@
+﻿using Microsoft.AspNetCore.Identity;
+
+namespace HaveASeat.Models
+{
+	public class ApplicationUser : IdentityUser
+	{
+		public string? Nome { get; set; }
+		public string? Cognome { get; set; }
+		public string? Indirizzo { get; set; }
+		public string? CAP { get; set; }
+		public string? Città { get; set; }
+		public string? Provincia { get; set; }
+		public string? CodiceFiscale { get; set; }
+		public string? PartitaIVA { get; set; }
+		public string? RagioneSociale { get; set; }
+		public string? SDI { get; set; }
+		public bool Azienda { get; set; }
+		public DateTime DataRegistrazione { get; set; } = DateTime.Now;
+	}
+}
