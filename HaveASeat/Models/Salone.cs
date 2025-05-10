@@ -20,5 +20,8 @@ namespace HaveASeat.Models
 		public ApplicationUser ApplicationUser { get; set; } = new ApplicationUser();
 		public ICollection<Servizio> Servizi { get; set; } = new List<Servizio>();
 		public ICollection<Orario> Orari { get; set; } = new List<Orario>();
+		public ICollection<Appuntamento> Appuntamenti { get; set; } = new List<Appuntamento>();
+		public ICollection<SaloneAbbonamento> SaloneAbbonamenti { get; set; } = new List<SaloneAbbonamento>();
+		public ICollection<Recensione> Recensioni { get; set; } = new List<Recensione>();
 	}
 }

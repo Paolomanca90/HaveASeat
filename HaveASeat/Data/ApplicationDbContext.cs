@@ -34,21 +34,27 @@ namespace HaveASeat.Data
 
 			builder.Entity<Salone>()
 				.HasMany(o => o.Orari);
+			
+			builder.Entity<Salone>()
+				.HasMany(o => o.Recensioni);
 
 			builder.Entity<Orario>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<SaloneServizio>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<SaloneServizio>()
 				.HasOne(o => o.Servizio)
 				.WithMany()
-				.HasForeignKey(o => o.ServizioId);
+				.HasForeignKey(o => o.ServizioId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Abbonamento>()
 				.Property(p => p.Prezzo)
@@ -65,37 +71,44 @@ namespace HaveASeat.Data
 			builder.Entity<SaloneAbbonamento>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<SaloneAbbonamento>()
 				.HasOne(o => o.Abbonamento)
 				.WithMany()
-				.HasForeignKey(o => o.AbbonamentoId);
+				.HasForeignKey(o => o.AbbonamentoId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<SaloneResponsabile>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<SaloneResponsabile>()
 				.HasOne(o => o.ApplicationUser)
 				.WithMany()
-				.HasForeignKey(o => o.ApplicationUserId);
+				.HasForeignKey(o => o.ApplicationUserId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Recensione>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Recensione>()
 				.HasOne(o => o.ApplicationUser)
 				.WithMany()
-				.HasForeignKey(o => o.ApplicationUserId);
+				.HasForeignKey(o => o.ApplicationUserId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Slot>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Slot>()
 				.HasMany(o => o.Appuntamenti);
@@ -103,22 +116,26 @@ namespace HaveASeat.Data
 			builder.Entity<Immagine>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Appuntamento>()
 				.HasOne(o => o.Salone)
 				.WithMany()
-				.HasForeignKey(o => o.SaloneId);
+				.HasForeignKey(o => o.SaloneId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Appuntamento>()
 				.HasOne(o => o.ApplicationUser)
 				.WithMany()
-				.HasForeignKey(o => o.ApplicationUserId);
+				.HasForeignKey(o => o.ApplicationUserId)
+				.OnDelete(DeleteBehavior.NoAction);
 
 			builder.Entity<Appuntamento>()
 				.HasOne(o => o.Slot)
 				.WithMany()
-				.HasForeignKey(o => o.SlotId);
+				.HasForeignKey(o => o.SlotId)
+				.OnDelete(DeleteBehavior.NoAction);
 		}
 	}
 }
