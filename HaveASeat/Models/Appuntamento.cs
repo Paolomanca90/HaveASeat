@@ -7,8 +7,8 @@ namespace HaveASeat.Models
 		public Guid AppuntamentoId { get; set; }
 		public Guid SaloneId { get; set; }
 		public string ApplicationUserId { get; set; } = string.Empty;
-		public DateTime OraInizio { get; set; } = DateTime.Now;
-		public DateTime OraFine { get; set; } = DateTime.Now.AddHours(1);
+		public DateTime OraInizio => Data.Date.Add(Slot.OraInizio);
+		public DateTime OraFine => Data.Date.Add(Slot.OraFine);
 		public string Note { get; set; } = string.Empty;
 		public Guid SlotId { get; set; }
 		public DateTime Data { get; set; } // Data dell'appuntamento
