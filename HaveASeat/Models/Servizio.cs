@@ -12,5 +12,6 @@
 		public DateTime DataInizioPromozione { get; set; } = DateTime.Now; // Data di inizio della promozione
 		public DateTime DataFinePromozione { get; set; } = DateTime.Now.AddDays(7); // Data di fine della promozione
 		public Salone Salone { get; set; } = new Salone();
+		public ICollection<DipendenteServizio> DipendenteServizi { get; set; } = new List<DipendenteServizio>();
 	}
 }

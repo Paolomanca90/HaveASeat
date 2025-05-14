@@ -24,5 +24,8 @@ namespace HaveASeat.Models
 		public ICollection<SaloneAbbonamento> SaloneAbbonamenti { get; set; } = new List<SaloneAbbonamento>();
 		public ICollection<Dipendente> Dipendenti { get; set; } = new List<Dipendente>();
 		public ICollection<Recensione> Recensioni { get; set; } = new List<Recensione>();
+		public ICollection<Immagine> Immagini { get; set; } = new List<Immagine>(); 
+		public ICollection<Slot> Slots { get; set; } = new List<Slot>();
+		public ICollection<SaloneCategoria> SaloneCategorie { get; set; } = new List<SaloneCategoria>();
 	}
 }

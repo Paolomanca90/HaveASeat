@@ -11,5 +11,6 @@
 		public ICollection<OrarioDipendente> Orari { get; set; } = new List<OrarioDipendente>();
 		public ICollection<Appuntamento> Appuntamenti { get; set; } = new List<Appuntamento>();
 		public ICollection<Recensione> Recensioni { get; set; } = new List<Recensione>();
+		public ICollection<DipendenteServizio> ServiziOfferti { get; set; } = new List<DipendenteServizio>(); 
 	}
 }
