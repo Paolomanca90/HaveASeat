@@ -14,10 +14,10 @@ namespace HaveASeat.Data
 		public DbSet<Servizio> Servizio { get; set; }
 		public DbSet<Salone> Salone { get; set; }
 		public DbSet<Orario> Orario { get; set; }
-		public DbSet<SaloneServizio> SaloneServizio { get; set; }
+		public DbSet<DipendenteServizio> SaloneServizio { get; set; }
 		public DbSet<Abbonamento> Abbonamento { get; set; }
 		public DbSet<SaloneAbbonamento> SaloneAbbonamento { get; set; }
-		public DbSet<SaloneResponsabile> SaloneResponsabile { get; set; }
+		public DbSet<Dipendente> SaloneResponsabile { get; set; }
 		public DbSet<Recensione> Recensione { get; set; }
 		public DbSet<Slot> Slot { get; set; }
 		public DbSet<Immagine> Immagine { get; set; }
@@ -44,13 +44,13 @@ namespace HaveASeat.Data
 				.HasForeignKey(o => o.SaloneId)
 				.OnDelete(DeleteBehavior.NoAction);
 
-			builder.Entity<SaloneServizio>()
+			builder.Entity<DipendenteServizio>()
 				.HasOne(o => o.Salone)
 				.WithMany()
 				.HasForeignKey(o => o.SaloneId)
 				.OnDelete(DeleteBehavior.NoAction);
 
-			builder.Entity<SaloneServizio>()
+			builder.Entity<DipendenteServizio>()
 				.HasOne(o => o.Servizio)
 				.WithMany()
 				.HasForeignKey(o => o.ServizioId)
@@ -80,13 +80,13 @@ namespace HaveASeat.Data
 				.HasForeignKey(o => o.AbbonamentoId)
 				.OnDelete(DeleteBehavior.NoAction);
 
-			builder.Entity<SaloneResponsabile>()
+			builder.Entity<Dipendente>()
 				.HasOne(o => o.Salone)
 				.WithMany()
 				.HasForeignKey(o => o.SaloneId)
 				.OnDelete(DeleteBehavior.NoAction);
 
-			builder.Entity<SaloneResponsabile>()
+			builder.Entity<Dipendente>()
 				.HasOne(o => o.ApplicationUser)
 				.WithMany()
 				.HasForeignKey(o => o.ApplicationUserId)

@@ -5,6 +5,7 @@
 		public Guid ImmagineId { get; set; }
 		public Guid SaloneId { get; set; }
 		public string Percorso { get; set; } = string.Empty;
+		public bool IsLogo { get; set; } = false; // Indica se l'immagine è un logo
 		public DateTime DataCreazione { get; set; } = DateTime.Now;
 		public Salone Salone { get; set; } = new Salone();
 	}
