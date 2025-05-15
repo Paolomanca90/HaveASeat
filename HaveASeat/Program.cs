@@ -1,5 +1,8 @@
+using Google.Apis.Auth.AspNetCore3;
 using HaveASeat.Data;
 using HaveASeat.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -21,6 +24,38 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 	.AddRoles<IdentityRole>()
 	.AddEntityFrameworkStores<ApplicationDbContext>()
 	.AddDefaultTokenProviders();
+
+builder.Services.AddAuthentication(o =>
+	{
+		// This forces challenge results to be handled by Google OpenID Handler, so there's no
+		// need to add an AccountController that emits challenges for Login.
+		o.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+		// This forces forbid results to be handled by Google OpenID Handler, which checks if
+		// extra scopes are required and does automatic incremental auth.
+		o.DefaultForbidScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+		// Default scheme that will handle everything else.
+		// Once a user is authenticated, the OAuth2 token info is stored in cookies.
+		o.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+	})
+	.AddCookie()
+	.AddGoogleOpenIdConnect(options =>
+	{
+		IConfigurationSection googleAuthNSection = builder.Configuration.GetSection("Google+");
+		options.ClientId = googleAuthNSection["ClientId"];
+		options.ClientSecret = googleAuthNSection["SecretId"];
+	});
+
+builder.Services.PostConfigure<AuthenticationOptions>(options =>
+{
+	foreach (var scheme in options.Schemes)
+	{
+		if (scheme.Name == GoogleOpenIdConnectDefaults.AuthenticationScheme)
+		{
+			scheme.DisplayName = "Accedi con Google";
+		}
+	}
+});
+
 builder.Services.AddSession(options =>
 {
 	options.IdleTimeout = TimeSpan.FromMinutes(30);

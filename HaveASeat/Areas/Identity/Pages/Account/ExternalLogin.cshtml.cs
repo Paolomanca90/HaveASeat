@@ -139,66 +139,86 @@ namespace HaveASeat.Areas.Identity.Pages.Account
             }
         }
 
-        public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
-        {
-            returnUrl = returnUrl ?? Url.Content("~/");
-            // Get the information about the user from the external login provider
-            var info = await _signInManager.GetExternalLoginInfoAsync();
-            if (info == null)
-            {
-                ErrorMessage = "Error loading external login information during confirmation.";
-                return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
-            }
+		public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
+		{
+			returnUrl ??= Url.Content("~/");
 
-            if (ModelState.IsValid)
-            {
-                var user = CreateUser();
+			// Ottieni le informazioni dal provider esterno
+			var info = await _signInManager.GetExternalLoginInfoAsync();
+			if (info == null)
+			{
+				ErrorMessage = "Error loading external login information during confirmation.";
+				return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
+			}
 
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+			// Recupera l'email dalle claim di Google
+			var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+			if (!string.IsNullOrEmpty(email))
+			{
+				var existingUser = await _userManager.FindByEmailAsync(email);
+				if (existingUser != null)
+				{
+					// Login automatico se l'utente esiste già
+					await _signInManager.SignInAsync(existingUser, isPersistent: false, info.LoginProvider);
+					return LocalRedirect(returnUrl);
+				}
+			}
 
-                var result = await _userManager.CreateAsync(user);
-                if (result.Succeeded)
-                {
-                    result = await _userManager.AddLoginAsync(user, info);
-                    if (result.Succeeded)
-                    {
-                        _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+			if (ModelState.IsValid)
+			{
+				var user = CreateUser();
 
-                        var userId = await _userManager.GetUserIdAsync(user);
-                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                        var callbackUrl = Url.Page(
-                            "/Account/ConfirmEmail",
-                            pageHandler: null,
-                            values: new { area = "Identity", userId = userId, code = code },
-                            protocol: Request.Scheme);
+				await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+				await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
 
-                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+				// Recupera nome e cognome dalle claim OpenID Connect di Google
+				user.Nome = info.Principal.FindFirstValue(ClaimTypes.GivenName);
+				user.Cognome = info.Principal.FindFirstValue(ClaimTypes.Surname);
 
-                        // If account confirmation is required, we need to show the link if we don't have a real email sender
-                        if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                        {
-                            return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
-                        }
+				// Recupera il numero di telefono, se presente
+				user.PhoneNumber = info.Principal.FindFirstValue(ClaimTypes.MobilePhone);
 
-                        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-                        return LocalRedirect(returnUrl);
-                    }
-                }
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
-            }
+				var result = await _userManager.CreateAsync(user);
+				if (result.Succeeded)
+				{
+					result = await _userManager.AddLoginAsync(user, info);
+					if (result.Succeeded)
+					{
+						_logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
-            ProviderDisplayName = info.ProviderDisplayName;
-            ReturnUrl = returnUrl;
-            return Page();
-        }
+						var userId = await _userManager.GetUserIdAsync(user);
+						var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+						code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+						var callbackUrl = Url.Page(
+							"/Account/ConfirmEmail",
+							pageHandler: null,
+							values: new { area = "Identity", userId = userId, code = code },
+							protocol: Request.Scheme);
 
-        private ApplicationUser CreateUser()
+						await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
+							$"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
+
+						if (_userManager.Options.SignIn.RequireConfirmedAccount)
+						{
+							return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });
+						}
+
+						await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+						return LocalRedirect(returnUrl);
+					}
+				}
+				foreach (var error in result.Errors)
+				{
+					ModelState.AddModelError(string.Empty, error.Description);
+				}
+			}
+
+			ProviderDisplayName = info.ProviderDisplayName;
+			ReturnUrl = returnUrl;
+			return Page();
+		}
+
+		private ApplicationUser CreateUser()
         {
             try
             {
