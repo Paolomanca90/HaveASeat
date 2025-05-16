@@ -5,13 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - HaveASeat</title>
     <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Tailwind CSS e DaisyUI -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/daisyui/2.51.6/full.min.css" rel="stylesheet">
+    <!-- Font personalizzato -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @* <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> *@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/HaveASeat.styles.css" asp-append-version="true" />
+    @* <link rel="stylesheet" href="~/HaveASeat.styles.css" asp-append-version="true" /> *@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+     @*    <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">HaveASeat</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
@@ -27,7 +32,39 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
+                </div>
+            </div>
+        </nav> *@
+        <!-- Navbar -->
+        <nav class="bg-white shadow-md sticky top-0 z-50">
+            <div class="container mx-auto px-4">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <a href="#" class="text-2xl font-bold text-purple-600">BeautyBook</a>
+                    </div>
+
+                    <!-- Menu Desktop -->
+                    <div class="hidden md:flex space-x-8">
+                        <a href="#features" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Funzionalità</a>
+                        <a href="#pricing" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Prezzi</a>
+                        <a href="#testimonials" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Testimonial</a>
+                        <a href="#faq" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">FAQ</a>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                      
+                        <a href="/Home/ForPartner"  style="background-color:#7C3AED;" class="btn btn-primary hover:bg-purple-700 border-none rounded-full px-6">Diventa Partner</a>
                     <partial name="_LoginPartial" />
+                    </div>
+                       
+                    <!-- Menu Mobile -->
+                    <div class="md:hidden">
+                        <button class="btn btn-ghost">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         </nav>

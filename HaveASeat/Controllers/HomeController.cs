@@ -17,6 +17,10 @@ namespace HaveASeat.Controllers
         {
             return View();
         }
+        public IActionResult ForPartner()
+        {
+            return View();
+        }
 
         public IActionResult Privacy()
         {
