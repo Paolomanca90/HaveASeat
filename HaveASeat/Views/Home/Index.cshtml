@@ -1,8 +1,236 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
+@section Styles{
+    <link href="~/css/Clienti.css" rel="stylesheet" />
+}
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<main class="main-content">
+    <div class="container">
+        <div class="hero">
+            <h1>Scopri i migliori saloni vicino a te</h1>
+            @* <p>Prenota trattamenti di bellezza, benessere e molto altro con un click</p> *@
+        </div>
+
+        <form class="search-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="service">Che servizio stai cercando?</label>
+                    <input type="text" id="service" placeholder="Es. Taglio capelli, Manicure, Massaggio">
+                </div>
+                <div class="form-group">
+                    <label for="location">Dove?</label>
+                    <input type="text" id="location" placeholder="Città, quartiere o codice postale">
+                </div>
+                <div class="form-group">
+                    <label for="date">Quando?</label>
+                    <input type="date" id="date">
+                </div>
+                <button type="submit" class="search-btn">Cerca</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<section class="salons-section">
+    <div class="container">
+        <h2 class="section-title">Saloni popolari nella tua zona</h2>
+
+        <div class="filters">
+            <button class="filter-btn active">Tutti</button>
+            <button class="filter-btn">Parrucchieri</button>
+            <button class="filter-btn">Centri Estetici</button>
+            <button class="filter-btn">Spa & Benessere</button>
+            <button class="filter-btn">Barbieri</button>
+            <button class="filter-btn">Nail Salon</button>
+        </div>
+
+        <div class="salons-grid">
+            <div class="salon-card">
+                <div class="salon-image"></div>
+                <div class="salon-info">
+                    <div class="salon-header">
+                        <div>
+                            <h3 class="salon-name">Bella Vista Hair Studio</h3>
+                            <div class="salon-location">
+                                📍 Milano, Brera
+                            </div>
+                        </div>
+                        <div class="salon-rating">
+                            <span class="stars">★★★★★</span>
+                            <span class="rating-text">4.8 (127)</span>
+                        </div>
+                    </div>
+                    <div class="salon-services">
+                        <div class="services-title">Servizi</div>
+                        <div class="services-list">
+                            <span class="service-tag">Taglio donna</span>
+                            <span class="service-tag">Colore</span>
+                            <span class="service-tag">Piega</span>
+                            <span class="service-tag">Trattamenti</span>
+                        </div>
+                    </div>
+                    <div class="salon-footer">
+                        <span class="price-range">€25 - €150</span>
+                        <button class="book-btn">Prenota ora</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="salon-card">
+                <div class="salon-image"></div>
+                <div class="salon-info">
+                    <div class="salon-header">
+                        <div>
+                            <h3 class="salon-name">Zen Spa & Wellness</h3>
+                            <div class="salon-location">
+                                📍 Roma, Trastevere
+                            </div>
+                        </div>
+                        <div class="salon-rating">
+                            <span class="stars">★★★★☆</span>
+                            <span class="rating-text">4.6 (89)</span>
+                        </div>
+                    </div>
+                    <div class="salon-services">
+                        <div class="services-title">Servizi</div>
+                        <div class="services-list">
+                            <span class="service-tag">Massaggi</span>
+                            <span class="service-tag">Trattamenti viso</span>
+                            <span class="service-tag">Sauna</span>
+                            <span class="service-tag">Aromaterapia</span>
+                        </div>
+                    </div>
+                    <div class="salon-footer">
+                        <span class="price-range">€40 - €200</span>
+                        <button class="book-btn">Prenota ora</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="salon-card">
+                <div class="salon-image"></div>
+                <div class="salon-info">
+                    <div class="salon-header">
+                        <div>
+                            <h3 class="salon-name">Nails & Beauty Lab</h3>
+                            <div class="salon-location">
+                                📍 Firenze, Centro
+                            </div>
+                        </div>
+                        <div class="salon-rating">
+                            <span class="stars">★★★★★</span>
+                            <span class="rating-text">4.9 (203)</span>
+                        </div>
+                    </div>
+                    <div class="salon-services">
+                        <div class="services-title">Servizi</div>
+                        <div class="services-list">
+                            <span class="service-tag">Manicure</span>
+                            <span class="service-tag">Pedicure</span>
+                            <span class="service-tag">Nail art</span>
+                            <span class="service-tag">Gel</span>
+                        </div>
+                    </div>
+                    <div class="salon-footer">
+                        <span class="price-range">€15 - €80</span>
+                        <button class="book-btn">Prenota ora</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="salon-card">
+                <div class="salon-image"></div>
+                <div class="salon-info">
+                    <div class="salon-header">
+                        <div>
+                            <h3 class="salon-name">Gentleman's Barbershop</h3>
+                            <div class="salon-location">
+                                📍 Torino, Quadrilatero
+                            </div>
+                        </div>
+                        <div class="salon-rating">
+                            <span class="stars">★★★★☆</span>
+                            <span class="rating-text">4.5 (156)</span>
+                        </div>
+                    </div>
+                    <div class="salon-services">
+                        <div class="services-title">Servizi</div>
+                        <div class="services-list">
+                            <span class="service-tag">Taglio uomo</span>
+                            <span class="service-tag">Barba</span>
+                            <span class="service-tag">Shampoo</span>
+                            <span class="service-tag">Styling</span>
+                        </div>
+                    </div>
+                    <div class="salon-footer">
+                        <span class="price-range">€20 - €60</span>
+                        <button class="book-btn">Prenota ora</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="salon-card">
+                <div class="salon-image"></div>
+                <div class="salon-info">
+                    <div class="salon-header">
+                        <div>
+                            <h3 class="salon-name">Estetica Moderna</h3>
+                            <div class="salon-location">
+                                📍 Bologna, Centro
+                            </div>
+                        </div>
+                        <div class="salon-rating">
+                            <span class="stars">★★★★★</span>
+                            <span class="rating-text">4.7 (94)</span>
+                        </div>
+                    </div>
+                    <div class="salon-services">
+                        <div class="services-title">Servizi</div>
+                        <div class="services-list">
+                            <span class="service-tag">Trattamenti viso</span>
+                            <span class="service-tag">Epilazione</span>
+                            <span class="service-tag">Microblading</span>
+                            <span class="service-tag">Pulizia viso</span>
+                        </div>
+                    </div>
+                    <div class="salon-footer">
+                        <span class="price-range">€30 - €120</span>
+                        <button class="book-btn">Prenota ora</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="salon-card">
+                <div class="salon-image"></div>
+                <div class="salon-info">
+                    <div class="salon-header">
+                        <div>
+                            <h3 class="salon-name">Luxury Hair & Beauty</h3>
+                            <div class="salon-location">
+                                📍 Napoli, Vomero
+                            </div>
+                        </div>
+                        <div class="salon-rating">
+                            <span class="stars">★★★★☆</span>
+                            <span class="rating-text">4.4 (67)</span>
+                        </div>
+                    </div>
+                    <div class="salon-services">
+                        <div class="services-title">Servizi</div>
+                        <div class="services-list">
+                            <span class="service-tag">Taglio & colore</span>
+                            <span class="service-tag">Extension</span>
+                            <span class="service-tag">Keratina</span>
+                            <span class="service-tag">Styling</span>
+                        </div>
+                    </div>
+                    <div class="salon-footer">
+                        <span class="price-range">€35 - €180</span>
+                        <button class="book-btn">Prenota ora</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

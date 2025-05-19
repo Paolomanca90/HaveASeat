@@ -1,0 +1,287 @@
+﻿
+.main-content {
+    margin-top: 80px;
+    background: linear-gradient(135deg, #f8f4ff 0%, #e8d5ff 100%);
+    padding: 4rem 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.hero {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+    .hero h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 1rem;
+    }
+
+    .hero p {
+        font-size: 1.2rem;
+        color: #666;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+.search-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 4rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 1fr auto;
+    gap: 1rem;
+    align-items: end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+    .form-group label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #1a1a1a;
+    }
+
+    .form-group input,
+    .form-group select {
+        padding: 1rem;
+        border: 2px solid #e5e5e5;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #663399;
+        }
+
+.search-btn {
+    background: #663399;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+    .search-btn:hover {
+        background: #552277;
+    }
+
+.salons-section {
+    background: white;
+    padding: 4rem 0;
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 3rem;
+    color: #1a1a1a;
+}
+
+.salons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.salon-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+}
+
+    .salon-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+
+.salon-image {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(45deg, #663399, #9966cc);
+    position: relative;
+    overflow: hidden;
+}
+
+    .salon-image::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('/api/placeholder/400/200') center/cover;
+    }
+
+.salon-info {
+    padding: 1.5rem;
+}
+
+.salon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1rem;
+}
+
+.salon-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+}
+
+.salon-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: #f8f9fa;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+}
+
+.stars {
+    color: #ffa500;
+    font-size: 0.9rem;
+}
+
+.rating-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.salon-location {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.salon-services {
+    margin-bottom: 1rem;
+}
+
+.services-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #1a1a1a;
+}
+
+.services-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.service-tag {
+    background: #f3f0ff;
+    color: #663399;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.salon-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.price-range {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.book-btn {
+    background: #663399;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+    .book-btn:hover {
+        background: #552277;
+    }
+
+.filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid #e5e5e5;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+    .filter-btn:hover,
+    .filter-btn.active {
+        background: #663399;
+        color: white;
+        border-color: #663399;
+    }
+
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .salons-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .salon-header {
+        flex-direction: column;
+        align-items: start;
+        gap: 0.5rem;
+    }
+}

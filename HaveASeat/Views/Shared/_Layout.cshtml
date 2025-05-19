@@ -1,9 +1,10 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - HaveASeat</title>
+    @await RenderSectionAsync("Styles", required: false)
     <script type="importmap"></script>
     <!-- Tailwind CSS e DaisyUI -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
@@ -15,14 +16,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
+<body class="h-full flex flex-col">
     <header>
         <!-- Navbar -->
         <nav class="bg-white shadow-md sticky top-0 z-50">
             <div class="container mx-auto px-4">
                 <div class="flex justify-between items-center py-4">
                     <div class="flex items-center">
-                        <a href="#" class="text-2xl font-bold text-purple-600">BeautyBook</a>
+                        <a href="/Home/Index" class="text-2xl font-bold text-purple-600">BeautyBook</a>
                     </div>
 
                     <!-- Menu Desktop -->
@@ -51,12 +52,12 @@
             </div>
         </nav>
     </header>
-    <div>
+    <div class="flex-grow">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
-    <footer class="footer sm:footer-horizontal bg-base-200 text-base-content p-10">
+    <footer class="footer sm:footer-horizontal bg-base-200 text-base-content p-10 mt-auto">
         <nav>
             <h6 class="footer-title">Services</h6>
             <a class="link link-hover">Branding</a>
