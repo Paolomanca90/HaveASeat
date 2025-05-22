@@ -5,14 +5,29 @@
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item">
+    @* <li class="nav-item">
         <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
     </li>
     <li class="nav-item">
         <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
             <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
         </form>
-    </li>
+    </li> *@
+        <div class="dropdown dropdown-bottom dropdown-end">
+            <div tabindex="0" role="button" class="btn m-1">
+                <i class="fas fa-user text-[#7C3AED]"></i>
+            </div>
+            <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index">Profilo</a>
+                </li>
+                <li class="nav-item">
+                    <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button type="submit" class="nav-link text-dark">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
 }
 else
 {
@@ -20,7 +35,7 @@ else
             <div tabindex="0" role="button" class="btn m-1">Accedi</div>
             <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
                 <li class="nav-item">
-                    <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                    <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Registrati</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>

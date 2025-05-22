@@ -5,7 +5,7 @@
 }
 
 <div class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
+    <div class="max-w-2xl w-full space-y-8">
         <!-- Header -->
         <div class="text-center">
             <h1 class="text-3xl font-bold text-gray-900 mb-2">Crea il tuo account</h1>
@@ -17,56 +17,150 @@
             <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="space-y-6">
                 <div asp-validation-summary="ModelOnly" class="alert alert-error text-sm" role="alert"></div>
 
-                <!-- Email Field -->
-                <div class="form-control">
-                    <label asp-for="Input.Email" class="label">
-                        <span class="label-text font-medium text-gray-700">Email</span>
-                    </label>
-                    <input asp-for="Input.Email"
-                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                           autocomplete="username"
-                           aria-required="true"
-                           placeholder="nome@esempio.com" />
-                    <span asp-validation-for="Input.Email" class="label-text-alt text-error mt-1"></span>
+                <!-- Personal Information Section -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Informazioni Personali</h3>
+
+                    <!-- Name Fields Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label asp-for="Input.Nome" class="label">
+                                <span class="label-text font-medium text-gray-700">Nome *</span>
+                            </label>
+                            <input asp-for="Input.Nome"
+                                   class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                   placeholder="Mario" />
+                            <span asp-validation-for="Input.Nome" class="label-text-alt text-error mt-1"></span>
+                        </div>
+
+                        <div class="form-control">
+                            <label asp-for="Input.Cognome" class="label">
+                                <span class="label-text font-medium text-gray-700">Cognome *</span>
+                            </label>
+                            <input asp-for="Input.Cognome"
+                                   class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                   placeholder="Rossi" />
+                            <span asp-validation-for="Input.Cognome" class="label-text-alt text-error mt-1"></span>
+                        </div>
+                    </div>
+
+                    <!-- Phone and Email Row-->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="form-control">
+                            <label asp-for="Input.Email" class="label">
+                                <span class="label-text font-medium text-gray-700">Email *</span>
+                            </label>
+                            <input asp-for="Input.Email"
+                                   class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                   autocomplete="username"
+                                   aria-required="true"
+                                   placeholder="nome@esempio.com" />
+                            <span asp-validation-for="Input.Email" class="label-text-alt text-error mt-1"></span>
+                        </div>
+                        <div class="form-control">
+                            <label asp-for="Input.PhoneNumber" class="label">
+                                <span class="label-text font-medium text-gray-700">Telefono *</span>
+                            </label>
+                            <input asp-for="Input.PhoneNumber"
+                                   type="tel"
+                                   class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                   placeholder="+39 333 123 4567" />
+                            <span asp-validation-for="Input.PhoneNumber" class="label-text-alt text-error mt-1"></span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Password Field -->
-                <div class="form-control">
-                    <label asp-for="Input.Password" class="label">
-                        <span class="label-text font-medium text-gray-700">Password</span>
-                    </label>
-                    <input asp-for="Input.Password"
-                           type="password"
-                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                           autocomplete="new-password"
-                           aria-required="true"
-                           placeholder="••••••••" />
-                    <span asp-validation-for="Input.Password" class="label-text-alt text-error mt-1"></span>
+                <!-- Address Information Section -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Indirizzo (opzionale)</h3>
+
+                    <div class="form-control">
+                        <label asp-for="Input.Address" class="label">
+                            <span class="label-text font-medium text-gray-700">Indirizzo</span>
+                        </label>
+                        <input asp-for="Input.Address"
+                               class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                               placeholder="Via Roma 123" />
+                        <span asp-validation-for="Input.Address" class="label-text-alt text-error mt-1"></span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-control">
+                            <label asp-for="Input.City" class="label">
+                                <span class="label-text font-medium text-gray-700">Città</span>
+                            </label>
+                            <input asp-for="Input.City"
+                                   class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                   placeholder="Milano" />
+                            <span asp-validation-for="Input.City" class="label-text-alt text-error mt-1"></span>
+                        </div>
+
+                        <div class="form-control">
+                            <label asp-for="Input.PostalCode" class="label">
+                                <span class="label-text font-medium text-gray-700">CAP</span>
+                            </label>
+                            <input asp-for="Input.PostalCode"
+                                   class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                   placeholder="20100" />
+                            <span asp-validation-for="Input.PostalCode" class="label-text-alt text-error mt-1"></span>
+                        </div>
+
+                        <div class="form-control">
+                            <label asp-for="Input.Province" class="label">
+                                <span class="label-text font-medium text-gray-700">Provincia</span>
+                            </label>
+                            <input asp-for="Input.Province"
+                                   class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                                   placeholder="MI" />
+                            <span asp-validation-for="Input.Province" class="label-text-alt text-error mt-1"></span>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Confirm Password Field -->
-                <div class="form-control">
-                    <label asp-for="Input.ConfirmPassword" class="label">
-                        <span class="label-text font-medium text-gray-700">Conferma Password</span>
-                    </label>
-                    <input asp-for="Input.ConfirmPassword"
-                           type="password"
-                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                           autocomplete="new-password"
-                           aria-required="true"
-                           placeholder="••••••••" />
-                    <span asp-validation-for="Input.ConfirmPassword" class="label-text-alt text-error mt-1"></span>
+                <!-- Account Security Section -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-gray-900 border-b border-gray-200 pb-2">Sicurezza Account</h3>
+
+                    <!-- Password Field -->
+                    <div class="form-control">
+                        <label asp-for="Input.Password" class="label">
+                            <span class="label-text font-medium text-gray-700">Password *</span>
+                        </label>
+                        <input asp-for="Input.Password"
+                               type="password"
+                               class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                               autocomplete="new-password"
+                               aria-required="true"
+                               placeholder="••••••••" />
+                        <span asp-validation-for="Input.Password" class="label-text-alt text-error mt-1"></span>
+                    </div>
+
+                    <!-- Confirm Password Field -->
+                    <div class="form-control">
+                        <label asp-for="Input.ConfirmPassword" class="label">
+                            <span class="label-text font-medium text-gray-700">Conferma Password *</span>
+                        </label>
+                        <input asp-for="Input.ConfirmPassword"
+                               type="password"
+                               class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                               autocomplete="new-password"
+                               aria-required="true"
+                               placeholder="••••••••" />
+                        <span asp-validation-for="Input.ConfirmPassword" class="label-text-alt text-error mt-1"></span>
+                    </div>
                 </div>
 
-                <!-- Terms and Conditions -->
-                <div class="form-control">
-                    <label class="label cursor-pointer justify-start">
-                        <input type="checkbox" class="checkbox checkbox-primary mr-3" required />
-                        <span class="label-text text-gray-700 text-sm">
-                            Accetto i <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Termini di Servizio</a>
-                            e la <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Privacy Policy</a>
-                        </span>
-                    </label>
+                <!-- Privacy and Terms -->
+                <div class="space-y-3">
+                    <div class="form-control">
+                        <label class="label cursor-pointer justify-start">
+                            <input type="checkbox" class="checkbox checkbox-primary mr-3" required />
+                            <span class="label-text text-gray-700 text-sm">
+                                Accetto i <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Termini di Servizio</a>
+                                e la <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Privacy Policy</a> *
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
                 <!-- Submit Button -->
@@ -120,7 +214,7 @@
                                 <img src="/img/@(provider.Name).png"
                                      class="w-5 h-5 mr-2"
                                      alt="@provider.DisplayName" />
-                                @provider.DisplayName
+                               @provider.DisplayName
                             </button>
                         }
                     </div>

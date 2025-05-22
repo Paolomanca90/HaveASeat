@@ -71,33 +71,57 @@ namespace HaveASeat.Areas.Identity.Pages.Account
         /// </summary>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
-            [Display(Name = "Email")]
-            public string Email { get; set; }
+			[Required(ErrorMessage = "Il nome è obbligatorio.")]
+			[StringLength(50, ErrorMessage = "Il nome non può superare i 50 caratteri.")]
+			[Display(Name = "Nome")]
+			public string Nome { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-            [DataType(DataType.Password)]
-            [Display(Name = "Password")]
-            public string Password { get; set; }
+			[Required(ErrorMessage = "Il cognome è obbligatorio.")]
+			[StringLength(50, ErrorMessage = "Il cognome non può superare i 50 caratteri.")]
+			[Display(Name = "Cognome")]
+			public string Cognome { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-            public string ConfirmPassword { get; set; }
+			[Required(ErrorMessage = "L'email è obbligatoria.")]
+			[EmailAddress(ErrorMessage = "Inserisci un indirizzo email valido.")]
+			[Display(Name = "Email")]
+			public string Email { get; set; }
+
+			[Required(ErrorMessage = "Il numero di telefono è obbligatorio.")]
+			[Phone(ErrorMessage = "Inserisci un numero di telefono valido.")]
+			[StringLength(20, ErrorMessage = "Il numero di telefono non può superare i 20 caratteri.")]
+			[Display(Name = "Telefono")]
+			public string PhoneNumber { get; set; }
+
+			[StringLength(200)]
+			[Display(Name = "Indirizzo")]
+			public string Address { get; set; }
+
+			[StringLength(50)]
+			[Display(Name = "Città")]
+			public string City { get; set; }
+
+			[StringLength(10)]
+			[Display(Name = "CAP")]
+			public string PostalCode { get; set; }
+
+			[StringLength(50)]
+			[Display(Name = "Provincia")]
+			public string Province { get; set; }
+            
+            [StringLength(50)]
+			[Display(Name = "C.F.")]
+			public string CodiceFiscale { get; set; }
+
+			[Required(ErrorMessage = "La password è obbligatoria.")]
+			[StringLength(100, ErrorMessage = "La password deve essere lunga almeno {2} caratteri e non più di {1}.", MinimumLength = 6)]
+			[DataType(DataType.Password)]
+			[Display(Name = "Password")]
+			public string Password { get; set; }
+
+			[DataType(DataType.Password)]
+			[Display(Name = "Conferma password")]
+			[Compare("Password", ErrorMessage = "La password e la conferma password non corrispondono.")]
+			public string ConfirmPassword { get; set; }
         }
 
 
@@ -114,8 +138,16 @@ namespace HaveASeat.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 var user = CreateUser();
+                user.Nome = Input.Nome;
+                user.Cognome = Input.Cognome;
+				user.PhoneNumber = Input.PhoneNumber;
+				user.Indirizzo = Input.Address;
+				user.Città = Input.City;
+				user.CAP = Input.PostalCode;
+				user.Provincia = Input.Province;
+                user.CodiceFiscale = Input.CodiceFiscale;
 
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+				await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 var result = await _userManager.CreateAsync(user, Input.Password);
 

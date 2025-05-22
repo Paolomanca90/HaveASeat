@@ -17,7 +17,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {
-	options.SignIn.RequireConfirmedAccount = true;
+	options.SignIn.RequireConfirmedAccount = false;
 	options.Password.RequireDigit = true;
 	options.Password.RequiredLength = 8;
 })
@@ -25,18 +25,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 	.AddEntityFrameworkStores<ApplicationDbContext>()
 	.AddDefaultTokenProviders();
 
-builder.Services.AddAuthentication(o =>
-	{
-		// This forces challenge results to be handled by Google OpenID Handler, so there's no
-		// need to add an AccountController that emits challenges for Login.
-		o.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
-		// This forces forbid results to be handled by Google OpenID Handler, which checks if
-		// extra scopes are required and does automatic incremental auth.
-		o.DefaultForbidScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
-		// Default scheme that will handle everything else.
-		// Once a user is authenticated, the OAuth2 token info is stored in cookies.
-		o.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-	})
+builder.Services.AddAuthentication()
 	.AddCookie()
 	.AddGoogleOpenIdConnect(options =>
 	{
@@ -112,9 +101,9 @@ else
 
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 
 app.MapStaticAssets();
 
