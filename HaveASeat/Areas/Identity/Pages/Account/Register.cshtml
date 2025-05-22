@@ -1,64 +1,163 @@
 ﻿@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Registrati";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Crea il tuo account</h1>
+            <p class="text-gray-600">Inizia a prenotare i tuoi trattamenti preferiti</p>
+        </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
-            <hr />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label asp-for="Input.Email">Email</label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn bg-white border-2 border-primary" name="provider" value="@provider.Name" title="@provider.DisplayName account">@provider.DisplayName <img src="/img/@(provider.Name).png" class="ms-2" style="width: 20px; vertical-align: sub" alt="Alternate Text" /></button>
-                                }
-                            </p>
+        <!-- Registration Form Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="space-y-6">
+                <div asp-validation-summary="ModelOnly" class="alert alert-error text-sm" role="alert"></div>
+
+                <!-- Email Field -->
+                <div class="form-control">
+                    <label asp-for="Input.Email" class="label">
+                        <span class="label-text font-medium text-gray-700">Email</span>
+                    </label>
+                    <input asp-for="Input.Email"
+                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                           autocomplete="username"
+                           aria-required="true"
+                           placeholder="nome@esempio.com" />
+                    <span asp-validation-for="Input.Email" class="label-text-alt text-error mt-1"></span>
+                </div>
+
+                <!-- Password Field -->
+                <div class="form-control">
+                    <label asp-for="Input.Password" class="label">
+                        <span class="label-text font-medium text-gray-700">Password</span>
+                    </label>
+                    <input asp-for="Input.Password"
+                           type="password"
+                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                           autocomplete="new-password"
+                           aria-required="true"
+                           placeholder="••••••••" />
+                    <span asp-validation-for="Input.Password" class="label-text-alt text-error mt-1"></span>
+                </div>
+
+                <!-- Confirm Password Field -->
+                <div class="form-control">
+                    <label asp-for="Input.ConfirmPassword" class="label">
+                        <span class="label-text font-medium text-gray-700">Conferma Password</span>
+                    </label>
+                    <input asp-for="Input.ConfirmPassword"
+                           type="password"
+                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                           autocomplete="new-password"
+                           aria-required="true"
+                           placeholder="••••••••" />
+                    <span asp-validation-for="Input.ConfirmPassword" class="label-text-alt text-error mt-1"></span>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start">
+                        <input type="checkbox" class="checkbox checkbox-primary mr-3" required />
+                        <span class="label-text text-gray-700 text-sm">
+                            Accetto i <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Termini di Servizio</a>
+                            e la <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Privacy Policy</a>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button id="registerSubmit"
+                        type="submit"
+                        class="btn w-full text-white border-none rounded-full py-3 text-lg font-medium hover:shadow-lg transition-all duration-200 bg-[#7C3AED] hover:bg-[#6D28D9]">
+                    Crea Account
+                </button>
+
+                <!-- Links -->
+                <div class="text-center">
+                    <p class="text-sm text-gray-600">
+                        Hai già un account?
+                        <a asp-page="./Login"
+                           asp-route-returnUrl="@Model.ReturnUrl"
+                           class="text-purple-600 hover:text-purple-700 font-medium">
+                            Accedi qui
+                        </a>
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- External Login Section -->
+        @if ((Model.ExternalLogins?.Count ?? 0) > 0)
+        {
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <div class="text-center mb-6">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
                         </div>
-                    </form>
-                }
-            }
-        </section>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white text-gray-500">oppure registrati con</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="external-account"
+                      asp-page="./ExternalLogin"
+                      asp-route-returnUrl="@Model.ReturnUrl"
+                      method="post">
+                    <div class="grid gap-3">
+                        @foreach (var provider in Model.ExternalLogins!)
+                        {
+                            <button type="submit"
+                                    class="btn btn-outline border-2 border-gray-300 hover:border-purple-500 hover:bg-purple-50 w-full justify-center"
+                                    name="provider"
+                                    value="@provider.Name"
+                                    title="@provider.DisplayName account">
+                                <img src="/img/@(provider.Name).png"
+                                     class="w-5 h-5 mr-2"
+                                     alt="@provider.DisplayName" />
+                                @provider.DisplayName
+                            </button>
+                        }
+                    </div>
+                </form>
+            </div>
+        }
+
+        <!-- Benefits Section -->
+        <div class="bg-white rounded-2xl shadow-xl p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Perché registrarti?</h3>
+            <div class="space-y-3">
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-sm text-gray-700">Prenotazioni rapide e facili</span>
+                </div>
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-sm text-gray-700">Gestione dei tuoi appuntamenti</span>
+                </div>
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-sm text-gray-700">Offerte e promozioni esclusive</span>
+                </div>
+                <div class="flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span class="text-sm text-gray-700">Storico dei tuoi trattamenti</span>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
