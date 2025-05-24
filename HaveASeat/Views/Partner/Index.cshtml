@@ -1,0 +1,191 @@
+﻿  <style>
+    :root {
+        --primary: #9c6ade;
+        --primary-hover: #8a5abe;
+        --secondary: #f2f2f2;
+        --gray-light: #f5f5f5;
+        --gray: #e0e0e0;
+        --gray-dark: #757575;
+        --text-dark: #333333;
+        --text-light: #757575;
+        --danger: #e53935;
+        --success: #43a047;
+        --warning: #fb8c00;
+        --radius: 8px;
+        --shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Sidebar */
+    .sidebar {
+        width: 250px;
+        background-color: white;
+        box-shadow: var(--shadow);
+        padding: 20px 0;
+        position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .logo {
+        padding: 0 20px 20px;
+        text-align: center;
+        border-bottom: 1px solid var(--gray);
+        margin-bottom: 20px;
+    }
+
+        .logo h2 {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+    .nav-menu {
+        list-style: none;
+    }
+
+    .nav-item {
+        margin-bottom: 5px;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        padding: 12px 20px;
+        color: var(--text-dark);
+        text-decoration: none;
+        border-left: 3px solid transparent;
+        transition: all 0.3s;
+    }
+
+        .nav-link:hover {
+            background-color: var(--gray-light);
+            border-left-color: var(--primary);
+        }
+
+        .nav-link.active {
+            background-color: var(--gray-light);
+            border-left-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+    .nav-category {
+        padding: 10px 20px;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: var(--text-light);
+        font-weight: 600;
+        margin-top: 15px;
+    }
+  </style>
+<div class="container">
+  <!-- Sidebar -->
+<div class="sidebar">
+    <div class="logo">
+        <h2>BeautyBook</h2>
+    </div>
+
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="#" class="nav-link active">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendario</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-user-friends"></i>
+                <span>Clienti</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-cut"></i>
+                <span>Servizi</span>
+            </a>
+        </li>
+
+        <div class="nav-category">Gestione</div>
+
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-user"></i>
+                <span>Staff</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-box"></i>
+                <span>Prodotti</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-tag"></i>
+                <span>Promozioni</span>
+            </a>
+        </li>
+
+        <div class="nav-category">Marketing</div>
+
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-bullhorn"></i>
+                <span>Campagne</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-envelope"></i>
+                <span>Email</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-mobile-alt"></i>
+                <span>SMS</span>
+            </a>
+        </li>
+
+        <div class="nav-category">Finanza</div>
+
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-chart-line"></i>
+                <span>Rapporti</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-file-invoice-dollar"></i>
+                <span>Fatturazione</span>
+            </a>
+        </li>
+
+        <div class="nav-category">Impostazioni</div>
+
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-store"></i>
+                <span>Profilo</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="#" class="nav-link">
+                <i class="fas fa-cog"></i>
+                <span>Impostazioni</span>
+            </a>
+        </li>
+    </ul>
+</div>
+</div>
