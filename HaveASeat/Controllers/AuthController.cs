@@ -56,6 +56,7 @@ namespace HaveASeat.Controllers
 
 			if (result.Succeeded)
 			{
+				await _userManager.AddToRoleAsync(user, "Partner");
 				await _signInManager.SignInAsync(user, isPersistent: false);
 				TempData["UserId"] = user.Id;
 				return RedirectToAction("NewShop");

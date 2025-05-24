@@ -19,75 +19,81 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet"/>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-          integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="h-full flex flex-col">
-    <header>
-        <!-- Navbar -->
-        <nav class="bg-white shadow-md sticky top-0 z-50">
-            <div class="container mx-auto px-4">
-                <div class="flex justify-between items-center py-4">
-                    <div class="flex items-center">
-                        <a href="/Home/Index" class="text-2xl font-bold text-purple-600">BeautyBook</a>
-                    </div>
+    @if (!User.IsInRole("Partner"))
+    {      
+        <header>
+            <!-- Navbar -->
+            <nav class="bg-white shadow-md sticky top-0 z-50">
+                <div class="container mx-auto px-4">
+                    <div class="flex justify-between items-center py-4">
+                        <div class="flex items-center">
+                            <a href="/Home/Index" class="text-2xl font-bold text-purple-600">BeautyBook</a>
+                        </div>
 
-                    <!-- Menu Desktop -->
-                  @*   <div class="hidden md:flex space-x-8">
-                        <a href="#features" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Funzionalità</a>
-                        <a href="#pricing" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Prezzi</a>
-                        <a href="#testimonials" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Testimonial</a>
-                        <a href="#faq" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">FAQ</a>
-                    </div> *@
+                        <!-- Menu Desktop -->
+                        @*   <div class="hidden md:flex space-x-8">
+                            <a href="#features" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Funzionalità</a>
+                            <a href="#pricing" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Prezzi</a>
+                            <a href="#testimonials" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">Testimonial</a>
+                            <a href="#faq" class="font-medium text-gray-600 hover:text-purple-600 transition-colors">FAQ</a>
+                        </div> *@
 
-                    <div class="flex items-center space-x-4">
-                      
-                        <a href="/Home/ForPartner" class="btn btn-primary hover:bg-purple-700 border-none rounded-full bg-[#7C3AED]">Diventa Partner</a>
-                    <partial name="_LoginPartial" />
+                        <div class="flex items-center space-x-4">
+
+                            <a href="/Home/ForPartner" class="btn btn-primary hover:bg-purple-700 border-none rounded-full bg-[#7C3AED]">Diventa Partner</a>
+                            <partial name="_LoginPartial" />
+                        </div>
                     </div>
                 </div>
-            </div>
-        </nav>
-    </header>
+            </nav>
+        </header>
+    }
     <div class="flex-grow">
         <main role="main">
             @RenderBody()
         </main>
     </div>
-    <footer class="footer sm:footer-horizontal bg-base-200 text-base-content p-10 mt-auto">
-        <nav>
-            <h6 class="footer-title">Services</h6>
-            <a class="link link-hover">Branding</a>
-            <a class="link link-hover">Design</a>
-            <a class="link link-hover">Marketing</a>
-            <a class="link link-hover">Advertisement</a>
-        </nav>
-        <nav>
-            <h6 class="footer-title">Company</h6>
-            <a class="link link-hover">About us</a>
-            <a class="link link-hover">Contact</a>
-            <a class="link link-hover">Jobs</a>
-            <a class="link link-hover">Press kit</a>
-        </nav>
-        <nav>
-            <h6 class="footer-title">Legal</h6>
-            <a class="link link-hover">Terms of use</a>
-            <a class="link link-hover">Privacy policy</a>
-            <a class="link link-hover">Cookie policy</a>
-        </nav>
-        <form>
-            <h6 class="footer-title">Newsletter</h6>
-            <fieldset class="w-80">
-                <label>Enter your email address</label>
-                <div class="join">
-                    <input type="text"
-                           placeholder="username@site.com"
-                           class="input input-bordered join-item" />
-                    <button class="btn btn-primary border-none join-item bg-[#7C3AED]">Subscribe</button>
-                </div>
-            </fieldset>
-        </form>
-    </footer>
+    @if (!User.IsInRole("Partner"))
+    {
+        <footer class="footer sm:footer-horizontal bg-base-200 text-base-content p-10 mt-auto">
+            <nav>
+                <h6 class="footer-title">Services</h6>
+                <a class="link link-hover">Branding</a>
+                <a class="link link-hover">Design</a>
+                <a class="link link-hover">Marketing</a>
+                <a class="link link-hover">Advertisement</a>
+            </nav>
+            <nav>
+                <h6 class="footer-title">Company</h6>
+                <a class="link link-hover">About us</a>
+                <a class="link link-hover">Contact</a>
+                <a class="link link-hover">Jobs</a>
+                <a class="link link-hover">Press kit</a>
+            </nav>
+            <nav>
+                <h6 class="footer-title">Legal</h6>
+                <a class="link link-hover">Terms of use</a>
+                <a class="link link-hover">Privacy policy</a>
+                <a class="link link-hover">Cookie policy</a>
+            </nav>
+            <form>
+                <h6 class="footer-title">Newsletter</h6>
+                <fieldset class="w-80">
+                    <label>Enter your email address</label>
+                    <div class="join">
+                        <input type="text"
+                               placeholder="username@site.com"
+                               class="input input-bordered join-item" />
+                        <button class="btn btn-primary border-none join-item bg-[#7C3AED]">Subscribe</button>
+                    </div>
+                </fieldset>
+            </form>
+        </footer>
+    }
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <!-- SweetAlert2 JS -->
