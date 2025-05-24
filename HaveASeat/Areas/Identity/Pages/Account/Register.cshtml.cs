@@ -122,7 +122,7 @@ namespace HaveASeat.Areas.Identity.Pages.Account
 			[Display(Name = "Conferma password")]
 			[Compare("Password", ErrorMessage = "La password e la conferma password non corrispondono.")]
 			public string ConfirmPassword { get; set; }
-        }
+		}
 
 
         public async Task OnGetAsync(string returnUrl = null)

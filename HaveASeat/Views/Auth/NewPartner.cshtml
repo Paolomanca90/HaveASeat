@@ -1,0 +1,289 @@
+﻿@model HaveASeat.Utilities.Dto.ApplicationUserDto
+
+@{
+    ViewData["Title"] = "Diventa Partner";
+}
+
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div class="flex min-h-screen">
+        <!-- Image Column - Hidden on mobile, visible on desktop -->
+        <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-600/90 to-indigo-700/90 z-10"></div>
+            <img src="/img/spa-partner-hero.jpg"
+                 alt="Spa Partner"
+                 class="w-full h-full object-cover" />
+            <div class="absolute inset-0 z-20 flex flex-col justify-center p-12 text-white">
+                <div class="max-w-md">
+                    <h2 class="text-4xl font-bold mb-6">Espandi il tuo business</h2>
+                    <p class="text-xl mb-8 text-purple-100">Unisciti alla nostra rete di partner e raggiungi migliaia di nuovi clienti ogni giorno.</p>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-purple-300 rounded-full mr-4"></div>
+                            <span class="text-purple-100">Visibilità online garantita</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-purple-300 rounded-full mr-4"></div>
+                            <span class="text-purple-100">Sistema di prenotazioni avanzato</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-purple-300 rounded-full mr-4"></div>
+                            <span class="text-purple-100">Supporto marketing dedicato</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-purple-300 rounded-full mr-4"></div>
+                            <span class="text-purple-100">Analytics e reportistica</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Column -->
+        <div class="flex-1 lg:w-1/2 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-xl w-full space-y-8">
+                <!-- Header -->
+                <div class="text-center">
+                    <div class="mx-auto w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl flex items-center justify-center mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">Diventa nostro Partner</h1>
+                    <p class="text-gray-600">Inizia il tuo percorso nel nostro network esclusivo</p>
+                </div>
+
+                <!-- Registration Form Card -->
+                <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-8">
+                    <form id="newPartnerForm" method="post" class="space-y-6">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-error text-sm" role="alert"></div>
+
+                        <!-- Personal Information Section -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 border-b border-gradient-to-r from-purple-200 to-indigo-200 pb-2">Referente Principale</h3>
+
+                            <!-- Name Fields Row -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label asp-for="Nome" class="label">
+                                        <span class="label-text font-medium text-gray-700">Nome *</span>
+                                    </label>
+                                    <input asp-for="Nome"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           placeholder="Mario" />
+                                    <span asp-validation-for="Nome" class="label-text-alt text-error mt-1"></span>
+                                </div>
+
+                                <div class="form-control">
+                                    <label asp-for="Cognome" class="label">
+                                        <span class="label-text font-medium text-gray-700">Cognome *</span>
+                                    </label>
+                                    <input asp-for="Cognome"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           placeholder="Rossi" />
+                                    <span asp-validation-for="Cognome" class="label-text-alt text-error mt-1"></span>
+                                </div>
+                            </div>
+                            
+                            <!-- C.F. Row -->
+                            <div class="grid grid-cols-1">
+                                <div class="form-control">
+                                    <label asp-for="CodiceFiscale" class="label">
+                                        <span class="label-text font-medium text-gray-700">Nome *</span>
+                                    </label>
+                                    <input asp-for="CodiceFiscale"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           placeholder="ABC12ABC34..." />
+                                    <span asp-validation-for="CodiceFiscale" class="label-text-alt text-error mt-1"></span>
+                                </div>
+                            </div>
+
+                            <!-- Phone and Email Row-->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-control">
+                                    <label asp-for="Email" class="label">
+                                        <span class="label-text font-medium text-gray-700">Email *</span>
+                                    </label>
+                                    <input asp-for="Email"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           autocomplete="username"
+                                           aria-required="true"
+                                           placeholder="nome@attivita.com" />
+                                    <span asp-validation-for="Email" class="label-text-alt text-error mt-1"></span>
+                                </div>
+                                <div class="form-control">
+                                    <label asp-for="PhoneNumber" class="label">
+                                        <span class="label-text font-medium text-gray-700">Telefono *</span>
+                                    </label>
+                                    <input asp-for="PhoneNumber"
+                                           type="tel"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           placeholder="+39 333 123 4567" />
+                                    <span asp-validation-for="PhoneNumber" class="label-text-alt text-error mt-1"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Information Section -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 border-b border-gradient-to-r from-purple-200 to-indigo-200 pb-2">Indirizzo Personale</h3>
+
+                            <div class="form-control">
+                                <label asp-for="Address" class="label">
+                                    <span class="label-text font-medium text-gray-700">Indirizzo *</span>
+                                </label>
+                                <input asp-for="Address"
+                                       class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                       placeholder="Via Roma 123" />
+                                <span asp-validation-for="Address" class="label-text-alt text-error mt-1"></span>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="form-control">
+                                    <label asp-for="City" class="label">
+                                        <span class="label-text font-medium text-gray-700">Città *</span>
+                                    </label>
+                                    <input asp-for="City"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           placeholder="Milano" />
+                                    <span asp-validation-for="City" class="label-text-alt text-error mt-1"></span>
+                                </div>
+
+                                <div class="form-control">
+                                    <label asp-for="PostalCode" class="label">
+                                        <span class="label-text font-medium text-gray-700">CAP *</span>
+                                    </label>
+                                    <input asp-for="PostalCode"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           placeholder="20100" />
+                                    <span asp-validation-for="PostalCode" class="label-text-alt text-error mt-1"></span>
+                                </div>
+
+                                <div class="form-control">
+                                    <label asp-for="Province" class="label">
+                                        <span class="label-text font-medium text-gray-700">Provincia *</span>
+                                    </label>
+                                    <input asp-for="Province"
+                                           class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                           placeholder="MI" />
+                                    <span asp-validation-for="Province" class="label-text-alt text-error mt-1"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Security Section -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 border-b border-gradient-to-r from-purple-200 to-indigo-200 pb-2">Sicurezza Account</h3>
+
+                            <!-- Password Field -->
+                            <div class="form-control">
+                                <label asp-for="Password" class="label">
+                                    <span class="label-text font-medium text-gray-700">Password *</span>
+                                </label>
+                                <input asp-for="Password"
+                                       type="password"
+                                       class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                       autocomplete="new-password"
+                                       aria-required="true"
+                                       placeholder="••••••••" />
+                                <span asp-validation-for="Password" class="label-text-alt text-error mt-1"></span>
+                            </div>
+
+                            <!-- Confirm Password Field -->
+                            <div class="form-control">
+                                <label asp-for="ConfirmPassword" class="label">
+                                    <span class="label-text font-medium text-gray-700">Conferma Password *</span>
+                                </label>
+                                <input asp-for="ConfirmPassword"
+                                       type="password"
+                                       class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200 bg-white/50"
+                                       autocomplete="new-password"
+                                       aria-required="true"
+                                       placeholder="••••••••" />
+                                <span asp-validation-for="ConfirmPassword" class="label-text-alt text-error mt-1"></span>
+                            </div>
+                        </div>
+
+                        <!-- Newsletter and Terms -->
+                        <div class="space-y-3">
+                            <div class="form-control">
+                                <label class="label cursor-pointer justify-start p-0">
+                                    <input asp-for="AcceptNewsletter"
+                                           type="checkbox"
+                                           class="checkbox checkbox-primary mr-3" />
+                                    <span class="label-text text-gray-700 text-sm text-wrap">
+                                        Desidero ricevere newsletter con aggiornamenti, consigli e offerte speciali per partner
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label cursor-pointer justify-start p-0">
+                                    <input type="checkbox" class="checkbox checkbox-primary mr-3" required />
+                                    <span class="label-text text-gray-700 text-sm">
+                                        Accetto i <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Termini di Servizio per Partner</a>
+                                        e la <a href="#" class="text-purple-600 hover:text-purple-700 font-medium">Privacy Policy</a> *
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button id="newPartnerSubmit"
+                                type="submit"
+                                class="btn w-full text-white border-none rounded-2xl py-4 text-lg font-medium hover:shadow-2xl transition-all duration-300 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 transform hover:scale-105">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Inizia la Partnership
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Info Section for mobile -->
+                <div class="lg:hidden bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/20 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Vantaggi della Partnership</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl mx-auto mb-2 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </div>
+                            <span class="text-xs text-gray-600">Visibilità Online</span>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl mx-auto mb-2 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <span class="text-xs text-gray-600">Prenotazioni</span>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl mx-auto mb-2 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                            </div>
+                            <span class="text-xs text-gray-600">Analytics</span>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-xl mx-auto mb-2 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 12l.707-.707M12 12l-.707.707M12 12l.707.707M12 12l-.707-.707" />
+                                </svg>
+                            </div>
+                            <span class="text-xs text-gray-600">Marketing</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

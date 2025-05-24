@@ -16,6 +16,7 @@ namespace HaveASeat.Models
 		public string? SDI { get; set; }
 		public bool Azienda { get; set; }
 		public DateTime DataRegistrazione { get; set; } = DateTime.Now;
+		public bool AcceptNewsletter { get; set; } = false;
 		public ICollection<Salone> Saloni { get; set; } = new List<Salone>();
 		public ICollection<Appuntamento> Appuntamenti { get; set; } = new List<Appuntamento>();
 		public ICollection<Recensione> Recensioni { get; set; } = new List<Recensione>();

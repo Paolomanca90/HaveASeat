@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using HaveASeat.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Session;
 
 namespace HaveASeat.Controllers
 {
@@ -22,7 +23,14 @@ namespace HaveASeat.Controllers
             return View();
         }
 
-        public IActionResult Privacy()
+        [HttpPost]
+		public IActionResult SelectPlan(string id)
+		{
+			TempData["SelectedPianoId"] = id;
+			return Json(new { success = true, redirectUrl = "/Auth/NewPartner" }); 
+		}
+
+		public IActionResult Privacy()
         {
             return View();
         }
