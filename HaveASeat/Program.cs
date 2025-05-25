@@ -2,6 +2,7 @@ using Google.Apis.Auth.AspNetCore3;
 using HaveASeat.Data;
 using HaveASeat.Models;
 using HaveASeat.Utilities.Roles;
+using HaveASeat.Utilities.Subscriptions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -93,12 +94,15 @@ using (var scope = app.Services.CreateScope())
 	var services = scope.ServiceProvider;
 	try
 	{
+		var context = services.GetRequiredService<ApplicationDbContext>();
+		await SubscriptionsInitializer.InitializeSubscriptions(context);
+
 		await RolesInitializer.InitializeRoles(services);
 	}
 	catch (Exception ex)
 	{
 		var logger = services.GetRequiredService<ILogger<Program>>();
-		logger.LogError(ex, "Errore durante l'inizializzazione dei ruoli.");
+		logger.LogError(ex, "Errore durante l'inizializzazione");
 	}
 }
 

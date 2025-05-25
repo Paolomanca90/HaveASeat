@@ -1,4 +1,6 @@
-﻿  <style>
+﻿@model HaveASeat.Models.Salone 
+
+<style>
     :root {
         --primary: #9c6ade;
         --primary-hover: #8a5abe;
@@ -83,109 +85,301 @@
     }
   </style>
 <div class="container">
-  <!-- Sidebar -->
-<div class="sidebar">
-    <div class="logo">
-        <h2>BeautyBook</h2>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">
+            <h2>BeautyBook</h2>
+        </div>
+
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Calendario</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Clienti</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-cut"></i>
+                    <span>Servizi</span>
+                </a>
+            </li>
+
+            <div class="nav-category">Gestione</div>
+
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-user"></i>
+                    <span>Staff</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-box"></i>
+                    <span>Prodotti</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-tag"></i>
+                    <span>Promozioni</span>
+                </a>
+            </li>
+
+            <div class="nav-category">Marketing</div>
+
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Campagne</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-mobile-alt"></i>
+                    <span>SMS</span>
+                </a>
+            </li>
+
+            <div class="nav-category">Finanza</div>
+
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Rapporti</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link">
+                    <i class="fas fa-file-invoice-dollar"></i>
+                    <span>Fatturazione</span>
+                </a>
+            </li>
+
+            <div class="nav-category">Impostazioni</div>
+
+            <li class="nav-item">
+                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index">
+                    <i class="fas fa-store"></i>
+                    <span>Profilo</span>
+                </a>
+
+            </li>
+            <li class="nav-item">
+                <form class="form-inline nav-link cursor-pointer" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                    <button type="submit" class="text-dark cursor-pointer">
+                        <i class="fas fa-cog"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </li>
+        </ul>
     </div>
+    <!-- Modal - Visible only when TempData is not null -->
+@*     @if (TempData["SelectedPianoId"] != null)
+    { *@
+        <div x-data="{ open: true }">
+            <div class="modal modal-open" x-show="open">
+            <div class="modal-box w-11/12 max-w-4xl bg-white/90 backdrop-blur-sm shadow-2xl border border-white/20">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-6 pb-4 border-b border-gradient-to-r from-purple-200 to-indigo-200">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h3M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Crea il tuo Salone</h2>
+                            <p class="text-gray-600">Configura i dettagli del tuo centro benessere</p>
+                        </div>
+                    </div>
+                   
+                    <button type="submit" name="ClearTempData" class="btn btn-sm btn-circle btn-ghost" x-on:click ="open = false">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
 
-    <ul class="nav-menu">
-        <li class="nav-item">
-            <a href="#" class="nav-link active">
-                <i class="fas fa-th-large"></i>
-                <span>Dashboard</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-calendar-alt"></i>
-                <span>Calendario</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-user-friends"></i>
-                <span>Clienti</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-cut"></i>
-                <span>Servizi</span>
-            </a>
-        </li>
+                <!-- Stepper -->
+                <ul class="steps mb-6">
+                    <li class="step step-primary px-3" id="step1-indicator">Dati generali</li>
+                    <li class="step" id="step2-indicator">Dati fiscali</li>
+                    <li class="step" id="step3-indicator">Indirizzo</li>
+                </ul>
 
-        <div class="nav-category">Gestione</div>
+                <!-- Modal Body -->
+                <form method="post" action="/Salone/Create" id="saloneForm" class="space-y-6">
+                    <!-- STEP 1: Dati generali -->
+                    <div id="step1">
+                        <h3 class="text-lg font-semibold mb-4">Informazioni Generali</h3>
+                        <div class="form-control mb-3">
+                            <label class="label">Nome Salone *</label>
+                            <input asp-for="Nome" class="input input-bordered w-full"
+                                   placeholder="Es. Beauty Center Roma" required />
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div class="form-control">
+                                <label class="label">Telefono *</label>
+                                <input asp-for="Telefono" class="input input-bordered w-full"
+                                       placeholder="Es. 3331234567" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label">Email *</label>
+                                <input asp-for="Email" class="input input-bordered w-full"
+                                       placeholder="Es. info@beautycenter.it" required />
+                            </div>
+                        </div>
+                        <div class="form-control mb-3">
+                            <label class="label">Sito Web</label>
+                            <input asp-for="SitoWeb" class="input input-bordered w-full"
+                                   placeholder="Es. www.beautycenter.it" />
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="button"
+                                    class="btn text-white bg-gradient-to-br from-purple-600 to-indigo-600"
+                                    onclick="goToStep(2)">
+                                Avanti
+                            </button>
+                        </div>
+                    </div>
 
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-user"></i>
-                <span>Staff</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-box"></i>
-                <span>Prodotti</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-tag"></i>
-                <span>Promozioni</span>
-            </a>
-        </li>
+                    <!-- STEP 2: Dati fiscali -->
+                    <div id="step2" class="hidden">
+                        <h3 class="text-lg font-semibold mb-4">Dati Fiscali</h3>
+                        <div class="form-control mb-3">
+                            <label class="label">Ragione Sociale *</label>
+                            <input asp-for="RagioneSociale" class="input input-bordered w-full"
+                                   placeholder="Es. Beauty Center Srl" />
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                            <div class="form-control">
+                                <label class="label">Partita IVA *</label>
+                                <input asp-for="PartitaIVA" class="input input-bordered w-full"
+                                       placeholder="Es. 12345678901" />
+                            </div>
+                            <div class="form-control">
+                                <label class="label">Codice SDI *</label>
+                                <input asp-for="SDI" class="input input-bordered w-full"
+                                       placeholder="Es. ABCDEF1" />
+                            </div>
+                        </div>
+                        <div class="flex justify-between">
+                            <button type="button"
+                                    class="btn btn-outline text-purple-600 border border-purple-600 hover:text-white hover:bg-purple-600"
+                                    onclick="goToStep(1)">
+                                Indietro
+                            </button>
+                            <button type="button"
+                                    class="btn text-white bg-gradient-to-br from-purple-600 to-indigo-600"
+                                    onclick="goToStep(3)">
+                                Avanti
+                            </button>
+                        </div>
+                    </div>
 
-        <div class="nav-category">Marketing</div>
-
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-bullhorn"></i>
-                <span>Campagne</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-envelope"></i>
-                <span>Email</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-mobile-alt"></i>
-                <span>SMS</span>
-            </a>
-        </li>
-
-        <div class="nav-category">Finanza</div>
-
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-chart-line"></i>
-                <span>Rapporti</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-file-invoice-dollar"></i>
-                <span>Fatturazione</span>
-            </a>
-        </li>
-
-        <div class="nav-category">Impostazioni</div>
-
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-store"></i>
-                <span>Profilo</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a href="#" class="nav-link">
-                <i class="fas fa-cog"></i>
-                <span>Impostazioni</span>
-            </a>
-        </li>
-    </ul>
+                    <!-- STEP 3: Indirizzo -->
+                    <div id="step3" class="hidden">
+                        <h3 class="text-lg font-semibold mb-4">Indirizzo Salone</h3>
+                        <div class="form-control mb-3">
+                            <label class="label">Indirizzo *</label>
+                            <input asp-for="Indirizzo" class="input input-bordered w-full"
+                                   placeholder="Es. Via Roma, 10" required />
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                            <div class="form-control">
+                                <label class="label">Città *</label>
+                                <input asp-for="Citta" class="input input-bordered w-full"
+                                       placeholder="Es. Roma" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label">CAP *</label>
+                                <input asp-for="CAP" class="input input-bordered w-full"
+                                       placeholder="Es. 00100" required />
+                            </div>
+                            <div class="form-control">
+                                <label class="label">Provincia *</label>
+                                <input asp-for="Provincia" class="input input-bordered w-full"
+                                       placeholder="Es. RM" required />
+                            </div>
+                        </div>
+                        <div class="form-control mb-3">
+                            <label class="label">Regione *</label>
+                            <select asp-for="Regione" class="select select-bordered w-full" required>
+                                <option value="">Seleziona Regione</option>
+                                <option value="Abruzzo">Abruzzo</option>
+                                <option value="Basilicata">Basilicata</option>
+                                <option value="Calabria">Calabria</option>
+                                <option value="Campania">Campania</option>
+                                <option value="Emilia-Romagna">Emilia-Romagna</option>
+                                <option value="Friuli-Venezia Giulia">Friuli-Venezia Giulia</option>
+                                <option value="Lazio">Lazio</option>
+                                <option value="Liguria">Liguria</option>
+                                <option value="Lombardia">Lombardia</option>
+                                <option value="Marche">Marche</option>
+                                <option value="Molise">Molise</option>
+                                <option value="Piemonte">Piemonte</option>
+                                <option value="Puglia">Puglia</option>
+                                <option value="Sardegna">Sardegna</option>
+                                <option value="Sicilia">Sicilia</option>
+                                <option value="Toscana">Toscana</option>
+                                <option value="Trentino-Alto Adige">Trentino-Alto Adige</option>
+                                <option value="Umbria">Umbria</option>
+                                <option value="Valle d'Aosta">Valle d'Aosta</option>
+                                <option value="Veneto">Veneto</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-between">
+                            <button type="button"
+                                    class="btn btn-outline text-purple-600 border border-purple-600 hover:text-white hover:bg-purple-600"                                 
+                                    onclick="goToStep(2)">
+                                Indietro
+                            </button>
+                            <button type="submit"
+                                    class="btn text-white bg-gradient-to-br from-purple-600 to-indigo-600">
+                                Crea Salone
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        </div>
+    @* } *@
 </div>
-</div>
+
+<script src="//unpkg.com/alpinejs" defer></script>
+<script defer>
+    function goToStep(step) {
+        // Nasconde tutti gli step
+        document.querySelectorAll('#saloneForm > div[id^="step"]').forEach(div => div.classList.add('hidden'));
+        // Mostra lo step desiderato
+        document.getElementById('step' + step).classList.remove('hidden');
+        // Aggiorna lo stepper DaisyUI
+        document.querySelectorAll('.steps .step').forEach((li, idx) => {
+            if (idx < step) li.classList.add('step-primary');
+            else li.classList.remove('step-primary');
+        });
+    }
+    // Mostra lo step 1 all'avvio
+    goToStep(1);
+</script>
