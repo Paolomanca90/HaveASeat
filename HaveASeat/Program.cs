@@ -1,6 +1,7 @@
 using Google.Apis.Auth.AspNetCore3;
 using HaveASeat.Data;
 using HaveASeat.Models;
+using HaveASeat.Utilities.Roles;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -86,6 +87,20 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+	var services = scope.ServiceProvider;
+	try
+	{
+		await RolesInitializer.InitializeRoles(services);
+	}
+	catch (Exception ex)
+	{
+		var logger = services.GetRequiredService<ILogger<Program>>();
+		logger.LogError(ex, "Errore durante l'inizializzazione dei ruoli.");
+	}
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
