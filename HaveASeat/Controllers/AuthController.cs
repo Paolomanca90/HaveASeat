@@ -1,4 +1,5 @@
-﻿using HaveASeat.Models;
+﻿using HaveASeat.Data;
+using HaveASeat.Models;
 using HaveASeat.Utilities.Dto;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -11,16 +12,19 @@ namespace HaveASeat.Controllers
 		private readonly UserManager<ApplicationUser> _userManager;
 		private readonly IUserStore<ApplicationUser> _userStore;
 		private readonly IUserEmailStore<ApplicationUser> _emailStore;
+		private readonly ApplicationDbContext _context;
 
 		public AuthController(
 			UserManager<ApplicationUser> userManager,
 			IUserStore<ApplicationUser> userStore,
-			SignInManager<ApplicationUser> signInManager)
+			SignInManager<ApplicationUser> signInManager,
+			ApplicationDbContext context)
 		{
 			_userManager = userManager;
 			_userStore = userStore;
 			_emailStore = GetEmailStore();
 			_signInManager = signInManager;
+			_context = context;
 		}
 
 		public IActionResult Index()
@@ -58,6 +62,15 @@ namespace HaveASeat.Controllers
 			{
 				await _userManager.AddToRoleAsync(user, "Partner");
 				await _signInManager.SignInAsync(user, isPersistent: false);
+				var piano = new PianoSelezionato
+				{
+					PianoSelezioantoId = Guid.NewGuid(),
+					AbbonamentoId = TempData["SelectedPianoId"] as Guid? ?? Guid.Empty,
+					ApplicationUserId = user.Id,
+					Confermato = false,
+				};
+				_context.Add(piano);
+				await _context.SaveChangesAsync();
 				return RedirectToAction("Index", "Partner");
 			}
 			else

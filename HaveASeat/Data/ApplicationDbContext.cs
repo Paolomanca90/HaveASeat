@@ -25,6 +25,7 @@ namespace HaveASeat.Data
 		public DbSet<OrarioDipendente> OrarioDipendente { get; set; } 
 		public DbSet<Categoria> Categoria { get; set; } 
 		public DbSet<SaloneCategoria> SaloneCategoria { get; set; } 
+		public DbSet<PianoSelezionato> PianoSelezionato { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -185,6 +186,9 @@ namespace HaveASeat.Data
 				.WithMany()
 				.HasForeignKey(sc => sc.CategoriaId)
 				.OnDelete(DeleteBehavior.NoAction);
+
+			builder.Entity<PianoSelezionato>()
+				.HasNoKey();
 		}
 	}
 }

@@ -1,7 +1,7 @@
-﻿@{
-    var id1 = "49B523F0-8654-41D4-BFFB-73A1C92F3438";
-    var id2 = "FD4C0CEC-956B-4950-B83A-E82BB0EAE888";
-    var id3 = "A05EB488-8980-432D-B9E8-F981530327E9";
+﻿@using HaveASeat.Utilities.Constants
+
+@{
+    ViewData["Title"] = "Partner Dashboard";
 }
 
 <!-- Hero Section -->
@@ -50,7 +50,7 @@
 
 <!-- Statistiche -->
 <section class="py-12 bg-white">
-    <div class="container mx-auto px-4">
+    <div class="container w-3/4 mx-auto px-4">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div class="text-center">
                 <h3 class="text-3xl md:text-4xl font-bold text-purple-600">85%</h3>
@@ -74,7 +74,7 @@
 
 <!-- Caratteristiche -->
 <section id="features" class="py-16 bg-gray-50">
-    <div class="container mx-auto px-4">
+    <div class="container w-3/4 mx-auto px-4">
         <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold mb-4">Tutto ciò di cui hai bisogno in un'unica piattaforma</h2>
             <p class="text-lg text-gray-600 max-w-2xl mx-auto">BeautyBook offre strumenti completi per gestire ogni aspetto del tuo salone di bellezza.</p>
@@ -152,7 +152,7 @@
 
 <!-- Come funziona -->
 <section class="py-16 bg-white">
-    <div class="container mx-auto px-4">
+    <div class="container w-3/4 mx-auto px-4">
         <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold mb-4">Come funziona BeautyBook</h2>
             <p class="text-lg text-gray-600 max-w-2xl mx-auto">Semplificheremo il tuo lavoro in pochi semplici passaggi</p>
@@ -185,7 +185,7 @@
 
 <!-- CTA Integrazione -->
 <section class="py-16 bg-purple-600 text-white">
-    <div class="container mx-auto px-4">
+    <div class="container w-3/4 mx-auto px-4">
         <div class="flex flex-col md:flex-row items-center justify-between">
             <div class="md:w-1/2 mb-8 md:mb-0">
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">Integrazioni con i tuoi strumenti preferiti</h2>
@@ -361,7 +361,7 @@
                             <span class="text-gray-600">Profilo base sulla piattaforma</span>
                         </li>
                     </ul>
-                    <button class="btn btn-outline border-purple-600 hover:bg-purple-600 text-purple-600 hover:text-white w-full rounded-full mt-8" onclick="scegli('@id1')">Prova gratis 14 giorni</button>
+                    <button class="btn btn-outline border border-purple-600 hover:bg-purple-600 text-purple-600 hover:text-white w-full rounded-full mt-8" onclick="scegli('@SubscriptionsConstants.Basic.ToString()')">Prova gratis 14 giorni</button>
                 </div>
             </div>
 
@@ -409,7 +409,7 @@
                             <span class="text-gray-600">Personalizzazione branding</span>
                         </li>
                     </ul>
-                    <button class="btn btn-primary bg-purple-600 hover:bg-purple-700 border-none w-full rounded-full mt-8" onclick="scegli('@id2')">Prova gratis 14 giorni</button>
+                    <button class="btn btn-primary bg-purple-600 hover:bg-purple-700 border-none w-full rounded-full mt-8 text-white" onclick="scegli('@SubscriptionsConstants.Pro.ToString()')">Prova gratis 14 giorni</button>
                 </div>
             </div>
 
@@ -462,7 +462,7 @@
                             <span class="text-gray-600">Fino a 10 operatori</span>
                         </li>
                     </ul>
-                    <button class="btn btn-outline border-purple-600 hover:bg-purple-600 text-purple-600 hover:text-white w-full rounded-full mt-8" onclick="scegli('@id3')">Prova gratis 14 giorni</button>
+                    <button class="btn btn-outline border border-purple-600 hover:bg-purple-600 text-purple-600 hover:text-white w-full rounded-full mt-8" onclick="scegli('@SubscriptionsConstants.Business.ToString()')">Prova gratis 14 giorni</button>
                 </div>
             </div>
         </div>
