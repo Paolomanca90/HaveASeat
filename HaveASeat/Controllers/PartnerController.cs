@@ -20,7 +20,7 @@ namespace HaveASeat.Controllers
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (string.IsNullOrEmpty(userId))
 			{
-				return RedirectToAction("Login", "Account");
+				return RedirectToAction("Login", "Auth");
 			}
 
 			var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
