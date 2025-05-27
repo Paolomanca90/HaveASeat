@@ -1,198 +1,280 @@
-﻿@model HaveASeat.Models.Salone 
+﻿@model HaveASeat.Models.Salone
+ 
+@{
+    Layout = "_DashboardLayout";
+}
+<!-- Header -->
+<div class="header">
+    <div class="header-title">
+        <h1>Dashboard</h1>
+        <p>Benvenuto di nuovo, @User.Identity?.Name</p>
+    </div>
 
-<style>
-    :root {
-        --primary: #9c6ade;
-        --primary-hover: #8a5abe;
-        --secondary: #f2f2f2;
-        --gray-light: #f5f5f5;
-        --gray: #e0e0e0;
-        --gray-dark: #757575;
-        --text-dark: #333333;
-        --text-light: #757575;
-        --danger: #e53935;
-        --success: #43a047;
-        --warning: #fb8c00;
-        --radius: 8px;
-        --shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
+    <div class="header-actions">
+        <button class="btn btn-outline">
+            <i class="fas fa-download"></i> Esporta
+        </button>
+        <button class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nuova prenotazione
+        </button>
+    </div>
+</div>
 
-    /* Sidebar */
-    .sidebar {
-        width: 250px;
-        background-color: white;
-        box-shadow: var(--shadow);
-        padding: 20px 0;
-        position: fixed;
-        height: 100vh;
-        overflow-y: auto;
-    }
+<!-- Stats Cards -->
+<div class="dashboard-stats">
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Prenotazioni Oggi</div>
+            <div class="stat-card-icon icon-appointments">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">24</div>
+        <div class="stat-card-change change-positive">
+            <i class="fas fa-arrow-up"></i> 12% rispetto a ieri
+        </div>
+    </div>
 
-    .logo {
-        padding: 0 20px 20px;
-        text-align: center;
-        border-bottom: 1px solid var(--gray);
-        margin-bottom: 20px;
-    }
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Nuovi Clienti</div>
+            <div class="stat-card-icon icon-clients">
+                <i class="fas fa-users"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">8</div>
+        <div class="stat-card-change change-positive">
+            <i class="fas fa-arrow-up"></i> 5% questa settimana
+        </div>
+    </div>
 
-        .logo h2 {
-            color: var(--primary);
-            font-weight: 700;
-        }
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Incasso Giornaliero</div>
+            <div class="stat-card-icon icon-revenue">
+                <i class="fas fa-euro-sign"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">€1,240</div>
+        <div class="stat-card-change change-positive">
+            <i class="fas fa-arrow-up"></i> 8% rispetto a ieri
+        </div>
+    </div>
 
-    .nav-menu {
-        list-style: none;
-    }
+    <div class="stat-card">
+        <div class="stat-card-header">
+            <div class="stat-card-title">Servizi Completati</div>
+            <div class="stat-card-icon icon-services">
+                <i class="fas fa-clipboard-check"></i>
+            </div>
+        </div>
+        <div class="stat-card-value">18</div>
+        <div class="stat-card-change change-negative">
+            <i class="fas fa-arrow-down"></i> 3% rispetto a ieri
+        </div>
+    </div>
+</div>
 
-    .nav-item {
-        margin-bottom: 5px;
-    }
+<!-- Charts Section -->
+<div class="charts-section">
+    <div class="chart-container">
+        <div class="chart-header">
+            <div class="chart-title">Prenotazioni e Incassi</div>
+            <div class="chart-duration">
+                <button class="duration-btn">Giorno</button>
+                <button class="duration-btn active">Settimana</button>
+                <button class="duration-btn">Mese</button>
+            </div>
+        </div>
+        <div class="canvas-container">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
 
-    .nav-link {
-        display: flex;
-        align-items: center;
-        padding: 12px 20px;
-        color: var(--text-dark);
-        text-decoration: none;
-        border-left: 3px solid transparent;
-        transition: all 0.3s;
-    }
-
-        .nav-link:hover {
-            background-color: var(--gray-light);
-            border-left-color: var(--primary);
-        }
-
-        .nav-link.active {
-            background-color: var(--gray-light);
-            border-left-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .nav-link i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-
-    .nav-category {
-        padding: 10px 20px;
-        font-size: 12px;
-        text-transform: uppercase;
-        color: var(--text-light);
-        font-weight: 600;
-        margin-top: 15px;
-    }
-  </style>
-<div class="container">
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="logo">
-            <h2>BeautyBook</h2>
+    <div class="chart-container top-services">
+        <div class="chart-header">
+            <div class="chart-title">Servizi Più Richiesti</div>
         </div>
 
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="#" class="nav-link active">
-                    <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Calendario</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user-friends"></i>
-                    <span>Clienti</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-cut"></i>
-                    <span>Servizi</span>
-                </a>
-            </li>
+        <div class="service-item">
+            <div class="service-info">
+                <div class="service-name">Taglio e Piega</div>
+                <div class="service-bookings">34 prenotazioni</div>
+            </div>
+            <div class="service-revenue">€1,360</div>
+        </div>
 
-            <div class="nav-category">Gestione</div>
+        <div class="service-item">
+            <div class="service-info">
+                <div class="service-name">Colorazione Capelli</div>
+                <div class="service-bookings">28 prenotazioni</div>
+            </div>
+            <div class="service-revenue">€2,240</div>
+        </div>
 
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-user"></i>
-                    <span>Staff</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-box"></i>
-                    <span>Prodotti</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-tag"></i>
-                    <span>Promozioni</span>
-                </a>
-            </li>
+        <div class="service-item">
+            <div class="service-info">
+                <div class="service-name">Manicure</div>
+                <div class="service-bookings">21 prenotazioni</div>
+            </div>
+            <div class="service-revenue">€840</div>
+        </div>
 
-            <div class="nav-category">Marketing</div>
+        <div class="service-item">
+            <div class="service-info">
+                <div class="service-name">Trattamento Viso</div>
+                <div class="service-bookings">15 prenotazioni</div>
+            </div>
+            <div class="service-revenue">€1,050</div>
+        </div>
 
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>Campagne</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-envelope"></i>
-                    <span>Email</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-mobile-alt"></i>
-                    <span>SMS</span>
-                </a>
-            </li>
-
-            <div class="nav-category">Finanza</div>
-
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Rapporti</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-file-invoice-dollar"></i>
-                    <span>Fatturazione</span>
-                </a>
-            </li>
-
-            <div class="nav-category">Impostazioni</div>
-
-            <li class="nav-item">
-                <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index">
-                    <i class="fas fa-store"></i>
-                    <span>Profilo</span>
-                </a>
-
-            </li>
-            <li class="nav-item">
-                <form class="form-inline nav-link cursor-pointer" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                    <button type="submit" class="text-dark cursor-pointer">
-                        <i class="fas fa-cog"></i>
-                        <span>Logout</span>
-                    </button>
-                </form>
-            </li>
-        </ul>
+        <div class="service-item">
+            <div class="service-info">
+                <div class="service-name">Massaggio Rilassante</div>
+                <div class="service-bookings">12 prenotazioni</div>
+            </div>
+            <div class="service-revenue">€960</div>
+        </div>
     </div>
+</div>
+
+<!-- Appointments Section -->
+<div class="section">
+    <div class="section-title">
+        <h2>Prenotazioni di Oggi</h2>
+        <a href="#">Vedi tutte</a>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active">Tutti</div>
+        <div class="tab">Confermati</div>
+        <div class="tab">In attesa</div>
+        <div class="tab">Cancellati</div>
+    </div>
+
+    <div class="card">
+        <div class="appointment-header">
+            <div class="appointment-date-filter">
+                <button class="btn btn-outline">
+                    <i class="fas fa-calendar"></i> Oggi
+                </button>
+            </div>
+
+            <div class="appointment-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Cerca cliente o servizio...">
+            </div>
+
+            <div class="appointment-actions">
+                <button class="btn btn-outline">
+                    <i class="fas fa-filter"></i> Filtro
+                </button>
+            </div>
+        </div>
+
+        <div class="appointment-list">
+            <table class="appointment-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Servizio</th>
+                        <th>Operatore</th>
+                        <th>Orario</th>
+                        <th>Prezzo</th>
+                        <th>Stato</th>
+                        <th>Azioni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="client-name">Maria Rossi</div>
+                            <div class="client-info">+39 333 1234567</div>
+                        </td>
+                        <td>Taglio e Piega</td>
+                        <td>Luisa B.</td>
+                        <td>10:00 - 11:00</td>
+                        <td>€40</td>
+                        <td><span class="status status-confirmed">Confermato</span></td>
+                        <td>
+                            <div class="appointment-actions-cell">
+                                <button class="action-btn">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn">
+                                    <i class="fas fa-comment"></i>
+                                </button>
+                                <button class="action-btn">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="client-name">Francesca Bianchi</div>
+                            <div class="client-info">+39 345 7654321</div>
+                        </td>
+                        <td>Manicure e Pedicure</td>
+                        <td>Sara M.</td>
+                        <td>11:30 - 13:00</td>
+                        <td>€65</td>
+                        <td><span class="status status-confirmed">Confermato</span></td>
+                        <td>
+                            <div class="appointment-actions-cell">
+                                <button class="action-btn">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn">
+                                    <i class="fas fa-comment"></i>
+                                </button>
+                                <button class="action-btn">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="client-name">Marco Verdi</div>
+                            <div class="client-info">+39 347 9876543</div>
+                        </td>
+                        <td>Barba e Capelli</td>
+                        <td>Paolo R.</td>
+                        <td>14:00 - 15:00</td>
+                        <td>€35</td>
+                        <td><span class="status status-pending">In attesa</span></td>
+                        <td>
+                            <div class="appointment-actions-cell">
+                                <button class="action-btn">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn">
+                                    <i class="fas fa-comment"></i>
+                                </button>
+                                <button class="action-btn">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="client-name">Laura Neri</div>
+                            <div class="client-info">+39 339 1122334</div>
+                        </td>
+                        <td>Trattamento Viso</td>
+                        <td>Giulia T.</td>
+                        <td>15:30 - 16:30</td>
+                        <td>€70</td>
+                        <td><span class="status status-cancelled">Cancellato</span></td>
+                        <td>
+            </table>
+
+
+        </div>
+    </div>
+</div>
     <!-- Modal - Visible only when TempData is not null -->
 @*     @if (TempData["SelectedPianoId"] != null)
     { *@

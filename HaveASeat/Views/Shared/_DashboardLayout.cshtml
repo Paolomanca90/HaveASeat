@@ -1,0 +1,147 @@
+﻿@inherits Microsoft.AspNetCore.Mvc.Razor.RazorPage<dynamic>
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard partner</title>
+    @await RenderSectionAsync("Styles", required: false)
+    <script type="importmap"></script>
+    <!-- Tailwind CSS e DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    @{
+        var tailwind = "https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4";
+    }
+    <script src="@tailwind"></script>
+    <!-- Font personalizzato -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/PartnerDashboard.css" asp-append-version="true" />
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    @{
+        var path = ViewContext.HttpContext.Request.Path;
+    }
+
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h2>BeautyBook</h2>
+   
+            </div>
+            <div class="nav-category">Dati</div>
+
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="/Partner/Index" class="nav-link @(path == "/Partner/Index" ? "active" : "")">
+                            <i class="fas fa-th-large"></i>
+                            <span>Dashboard</span>
+                        </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/Partner/Calendario" class="nav-link @(path == "/Partner/Calendario" ? "active" : "")">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Calendario</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/Partner/Clienti" class="nav-link @(path == "/Partner/Clienti" ? "active" : "")">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Clienti</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/Partner/Servizi" class="nav-link @(path == "/Partner/Servizi" ? "active" : "")">
+                        <i class="fas fa-cut"></i>
+                        <span>Servizi</span>
+                    </a>
+                </li>
+
+                <div class="nav-category">Gestione</div>
+
+                <li class="nav-item">
+                    <a href="/Partner/Staff" class="nav-link @(path == "/Partner/Staff" ? "active" : "")">
+                        <i class="fas fa-user"></i>
+                        <span>Staff</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/Partner/Sedi" class="nav-link @(path == "/Partner/Sedi" ? "active" : "")">
+                        <i class="fas fa-box"></i>
+                        <span>Sedi</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-tag"></i>
+                        <span>Promozioni</span>
+                    </a>
+                </li>
+
+                <div class="nav-category">Marketing</div>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-bullhorn"></i>
+                        <span>Campagne</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-envelope"></i>
+                        <span>Email</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>SMS</span>
+                    </a>
+                </li>
+
+                <div class="nav-category">Finanza</div>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Rapporti</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span>Fatturazione</span>
+                    </a>
+                </li>
+
+                <div class="nav-category">Impostazioni</div>
+
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-store"></i>
+                        <span>Profilo</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Impostazioni</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+         @RenderBody()
+                </div>
+</body>
+</html>

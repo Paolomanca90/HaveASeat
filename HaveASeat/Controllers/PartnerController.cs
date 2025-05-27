@@ -28,5 +28,25 @@ namespace HaveASeat.Controllers
                 TempData["SelectedPianoId"] = checkPiano.ApplicationUserId;
             return View();
         }
+        public IActionResult Calendario()
+        {
+            return View();
+        }
+        public IActionResult Servizi()
+        {
+            return View();
+        }
+        public IActionResult Clienti()
+        {
+            return View();
+        }
+        public IActionResult Staff()
+        {
+            return View();
+        }
+        public IActionResult Sedi()
+        {
+            return View();
+        }
     }
 }
