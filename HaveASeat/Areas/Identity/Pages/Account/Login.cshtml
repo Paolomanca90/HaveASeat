@@ -5,7 +5,7 @@
     ViewData["Title"] = "Accedi";
 }
 
-<div class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-200 dark:to-purple-300 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
         <!-- Header -->
         <div class="text-center">
@@ -14,14 +14,14 @@
         </div>
 
         <!-- Login Form Card -->
-        <div class="bg-white rounded-2xl shadow-xl p-8">
+        <div class="bg-white rounded-2xl shadow-xl p-8 dark:bg-gray-800">
             <form id="account" method="post" class="space-y-6">
                 <div asp-validation-summary="ModelOnly" class="alert alert-error text-sm" role="alert"></div>
 
                 <!-- Email Field -->
                 <div class="form-control">
                     <label asp-for="Input.Email" class="label">
-                        <span class="label-text font-medium text-gray-700">Email</span>
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Email</span>
                     </label>
                     <input asp-for="Input.Email"
                            class="input input-bordered w-full focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
@@ -34,7 +34,7 @@
                 <!-- Password Field -->
                 <div class="form-control">
                     <label asp-for="Input.Password" class="label">
-                        <span class="label-text font-medium text-gray-700">Password</span>
+                        <span class="label-text font-medium text-gray-700 dark:text-gray-300">Password</span>
                     </label>
                     <input asp-for="Input.Password"
                            type="password"
@@ -48,8 +48,8 @@
                 <!-- Remember Me -->
                 <div class="form-control">
                     <label class="label cursor-pointer justify-start">
-                        <input asp-for="Input.RememberMe" type="checkbox" class="checkbox checkbox-primary mr-3" />
-                        <span class="label-text text-gray-700">@Html.DisplayNameFor(m => m.Input.RememberMe)</span>
+                        <input asp-for="Input.RememberMe" type="checkbox" class="checkbox border-purple-600 [--chkbg:theme(colors.purple.600)] [--chkfg:white] mr-3" />
+                        <span class="label-text text-gray-700 dark:text-gray-300">@Html.DisplayNameFor(m => m.Input.RememberMe)</span>
                     </label>
                 </div>
 
@@ -69,19 +69,12 @@
                             Hai dimenticato la password?
                         </a>
                     </p>
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
                         Non hai un account?
                         <a asp-page="./Register"
                            asp-route-returnUrl="@Model.ReturnUrl"
                            class="text-purple-600 hover:text-purple-700 font-medium">
                             Registrati ora
-                        </a>
-                    </p>
-                    <p class="text-sm">
-                        <a id="resend-confirmation"
-                           asp-page="./ResendEmailConfirmation"
-                           class="text-gray-500 hover:text-gray-700">
-                            Reinvia conferma email
                         </a>
                     </p>
                 </div>
@@ -91,14 +84,14 @@
         <!-- External Login Section -->
         @if ((Model.ExternalLogins?.Count ?? 0) > 0)
         {
-            <div class="bg-white rounded-2xl shadow-xl p-8">
+            <div class="bg-white rounded-2xl shadow-xl p-8 dark:bg-gray-800">
                 <div class="text-center mb-6">
                     <div class="relative">
                         <div class="absolute inset-0 flex items-center">
                             <div class="w-full border-t border-gray-300"></div>
                         </div>
                         <div class="relative flex justify-center text-sm">
-                            <span class="px-2 bg-white text-gray-500">oppure continua con</span>
+                            <span class="px-2 bg-white text-gray-500 dark:bg-gray-800 dark:text-gray-300">oppure continua con</span>
                         </div>
                     </div>
                 </div>
@@ -111,7 +104,7 @@
                         @foreach (var provider in Model.ExternalLogins!)
                         {
                             <button type="submit"
-                                    class="btn btn-outline border-2 border-gray-300 hover:border-purple-500 hover:bg-purple-50 w-full justify-center"
+                                    class="btn btn-outline border-2 border-gray-300 hover:border-purple-500 hover:bg-purple-50 hover:text-black w-full justify-center"
                                     name="provider"
                                     value="@provider.Name"
                                     title="@provider.DisplayName account">
