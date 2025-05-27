@@ -64,7 +64,7 @@ namespace HaveASeat.Controllers
 				await _signInManager.SignInAsync(user, isPersistent: false);
 				var piano = new PianoSelezionato
 				{
-					PianoSelezioantoId = Guid.NewGuid(),
+					PianoSelezionatoId = Guid.NewGuid(),
 					AbbonamentoId = TempData["SelectedPianoId"] as Guid? ?? Guid.Empty,
 					ApplicationUserId = user.Id,
 					Confermato = false,

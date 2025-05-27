@@ -187,8 +187,9 @@ namespace HaveASeat.Data
 				.HasForeignKey(sc => sc.CategoriaId)
 				.OnDelete(DeleteBehavior.NoAction);
 
-			builder.Entity<PianoSelezionato>()
-				.HasNoKey();
-		}
-	}
+            builder.Entity<PianoSelezionato>()
+				.HasKey(p => p.PianoSelezionatoId);
+
+        }
+    }
 }
