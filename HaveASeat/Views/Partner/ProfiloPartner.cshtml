@@ -1,0 +1,223 @@
+﻿@model HaveASeat.Models.ApplicationUser;
+@{
+    Layout = "_DashboardLayout";
+}
+<div class="container">
+    <!-- Header Profilo -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <div class="avatar-container">
+                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" alt="Avatar" class="avatar" id="avatar">
+                <button class="avatar-edit" onclick="editAvatar()">✏️</button>
+            </div>
+            <div class="profile-info">
+                <h1 id="userName">@Model.Nome @Model.Cognome</h1>
+                <p>📧 @Model.Email</p>
+                <p>📱 @Model.PhoneNumber</p>
+                <p>📍 @Model.Città, @Model.Provincia @Model.CAP</p>
+                <div class="status-badge">
+                    <span>✅</span>
+                    Account registrato il @Model.DataRegistrazione.ToShortDateString()
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="profile-sections">
+        <!-- Informazioni Personali -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    👤 Informazioni Personali
+                </h2>
+                <button class="edit-btn" onclick="toggleEdit('personal')">
+                    ✏️ Modifica
+                </button>
+            </div>
+
+            <div id="personal-view">
+                <div class="info-item">
+                    <span class="info-label">Nome</span>
+                    <span class="info-value">@Model.Nome</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Cognome</span>
+                    <span class="info-value">@Model.Cognome</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Indirizzo</span>
+                    <span class="info-value">@Model.Indirizzo</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Città</span>
+                    <span class="info-value">@Model.Città</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Provincia</span>
+                    <span class="info-value">@Model.Provincia</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">CAP</span>
+                    <span class="info-value">@Model.CAP</span>
+                </div>
+            </div>
+
+            <div id="personal-edit" class="hidden">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome</label>
+                        <input type="text" id="firstName" value="Marco">
+                    </div>
+                    <div class="form-group">
+                        <label>Cognome</label>
+                        <input type="text" id="lastName" value="Rossi">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data di Nascita</label>
+                        <input type="date" id="birthDate" value="1990-05-15">
+                    </div>
+                    <div class="form-group">
+                        <label>Genere</label>
+                        <select id="gender">
+                            <option value="male">Maschio</option>
+                            <option value="female">Femmina</option>
+                            <option value="other">Altro</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="save-btn" onclick="saveSection('personal')">
+                    💾 Salva Modifiche
+                </button>
+                <button class="cancel-btn" onclick="cancelEdit('personal')">
+                    ❌ Annulla
+                </button>
+            </div>
+        </div>
+
+        <!-- Contatti -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    📞 Informazioni di Contatto
+                </h2>
+                <button class="edit-btn" onclick="toggleEdit('contact')">
+                    ✏️ Modifica
+                </button>
+            </div>
+
+            <div id="contact-view">
+                <div class="info-item">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">@Model.Email</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Telefono</span>
+                    <span class="info-value">+39 @Model.PhoneNumber</span>
+                </div>
+            </div>
+
+            <div id="contact-edit" class="hidden">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" value="marco.rossi@email.com">
+                </div>
+                <div class="form-group">
+                    <label>Telefono</label>
+                    <input type="tel" id="phone" value="+39 123 456 7890">
+                </div>
+                <div class="form-group">
+                    <label>Indirizzo</label>
+                    <textarea id="address" rows="3">Via Roma 123, Milano, 20100</textarea>
+                </div>
+                <button class="save-btn" onclick="saveSection('contact')">
+                    💾 Salva Modifiche
+                </button>
+                <button class="cancel-btn" onclick="cancelEdit('contact')">
+                    ❌ Annulla
+                </button>
+            </div>
+        </div>
+
+        <!-- Preferenze -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    ⚙️ Preferenze
+                </h2>
+            </div>
+
+            <div class="preferences-grid">
+                <div class="preference-item">
+                    <span>Notifiche Email</span>
+                    <div class="toggle-switch active" onclick="togglePreference(this)"></div>
+                </div>
+                <div class="preference-item">
+                    <span>Notifiche Push</span>
+                    <div class="toggle-switch active" onclick="togglePreference(this)"></div>
+                </div>
+                <div class="preference-item">
+                    <span>Newsletter</span>
+                    <div class="toggle-switch" onclick="togglePreference(this)"></div>
+                </div>
+                <div class="preference-item">
+                    <span>Profilo Pubblico</span>
+                    <div class="toggle-switch active" onclick="togglePreference(this)"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sicurezza -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    🔒 Sicurezza
+                </h2>
+                <button class="edit-btn" onclick="toggleEdit('security')">
+                    ✏️ Modifica Password
+                </button>
+            </div>
+
+            <div id="security-view">
+                <div class="info-item">
+                    <span class="info-label">Password</span>
+                    <span class="info-value">••••••••</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Ultima Modifica</span>
+                    <span class="info-value">15 giorni fa</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Autenticazione a Due Fattori</span>
+                    <span class="info-value">✅ Attiva</span>
+                </div>
+            </div>
+
+            <div id="security-edit" class="hidden">
+                <div class="form-group">
+                    <label>Password Attuale</label>
+                    <input type="password" id="currentPassword" placeholder="Inserisci password attuale">
+                </div>
+                <div class="form-group">
+                    <label>Nuova Password</label>
+                    <input type="password" id="newPassword" placeholder="Inserisci nuova password">
+                </div>
+                <div class="form-group">
+                    <label>Conferma Nuova Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Conferma nuova password">
+                </div>
+                <button class="save-btn" onclick="saveSection('security')">
+                    💾 Cambia Password
+                </button>
+                <button class="cancel-btn" onclick="cancelEdit('security')">
+                    ❌ Annulla
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="notification" id="notification">
+    Modifiche salvate con successo! ✅
+</div>

@@ -48,5 +48,17 @@ namespace HaveASeat.Controllers
         {
             return View();
         }
+        public IActionResult ProfiloPartner()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = _context.Users.FirstOrDefault(u => u.Id == userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+            return View(user);
+           
+        }
     }
 }

@@ -17,6 +17,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/PartnerDashboard.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ProfilePage.css" asp-append-version="true" />
     <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
     <!-- Font Awesome -->
@@ -124,7 +125,7 @@
                 <div class="nav-category">Impostazioni</div>
 
                 <li class="nav-item">
-                    <a href="#" class="nav-link">
+                    <a href="/Partner/ProfiloPartner" class="nav-link">
                         <i class="fas fa-store"></i>
                         <span>Profilo</span>
                     </a>
@@ -135,6 +136,12 @@
                         <span>Impostazioni</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" class="nav-link">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Logout</span>
+                    </a>
+                </li>
             </ul>
         </div>
         </div>
@@ -143,5 +150,6 @@
         <div class="main-content">
          @RenderBody()
                 </div>
+   <script src="/js/ScriptProfilePage.js"></script>
 </body>
 </html>
