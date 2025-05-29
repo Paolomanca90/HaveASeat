@@ -24,7 +24,7 @@ html, body {
     height: 100%;
     overflow: hidden; /* Previene scroll del body, lo gestiamo su main-content */
 }
-
+ 
 .main-content {
     height: 100vh;
     overflow-y: auto;
@@ -45,7 +45,13 @@ body {
     position: fixed;
     height: 100vh;
     overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE e Edge */
 }
+    .sidebar::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+ 
 
 .logo {
     padding: 0 20px 20px;
@@ -78,14 +84,16 @@ body {
 }
 
     .nav-link:hover {
-        background-color: var(--gray-light);
+        /*background-color: var(--gray-light);*/
         border-left-color: var(--primary);
+        margin-left:2px;
     }
 
     .nav-link.active {
-        background-color: var(--gray-light);
+        /*background-color: var(--gray-light);*/
         border-left-color: var(--primary);
         color: var(--primary);
+        margin-left: 2px;
     }
 
     .nav-link i {
