@@ -1,0 +1,24 @@
+﻿@{
+    Layout = null;
+}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(function() {
+        $.ajax({
+            type: "POST",
+            url: '@Url.Action("CreateCheckoutSession", "Partner")',
+            success: function(response) {
+                if (response.url) {
+                    window.location.href = response.url;
+                } else {
+                    alert("Errore nella creazione della sessione di pagamento.");
+                }
+            },
+            error: function() {
+                alert("Errore nella chiamata AJAX.");
+            }
+        });
+    });
+</script>
+<p>Attendere, stai per essere reindirizzato a Stripe...</p>
