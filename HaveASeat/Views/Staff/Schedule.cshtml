@@ -1,0 +1,358 @@
+﻿@model HaveASeat.Models.Dipendente
+
+@{
+    Layout = "_DashboardLayout";
+    var giorni = new[] { "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica" };
+}
+
+<!-- Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div class="flex items-center space-x-4">
+        <a href="/Staff/Details/@Model.DipendenteId" class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+        </a>
+        <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                <i class="fas fa-clock text-white text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Orari di @Model.ApplicationUser.Nome</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Configura gli orari di lavoro per @Model.Salone.Nome</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <button onclick="copyFromSalon()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <i class="fas fa-copy mr-2"></i>
+            Copia Orari Salone
+        </button>
+        <button onclick="resetSchedule()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <i class="fas fa-undo mr-2"></i>
+            Reset
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success mb-6">
+        <i class="fas fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<!-- Schedule Form -->
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <!-- Header Card -->
+        <div class="bg-gradient-to-r from-green-600 to-emerald-600 px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">Pianificazione Settimanale</h2>
+                    <p class="text-green-100 mt-1">Configura gli orari di lavoro per ogni giorno della settimana</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-white text-sm">
+                        <i class="fas fa-calendar-week mr-2"></i>
+                        @Model.Orari.Count(o => !o.IsDayOff) giorni lavorativi
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" id="scheduleForm" class="p-8">
+            <div class="space-y-6">
+                @for (int i = 0; i < 7; i++)
+                {
+                    var orario = Model.Orari.FirstOrDefault(o => (int)o.Giorno == i);
+                    var isWorkDay = orario != null && !orario.IsDayOff;
+
+                    <div class="schedule-day bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-200 dark:border-gray-600" data-day="@i">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                                    <span class="text-white font-bold text-sm">@giorni[i].Substring(0, 3).ToUpper()</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">@giorni[i]</h3>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" id="status-@i">
+                                        @if (isWorkDay)
+                                        {
+                                            @if (orario != null)
+                                            {
+                                                <span>@orario.Apertura.ToString(@"hh\:mm") - @orario.Chiusura.ToString(@"hh\:mm")</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span>Giorno di riposo</span>
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Toggle Switch -->
+                            <div class="form-control">
+                                <label class="label cursor-pointer">
+                                    <span class="label-text mr-3 font-medium text-gray-700 dark:text-gray-300">Giorno lavorativo</span>
+                                    <input type="checkbox"
+                                           class="toggle toggle-success work-day-toggle"
+                                           data-day="@i"
+                                    @(isWorkDay ? "checked" : "")
+                                           onchange="toggleWorkDay(@i)" />
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Time Inputs -->
+                        <div class="time-inputs grid grid-cols-1 md:grid-cols-2 gap-6 @(!isWorkDay ? "hidden" : "")" id="time-inputs-@i">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-clock mr-2 text-green-600"></i>
+                                        Ora di inizio
+                                    </span>
+                                </label>
+                                <input type="time"
+                                       name="apertura[@i]"
+                                       value="@(orario?.Apertura.ToString(@"hh\:mm") ?? "09:00")"
+                                       class="input input-bordered focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:bg-gray-700 dark:text-gray-100"
+                                       onchange="updateStatus(@i)" />
+                            </div>
+
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-clock mr-2 text-red-600"></i>
+                                        Ora di fine
+                                    </span>
+                                </label>
+                                <input type="time"
+                                       name="chiusura[@i]"
+                                       value="@(orario?.Chiusura.ToString(@"hh\:mm") ?? "18:00")"
+                                       class="input input-bordered focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:bg-gray-700 dark:text-gray-100"
+                                       onchange="updateStatus(@i)" />
+                            </div>
+                        </div>
+
+                        <!-- Rest Day Input -->
+                        @if (!isWorkDay)
+                        {
+                            <input type="hidden" name="giorniRiposo" value="@i" />
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Azioni Rapide</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button type="button" onclick="setStandardHours()" class="btn btn-outline">
+                        <i class="fas fa-business-time mr-2"></i>
+                        Orari Standard (9:00-18:00)
+                    </button>
+                    <button type="button" onclick="setWeekendOff()" class="btn btn-outline">
+                        <i class="fas fa-calendar-minus mr-2"></i>
+                        Weekend di Riposo
+                    </button>
+                    <button type="button" onclick="setAllWorkDays()" class="btn btn-outline">
+                        <i class="fas fa-calendar-check mr-2"></i>
+                        Tutti i Giorni Lavorativi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="mt-8 p-6 bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Riepilogo</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Giorni lavorativi:</span>
+                        <span class="text-gray-600 dark:text-gray-400 ml-2" id="work-days-count">@Model.Orari.Count(o => !o.IsDayOff)</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Ore settimanali:</span>
+                        <span class="text-gray-600 dark:text-gray-400 ml-2" id="total-hours">-</span>
+                    </div>
+                    <div>
+                        <span class="font-medium text-gray-700 dark:text-gray-300">Media giornaliera:</span>
+                        <span class="text-gray-600 dark:text-gray-400 ml-2" id="average-hours">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-8 border-t border-gray-200 dark:border-gray-700 space-y-3 sm:space-y-0">
+                <a href="/Staff/Details/@Model.DipendenteId" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-times mr-2"></i>
+                    Annulla
+                </a>
+
+                <button type="submit" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-save mr-2"></i>
+                    Salva Orari
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleWorkDay(day) {
+        const timeInputs = document.getElementById(`time-inputs-${day}`);
+        const toggle = document.querySelector(`[data-day="${day}"]`);
+        const restDayInput = document.querySelector(`input[name="giorniRiposo"][value="${day}"]`);
+
+        if (toggle.checked) {
+            timeInputs.classList.remove('hidden');
+            if (restDayInput) {
+                restDayInput.remove();
+            }
+        } else {
+            timeInputs.classList.add('hidden');
+            // Add rest day input
+            const form = document.getElementById('scheduleForm');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'giorniRiposo';
+            input.value = day;
+            form.appendChild(input);
+        }
+
+        updateStatus(day);
+        updateSummary();
+    }
+
+    function updateStatus(day) {
+        const status = document.getElementById(`status-${day}`);
+        const toggle = document.querySelector(`[data-day="${day}"]`);
+
+        if (!toggle.checked) {
+            status.textContent = 'Giorno di riposo';
+            return;
+        }
+
+        const apertura = document.querySelector(`input[name="apertura[${day}]"]`).value;
+        const chiusura = document.querySelector(`input[name="chiusura[${day}]"]`).value;
+
+        if (apertura && chiusura) {
+            status.textContent = `${apertura} - ${chiusura}`;
+        } else {
+            status.textContent = 'Orari non impostati';
+        }
+
+        updateSummary();
+    }
+
+    function updateSummary() {
+        let workDays = 0;
+        let totalMinutes = 0;
+
+        for (let day = 0; day < 7; day++) {
+            const toggle = document.querySelector(`[data-day="${day}"]`);
+            if (toggle.checked) {
+                workDays++;
+
+                const apertura = document.querySelector(`input[name="apertura[${day}]"]`).value;
+                const chiusura = document.querySelector(`input[name="chiusura[${day}]"]`).value;
+
+                if (apertura && chiusura) {
+                    const start = new Date(`2000-01-01T${apertura}`);
+                    const end = new Date(`2000-01-01T${chiusura}`);
+                    const diffMinutes = (end - start) / (1000 * 60);
+                    if (diffMinutes > 0) {
+                        totalMinutes += diffMinutes;
+                    }
+                }
+            }
+        }
+
+        document.getElementById('work-days-count').textContent = workDays;
+
+        const totalHours = Math.floor(totalMinutes / 60);
+        const remainingMinutes = totalMinutes % 60;
+        document.getElementById('total-hours').textContent = `${totalHours}h ${remainingMinutes}m`;
+
+        const averageHours = workDays > 0 ? totalMinutes / workDays / 60 : 0;
+        document.getElementById('average-hours').textContent = `${averageHours.toFixed(1)}h`;
+    }
+
+    // Quick action functions
+    function setStandardHours() {
+        for (let day = 0; day < 7; day++) {
+            const toggle = document.querySelector(`[data-day="${day}"]`);
+            if (toggle.checked) {
+                document.querySelector(`input[name="apertura[${day}]"]`).value = '09:00';
+                document.querySelector(`input[name="chiusura[${day}]"]`).value = '18:00';
+                updateStatus(day);
+            }
+        }
+        updateSummary();
+    }
+
+    function setWeekendOff() {
+        // Sabato (5) e Domenica (6)
+        [5, 6].forEach(day => {
+            const toggle = document.querySelector(`[data-day="${day}"]`);
+            if (toggle.checked) {
+                toggle.checked = false;
+                toggleWorkDay(day);
+            }
+        });
+    }
+
+    function setAllWorkDays() {
+        for (let day = 0; day < 7; day++) {
+            const toggle = document.querySelector(`[data-day="${day}"]`);
+            if (!toggle.checked) {
+                toggle.checked = true;
+                toggleWorkDay(day);
+            }
+        }
+    }
+
+    function copyFromSalon() {
+        Swal.fire({
+            title: '📋 Copia Orari Salone',
+            text: 'Vuoi copiare gli orari di apertura del salone come base per questo dipendente?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Copia Orari',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#10b981'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('✅ Orari Copiati!', 'Gli orari del salone sono stati applicati', 'success');
+            }
+        });
+    }
+
+    function resetSchedule() {
+        Swal.fire({
+            title: '🔄 Reset Orari',
+            text: 'Vuoi azzerare tutti gli orari configurati?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Reset',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#f59e0b'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Reset all toggles and inputs
+                for (let day = 0; day < 7; day++) {
+                    const toggle = document.querySelector(`[data-day="${day}"]`);
+                    toggle.checked = false;
+                    toggleWorkDay(day);
+                }
+                Swal.fire('✅ Reset Completato!', 'Tutti gli orari sono stati azzerati', 'success');
+            }
+        });
+    }
+
+    // Initialize summary on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSummary();
+    });
+</script>

@@ -1,0 +1,384 @@
+﻿@model HaveASeat.Models.Dipendente
+
+@{
+    Layout = "_DashboardLayout";
+    var appuntamentiOggi = Model.Appuntamenti.Where(a => a.Data.Date == DateTime.Today).ToList();
+    var appuntamentiSettimana = Model.Appuntamenti.Where(a => a.Data.Date >= DateTime.Today && a.Data.Date <= DateTime.Today.AddDays(7)).ToList();
+    var recensioniRecenti = Model.Recensioni.OrderByDescending(r => r.DataCreazione).Take(5).ToList();
+    var mediaVoti = Model.Recensioni.Any() ? Model.Recensioni.Average(r => r.Voto) : 0;
+}
+
+<!-- Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div class="flex items-center space-x-4">
+        <a href="/Staff/Index?saloneId=@Model.SaloneId" class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+        </a>
+        <div class="flex items-center space-x-4">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                <span class="text-white text-xl font-bold">
+                    @Model.ApplicationUser.Nome.Substring(0, 1)@Model.ApplicationUser.Cognome.Substring(0, 1)
+                </span>
+            </div>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.ApplicationUser.Nome @Model.ApplicationUser.Cognome</h1>
+                <p class="text-gray-600 dark:text-gray-400 flex items-center mt-1">
+                    <i class="fas fa-store mr-2"></i>
+                    @Model.Salone.Nome
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <a href="/Staff/Schedule/@Model.DipendenteId" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <i class="fas fa-clock mr-2"></i>
+            Gestisci Orari
+        </a>
+        <a href="/Staff/Edit/@Model.DipendenteId" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <i class="fas fa-edit mr-2"></i>
+            Modifica
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success mb-6">
+        <i class="fas fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-error mb-6">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Appuntamenti Oggi</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@appuntamentiOggi.Count</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-check text-purple-600 dark:text-purple-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-green-600 dark:text-green-400 mt-2">
+            <i class="fas fa-calendar mr-1"></i>
+            @appuntamentiOggi.Count(a => a.Stato == HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato) confermati
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Assegnati</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.ServiziOfferti.Count</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-cut text-blue-600 dark:text-blue-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Servizi attivi</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Rating Medio</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@mediaVoti.ToString("F1")</p>
+            </div>
+            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-star text-orange-600 dark:text-orange-400"></i>
+            </div>
+        </div>
+        <p class="text-sm @(mediaVoti >= 4 ? "text-green-600 dark:text-green-400" : mediaVoti >= 3 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400") mt-2">
+            Da @Model.Recensioni.Count recensioni
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Giorni Lavorativi</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Orari.Count(o => !o.IsDayOff)</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock text-green-600 dark:text-green-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Su 7 giorni</p>
+    </div>
+</div>
+
+<!-- Informazioni Dipendente -->
+<div class="mb-8">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Informazioni Dipendente</h2>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Dati Personali -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <i class="fas fa-user text-blue-600 dark:text-blue-400 mr-3"></i>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Dati Personali</h3>
+            </div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Nome Completo</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.ApplicationUser.Nome @Model.ApplicationUser.Cognome</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Email</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.ApplicationUser.Email</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Telefono</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">
+                        @(string.IsNullOrEmpty(Model.ApplicationUser.PhoneNumber) ? "Non specificato" : Model.ApplicationUser.PhoneNumber)
+                    </span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Membro dal</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.DataCreazione.ToString("dd/MM/yyyy")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Servizi Assegnati -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <i class="fas fa-cut text-blue-600 dark:text-blue-400 mr-3"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Servizi Assegnati</h3>
+                </div>
+                <a href="/Staff/Edit/@Model.DipendenteId" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    <i class="fas fa-edit mr-1"></i>
+                    Modifica
+                </a>
+            </div>
+
+            @if (Model.ServiziOfferti.Any())
+            {
+                <div class="space-y-3">
+                    @foreach (var servizio in Model.ServiziOfferti)
+                    {
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-gray-100">@servizio.Servizio.Nome</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">@servizio.Servizio.Descrizione</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-bold text-green-600 dark:text-green-400">€@servizio.Servizio.Prezzo.ToString("F2")</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">@servizio.Servizio.Durata min</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-6">
+                    <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-4"></i>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun servizio assegnato</p>
+                    <a href="/Staff/Edit/@Model.DipendenteId" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        <i class="fas fa-plus mr-2"></i>
+                        Assegna Servizi
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Orari di Lavoro -->
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Orari di Lavoro</h2>
+        <a href="/Staff/Schedule/@Model.DipendenteId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <i class="fas fa-edit mr-2"></i>
+            Modifica Orari
+        </a>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        @if (Model.Orari.Any())
+        {
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+                @{
+                    var giorni = new[] { "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica" };
+                }
+                @for (int i = 0; i < 7; i++)
+                {
+                    var orario = Model.Orari.FirstOrDefault(o => (int)o.Giorno == i);
+                    <div class="text-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div class="font-semibold text-gray-900 dark:text-gray-100 mb-2">@giorni[i]</div>
+                        @if (orario != null && !orario.IsDayOff)
+                        {
+                            <div class="text-sm text-green-600 dark:text-green-400">
+                                @orario.Apertura.ToString(@"hh\:mm")
+                            </div>
+                            <div class="text-sm text-green-600 dark:text-green-400">
+                                @orario.Chiusura.ToString(@"hh\:mm")
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-sm text-red-500">Riposo</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-8">
+                <i class="fas fa-clock text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400 mb-4">Orari non configurati</p>
+                <a href="/Staff/Schedule/@Model.DipendenteId" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <i class="fas fa-clock mr-2"></i>
+                    Configura Orari
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Appuntamenti della Settimana -->
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Appuntamenti della Settimana</h2>
+        <span class="text-sm text-gray-500 dark:text-gray-400">@appuntamentiSettimana.Count appuntamenti programmati</span>
+    </div>
+
+    @if (appuntamentiSettimana.Any())
+    {
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Data</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cliente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Servizio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Orario</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        @foreach (var appuntamento in appuntamentiSettimana.OrderBy(a => a.Data).Take(10))
+                        {
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    @appuntamento.Data.ToString("ddd dd/MM")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">@appuntamento.ApplicationUser.Nome @appuntamento.ApplicationUser.Cognome</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">@appuntamento.ApplicationUser.PhoneNumber</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">@appuntamento.Slot.Note</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    @appuntamento.OraInizio.ToString("HH:mm") - @appuntamento.OraFine.ToString("HH:mm")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @switch (appuntamento.Stato)
+                                    {
+                                        case HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                                                Confermato
+                                            </span>
+                                            break;
+                                        case HaveASeat.Utilities.Enum.StatoAppuntamento.Annullato:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                                                Cancellato
+                                            </span>
+                                            break;
+                                        default:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                                                @appuntamento.Stato
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <i class="fas fa-calendar-times text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
+            <p class="text-gray-500 dark:text-gray-400">Nessun appuntamento programmato per questa settimana</p>
+        </div>
+    }
+</div>
+
+<!-- Recensioni Recenti -->
+@if (recensioniRecenti.Any())
+{
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Recensioni Recenti</h2>
+            <div class="flex items-center space-x-2">
+                <div class="flex">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        @if (i <= Math.Round(mediaVoti))
+                        {
+                            <i class="fas fa-star text-yellow-400"></i>
+                        }
+                        else
+                        {
+                            <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                        }
+                    }
+                </div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">@mediaVoti.ToString("F1") (@Model.Recensioni.Count recensioni)</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            @foreach (var recensione in recensioniRecenti)
+            {
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-user text-gray-500 dark:text-gray-400"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-gray-100">@recensione.ApplicationUser.Nome @recensione.ApplicationUser.Cognome</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">@recensione.DataCreazione.ToString("dd/MM/yyyy")</div>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                @if (i <= recensione.Voto)
+                                {
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                                }
+                            }
+                        </div>
+                    </div>
+                    <div class="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <p>@recensione.Commento</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

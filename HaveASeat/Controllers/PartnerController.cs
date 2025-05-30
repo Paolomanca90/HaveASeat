@@ -239,10 +239,6 @@ namespace HaveASeat.Controllers
         {
             return View();
         }
-        public IActionResult Staff()
-        {
-            return View();
-        }
 
 		public IActionResult Sedi()
 		{

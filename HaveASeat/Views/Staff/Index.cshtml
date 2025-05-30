@@ -1,0 +1,519 @@
+﻿@model List<HaveASeat.Models.Dipendente>
+
+@{
+    Layout = "_DashboardLayout";
+    var salone = ViewBag.SaloneCorrente as HaveASeat.Models.Salone;
+    var saloni = ViewBag.Saloni as List<HaveASeat.Models.Salone>;
+    var hasStaff = Model != null && Model.Count > 0;
+}
+
+<!-- Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestione Staff</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Gestisci il team di @salone?.Nome</p>
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <!-- Selector Salone -->
+        @if (saloni != null && saloni.Count > 1)
+        {
+            <div class="dropdown dropdown-bottom dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600">
+                    <i class="fas fa-store mr-2"></i>
+                    @salone?.Nome
+                    <i class="fas fa-chevron-down ml-2"></i>
+                </div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 dark:bg-gray-800 rounded-box z-[1] w-64 p-2 shadow-xl border border-gray-200 dark:border-gray-700">
+                    @foreach (var s in saloni)
+                    {
+                        <li>
+                            <a href="/Staff/Index?saloneId=@s.SaloneId" class="@(s.SaloneId == salone?.SaloneId ? "active" : "")">
+                                <i class="fas fa-store mr-2"></i>
+                                @s.Nome
+                                @if (s.SaloneId == salone?.SaloneId)
+                                {
+                                    <i class="fas fa-check ml-auto text-green-500"></i>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <a href="/Staff/Create?saloneId=@salone?.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            <i class="fas fa-user-plus mr-2"></i>
+            Aggiungi Staff
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success mb-6 transition-all duration-300 ease-in-out opacity-100" id="successAlert">
+        <i class="fas fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-error mb-6 transition-all duration-300 ease-in-out opacity-100" id="errorAlert">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (!hasStaff)
+{
+    <!-- Empty State -->
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="text-center max-w-md mx-auto">
+            <div class="mx-auto mb-8">
+                <div class="w-32 h-32 mx-auto bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-slash text-6xl text-gray-400 dark:text-gray-600"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Nessun membro dello staff</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                Non hai ancora aggiunto nessun membro al team di @salone?.Nome. Inizia aggiungendo il primo collaboratore.
+            </p>
+            <a href="/Staff/Create?saloneId=@salone?.SaloneId" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                <i class="fas fa-user-plus mr-2"></i>
+                Aggiungi Primo Membro
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Staff Totale</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Count</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Membri del team</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Coperti</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.SelectMany(d => d.ServiziOfferti).Select(ds => ds.ServizioId).Distinct().Count()</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cut text-green-600 dark:text-green-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Servizi assegnati</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Appuntamenti Oggi</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Sum(d => d.Appuntamenti.Count(a => a.Data.Date == DateTime.Today))</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-check text-purple-600 dark:text-purple-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Prenotazioni oggi</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Rating Medio</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                        @{
+                            var mediaVoti = Model.SelectMany(d => d.Recensioni).Any() ?
+                            Model.SelectMany(d => d.Recensioni).Average(r => r.Voto) : 0;
+                        }
+                        @mediaVoti.ToString("F1")
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-star text-orange-600 dark:text-orange-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Recensioni staff</p>
+        </div>
+    </div>
+
+    <!-- Staff Grid -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-0">Team @salone?.Nome</h2>
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <input type="text" placeholder="Cerca staff..." class="input input-bordered input-sm w-64 pl-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200" id="searchInput">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                </div>
+                <div class="dropdown dropdown-bottom dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-sm btn-outline transition-all duration-200">
+                        <i class="fas fa-filter mr-2"></i>
+                        Filtri
+                    </div>
+                    <div tabindex="0" class="dropdown-content menu bg-base-100 dark:bg-gray-800 rounded-box z-[1] w-52 p-2 shadow-xl border border-gray-200 dark:border-gray-700 animate-pulse-subtle">
+                        <li><a onclick="filterStaff('all')" class="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Tutti</a></li>
+                        <li><a onclick="filterStaff('with-appointments')" class="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Con appuntamenti oggi</a></li>
+                        <li><a onclick="filterStaff('without-schedule')" class="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Senza orari</a></li>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="staffGrid">
+            @foreach (var dipendente in Model)
+            {
+                <div class="staff-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 ease-out border border-gray-100 dark:border-gray-700 overflow-hidden hover:-translate-y-2 transform-gpu opacity-0"
+                     data-name="@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome"
+                     data-has-appointments="@(dipendente.Appuntamenti.Any(a => a.Data.Date == DateTime.Today))"
+                     data-has-schedule="@dipendente.Orari.Any()">
+
+                    <!-- Card Header -->
+                    <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+                                <span class="text-white text-xl font-bold">
+                                    @dipendente.ApplicationUser.Nome.Substring(0, 1)@dipendente.ApplicationUser.Cognome.Substring(0, 1)
+                                </span>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg">
+                                    @dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome
+                                </h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm cursor-pointer hover:text-blue-600 transition-colors" onclick="copyContact('@dipendente.ApplicationUser.Email', 'Email')">
+                                    <i class="fas fa-envelope mr-1"></i>
+                                    @dipendente.ApplicationUser.Email
+                                </p>
+                                @if (!string.IsNullOrEmpty(dipendente.ApplicationUser.PhoneNumber))
+                                {
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm cursor-pointer hover:text-blue-600 transition-colors" onclick="copyContact('@dipendente.ApplicationUser.PhoneNumber', 'Telefono')">
+                                        <i class="fas fa-phone mr-1"></i>
+                                        @dipendente.ApplicationUser.PhoneNumber
+                                    </p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-6">
+                        <!-- Stats -->
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    @dipendente.Appuntamenti.Count(a => a.Data.Date == DateTime.Today)
+                                </div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">Oggi</div>
+                            </div>
+                            <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-colors hover:bg-green-50 dark:hover:bg-green-900/20">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                    @dipendente.ServiziOfferti.Count
+                                </div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">Servizi</div>
+                            </div>
+                            <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg transition-colors hover:bg-purple-50 dark:hover:bg-purple-900/20">
+                                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                    @(dipendente.Recensioni.Any() ? dipendente.Recensioni.Average(r => r.Voto).ToString("F1") : "N/A")
+                                </div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">Rating</div>
+                            </div>
+                        </div>
+
+                        <!-- Servizi Assegnati -->
+                        @if (dipendente.ServiziOfferti.Any())
+                        {
+                            <div class="mb-4">
+                                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Servizi:</p>
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach (var servizio in dipendente.ServiziOfferti.Take(3))
+                                    {
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400 transition-all hover:bg-blue-200 dark:hover:bg-blue-900/40">
+                                            @servizio.Servizio.Nome
+                                        </span>
+                                    }
+                                    @if (dipendente.ServiziOfferti.Count > 3)
+                                    {
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                                            +@(dipendente.ServiziOfferti.Count - 3) altri
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Status Indicators -->
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                @if (dipendente.Orari.Any())
+                                {
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400 animate-pulse">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Orari OK
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 animate-pulse">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                                        Senza orari
+                                    </span>
+                                }
+
+                                @if (dipendente.Appuntamenti.Any(a => a.Data.Date == DateTime.Today))
+                                {
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
+                                        <i class="fas fa-calendar-check mr-1"></i>
+                                        Impegnato
+                                    </span>
+                                }
+                            </div>
+
+                            <span class="text-xs text-gray-500 dark:text-gray-400">
+                                Dal @dipendente.DataCreazione.ToString("dd/MM/yyyy")
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Card Footer -->
+                    <div class="p-6 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <a href="/Staff/Details/@dipendente.DipendenteId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                                <i class="fas fa-eye mr-2"></i>
+                                Dettagli
+                            </a>
+
+                            <div class="flex items-center space-x-2">
+                                <a href="/Staff/Schedule/@dipendente.DipendenteId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors duration-200" title="Gestisci Orari">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    Orari
+                                </a>
+
+                                <div class="dropdown dropdown-end dropdown-top">
+                                    <div tabindex="0" role="button" class="inline-flex items-center justify-center w-8 h-8 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+                                        <i class="fas fa-ellipsis-v text-gray-500"></i>
+                                    </div>
+                                    <ul tabindex="0" class="dropdown-content menu bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[1] w-48 p-2">
+                                        <li>
+                                            <a href="/Staff/Edit/@dipendente.DipendenteId" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200">
+                                                <i class="fas fa-edit mr-3 text-blue-500"></i>
+                                                Modifica
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <hr class="my-1 border-gray-200 dark:border-gray-700">
+                                        </li>
+                                        <li>
+                                            <a onclick="confirmDelete('@dipendente.DipendenteId', '@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome')" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 cursor-pointer">
+                                                <i class="fas fa-trash mr-3"></i>
+                                                Rimuovi
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Modal di Conferma Eliminazione -->
+<div id="deleteModal" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">Conferma Rimozione</h3>
+        <p class="py-4 text-gray-600 dark:text-gray-400">
+            Sei sicuro di voler rimuovere <span id="staffName" class="font-semibold"></span> dal team?
+            Questa azione non può essere annullata.
+        </p>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-ghost">Annulla</button>
+            </form>
+            <form id="deleteForm" method="post" action="">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-error">
+                    <i class="fas fa-trash mr-2"></i>
+                    Rimuovi
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Funzione per la ricerca dello staff
+    document.getElementById('searchInput').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const staffCards = document.querySelectorAll('.staff-card');
+
+        staffCards.forEach(card => {
+            const name = card.dataset.name.toLowerCase();
+            if (name.includes(searchTerm)) {
+                card.style.display = 'block';
+                card.classList.remove('opacity-0', 'scale-95');
+                card.classList.add('opacity-100', 'scale-100');
+            } else {
+                card.classList.add('opacity-0', 'scale-95');
+                card.classList.remove('opacity-100', 'scale-100');
+                setTimeout(() => {
+                    if (card.classList.contains('opacity-0')) {
+                        card.style.display = 'none';
+                    }
+                }, 200);
+            }
+        });
+
+        updateNoResultsMessage();
+    });
+
+    // Funzione per filtrare lo staff
+    function filterStaff(filter) {
+        const staffCards = document.querySelectorAll('.staff-card');
+
+        staffCards.forEach(card => {
+            let show = false;
+
+            switch(filter) {
+                case 'all':
+                    show = true;
+                    break;
+                case 'with-appointments':
+                    show = card.dataset.hasAppointments === 'True';
+                    break;
+                case 'without-schedule':
+                    show = card.dataset.hasSchedule === 'False';
+                    break;
+            }
+
+            if (show) {
+                card.style.display = 'block';
+                card.classList.remove('opacity-0', 'scale-95');
+                card.classList.add('opacity-100', 'scale-100');
+            } else {
+                card.classList.add('opacity-0', 'scale-95');
+                card.classList.remove('opacity-100', 'scale-100');
+                setTimeout(() => {
+                    if (card.classList.contains('opacity-0')) {
+                        card.style.display = 'none';
+                    }
+                }, 200);
+            }
+        });
+
+        updateNoResultsMessage();
+        document.activeElement.blur();
+    }
+
+    // Funzione per mostrare/nascondere il messaggio "Nessun risultato"
+    function updateNoResultsMessage() {
+        const staffGrid = document.getElementById('staffGrid');
+        const visibleCards = document.querySelectorAll('.staff-card[style="display: block"], .staff-card:not([style*="display: none"])');
+
+        const existingMessage = document.getElementById('noResultsMessage');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+
+        if (visibleCards.length === 0) {
+            const noResultsHtml = `
+                <div id="noResultsMessage" class="col-span-full text-center py-12 opacity-0 animate-fade-in">
+                    <div class="w-20 h-20 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center animate-bounce">
+                        <i class="fas fa-search text-2xl text-gray-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Nessun risultato trovato</h3>
+                    <p class="text-gray-500 dark:text-gray-400">Prova a modificare i criteri di ricerca o i filtri.</p>
+                </div>
+            `;
+            staffGrid.insertAdjacentHTML('beforeend', noResultsHtml);
+            setTimeout(() => {
+                const message = document.getElementById('noResultsMessage');
+                if (message) {
+                    message.classList.remove('opacity-0');
+                    message.classList.add('opacity-100');
+                }
+            }, 100);
+        }
+    }
+
+    // Funzione per confermare l'eliminazione
+    function confirmDelete(dipendenteId, staffName) {
+        document.getElementById('staffName').textContent = staffName;
+        document.getElementById('deleteForm').action = `/Staff/Delete/${dipendenteId}`;
+        document.getElementById('deleteModal').showModal();
+    }
+
+    // Inizializzazione al caricamento della pagina
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss degli alert dopo 5 secondi
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.classList.add('opacity-0', '-translate-y-4');
+                setTimeout(() => alert.remove(), 300);
+            });
+        }, 5000);
+
+        // Animazione di entrata per le card
+        const cards = document.querySelectorAll('.staff-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.remove('opacity-0');
+                card.classList.add('opacity-100');
+            }, index * 100);
+        });
+    });
+
+    // Funzione per copiare le informazioni di contatto
+    function copyContact(text, type) {
+        navigator.clipboard.writeText(text).then(function() {
+            const toast = document.createElement('div');
+            toast.className = 'fixed top-4 right-4 z-50 transform translate-x-full transition-transform duration-300';
+            toast.innerHTML = `
+                <div class="alert alert-success shadow-lg">
+                    <i class="fas fa-check mr-2"></i>
+                    ${type} copiato negli appunti!
+                </div>
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            document.getElementById('searchInput').focus();
+        }
+
+        if (e.key === 'Escape') {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput.value) {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        }
+    });
+</script>
