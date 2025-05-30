@@ -1,0 +1,492 @@
+﻿@model HaveASeat.Models.Salone
+
+@{
+    Layout = "_DashboardLayout";
+    var appuntamentiOggi = Model.Appuntamenti.Where(a => a.Data.Date == DateTime.Today).ToList();
+    var appuntamentiSettimana = Model.Appuntamenti.Where(a => a.Data.Date >= DateTime.Today && a.Data.Date <= DateTime.Today.AddDays(7)).ToList();
+    var recensioniRecenti = Model.Recensioni.OrderByDescending(r => r.DataCreazione).Take(5).ToList();
+    var mediaVoti = Model.Recensioni.Any() ? Model.Recensioni.Average(r => r.Voto) : 0;
+}
+
+<!-- Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div class="flex items-center space-x-4">
+        <a href="/Partner/Sedi" class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Nome</h1>
+            <p class="text-gray-600 dark:text-gray-400 flex items-center mt-1">
+                <i class="fas fa-map-marker-alt mr-2"></i>
+                @Model.Indirizzo, @Model.Citta (@Model.Provincia)
+            </p>
+        </div>
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <!-- Status Badge -->
+        @switch (Model.Stato)
+        {
+            case HaveASeat.Utilities.Enum.Stato.Attivo:
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                    <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                    Attivo
+                </span>
+                break;
+            case HaveASeat.Utilities.Enum.Stato.InAttesaDiApprovazione:
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                    <span class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></span>
+                    In Attesa
+                </span>
+                break;
+            default:
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                    <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                    Non Attivo
+                </span>
+                break;
+        }
+
+        <button onclick="window.location.href='/Partner/EditSede/@Model.SaloneId'" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <i class="fas fa-edit mr-2"></i>
+            Modifica
+        </button>
+        <button onclick="window.location.href='/Partner/ManageSede/@Model.SaloneId'" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <i class="fas fa-cog mr-2"></i>
+            Gestisci
+        </button>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Prenotazioni Oggi</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@appuntamentiOggi.Count</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-check text-purple-600 dark:text-purple-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-green-600 dark:text-green-400 mt-2">
+            <i class="fas fa-calendar mr-1"></i>
+            @appuntamentiOggi.Count(a => a.Stato == HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato) confermati
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Staff Attivo</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Dipendenti.Count</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Dipendenti registrati</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Disponibili</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Servizi.Count</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-cut text-green-600 dark:text-green-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Servizi attivi</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Rating Medio</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@mediaVoti.ToString("F1")</p>
+            </div>
+            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-star text-orange-600 dark:text-orange-400"></i>
+            </div>
+        </div>
+        <p class="text-sm @(mediaVoti >= 4 ? "text-green-600 dark:text-green-400" : mediaVoti >= 3 ? "text-yellow-600 dark:text-yellow-400" : "text-red-600 dark:text-red-400") mt-2">
+            Da @Model.Recensioni.Count recensioni
+        </p>
+    </div>
+</div>
+
+<!-- Informazioni Sede -->
+<div class="mb-8">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6">Informazioni Sede</h2>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Dati Generali -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <i class="fas fa-info-circle text-purple-600 dark:text-purple-400 mr-3"></i>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Dati Generali</h3>
+            </div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Nome</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.Nome</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Telefono</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-purple-600" onclick="copyToClipboard('@Model.Telefono', 'Telefono')">@Model.Telefono</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Email</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100 cursor-pointer hover:text-purple-600" onclick="copyToClipboard('@Model.Email', 'Email')">@Model.Email</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Sito Web</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">
+                        @if (!string.IsNullOrEmpty(Model.SitoWeb))
+                        {
+                            <a href="@Model.SitoWeb" target="_blank" class="text-purple-600 hover:text-purple-700 transition-colors">
+                                @Model.SitoWeb <i class="fas fa-external-link-alt text-xs ml-1"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-gray-400">Non specificato</span>
+                        }
+                    </span>
+                </div>
+                <div class="flex justify-between items-center py-3">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Data Creazione</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.DataCreazione.ToString("dd/MM/yyyy")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dati Fiscali -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                <i class="fas fa-file-invoice text-purple-600 dark:text-purple-400 mr-3"></i>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Dati Fiscali</h3>
+            </div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Ragione Sociale</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.RagioneSociale</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Partita IVA</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.PartitaIVA</span>
+                </div>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Codice SDI</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.SDI</span>
+                </div>
+                <div class="flex flex-col py-3">
+                    <span class="font-medium text-gray-600 dark:text-gray-400 mb-2">Indirizzo Completo</span>
+                    <span class="font-semibold text-gray-900 dark:text-gray-100 text-right cursor-pointer hover:text-purple-600" onclick="openMaps()">
+                        @Model.Indirizzo, @Model.CAP @Model.Citta (@Model.Provincia), @Model.Regione
+                        <i class="fas fa-map-marker-alt ml-2"></i>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appuntamenti della Settimana -->
+<div class="mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Appuntamenti della Settimana</h2>
+        <a href="/Partner/Calendario?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <i class="fas fa-calendar mr-2"></i>
+            Vedi Calendario
+        </a>
+    </div>
+
+    @if (appuntamentiSettimana.Any())
+    {
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Data</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cliente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Servizio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Operatore</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Orario</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        @foreach (var appuntamento in appuntamentiSettimana.OrderBy(a => a.Data).Take(10))
+                        {
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    @appuntamento.Data.ToString("ddd dd/MM")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">@appuntamento.ApplicationUser.Nome @appuntamento.ApplicationUser.Cognome</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">@appuntamento.ApplicationUser.PhoneNumber</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">@appuntamento.Slot.Note</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    @(appuntamento.Dipendente?.ApplicationUser.Nome ?? "Non assegnato")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                    @appuntamento.OraInizio.ToString("HH:mm") - @appuntamento.OraFine.ToString("HH:mm")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    @switch (appuntamento.Stato)
+                                    {
+                                        case HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                                                Confermato
+                                            </span>
+                                            break;
+                                        case HaveASeat.Utilities.Enum.StatoAppuntamento.Annullato:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                                                Cancellato
+                                            </span>
+                                            break;
+                                        default:
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                                                @appuntamento.Stato
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <i class="fas fa-calendar-times text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
+            <p class="text-gray-500 dark:text-gray-400">Nessun appuntamento programmato per questa settimana</p>
+        </div>
+    }
+</div>
+
+<!-- Staff e Servizi -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Staff -->
+    <div>
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Staff</h2>
+            <a href="/Partner/Staff?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <i class="fas fa-user-plus mr-2"></i>
+                Gestisci Staff
+            </a>
+        </div>
+
+        @if (Model.Dipendenti.Any())
+        {
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="space-y-4">
+                    @foreach (var dipendente in Model.Dipendenti.Take(5))
+                    {
+                        <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900 dark:text-gray-100">@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">@dipendente.ApplicationUser.Email</div>
+                                <div class="text-xs text-purple-600 dark:text-purple-400 font-medium">@dipendente.ServiziOfferti.Count servizi</div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                                Attivo
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <i class="fas fa-user-slash text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun membro dello staff registrato</p>
+                <a href="/Partner/Staff?saloneId=@Model.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Aggiungi Staff
+                </a>
+            </div>
+        }
+    </div>
+
+    <!-- Servizi -->
+    <div>
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Servizi</h2>
+            <a href="/Partner/Servizi?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>
+                Gestisci Servizi
+            </a>
+        </div>
+
+        @if (Model.Servizi.Any())
+        {
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="space-y-4">
+                    @foreach (var servizio in Model.Servizi.Take(5))
+                    {
+                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900 dark:text-gray-100">@servizio.Nome</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">@servizio.Descrizione</div>
+                                <div class="text-xs text-purple-600 dark:text-purple-400 font-medium">@servizio.Durata min</div>
+                            </div>
+                            <div class="text-lg font-bold text-green-600 dark:text-green-400">
+                                €@servizio.Prezzo.ToString("F2")
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                <i class="fas fa-cut text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun servizio configurato</p>
+                <a href="/Partner/Servizi?saloneId=@Model.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+                    <i class="fas fa-plus mr-2"></i>
+                    Aggiungi Servizi
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Recensioni Recenti -->
+@if (recensioniRecenti.Any())
+{
+    <div class="mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Recensioni Recenti</h2>
+            <div class="flex items-center space-x-2">
+                <div class="flex">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        @if (i <= Math.Round(mediaVoti))
+                        {
+                            <i class="fas fa-star text-yellow-400"></i>
+                        }
+                        else
+                        {
+                            <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                        }
+                    }
+                </div>
+                <span class="text-sm text-gray-600 dark:text-gray-400">@mediaVoti.ToString("F1") (@Model.Recensioni.Count recensioni)</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            @foreach (var recensione in recensioniRecenti)
+            {
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mr-3">
+                                <i class="fas fa-user text-gray-500 dark:text-gray-400"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900 dark:text-gray-100">@recensione.ApplicationUser.Nome @recensione.ApplicationUser.Cognome</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">@recensione.DataCreazione.ToString("dd/MM/yyyy")</div>
+                            </div>
+                        </div>
+                        <div class="flex">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                @if (i <= recensione.Voto)
+                                {
+                                    <i class="fas fa-star text-yellow-400"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-star text-gray-300 dark:text-gray-600"></i>
+                                }
+                            }
+                        </div>
+                    </div>
+                    <div class="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <p>@recensione.Commento</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<script>
+    // Funzioni essenziali con SweetAlert2
+    function copyToClipboard(text, type) {
+        navigator.clipboard.writeText(text).then(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `${type} copiato!`,
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true
+            });
+        }).catch(() => {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'Errore nella copia',
+                showConfirmButton: false,
+                timer: 2000
+            });
+        });
+    }
+
+    function openMaps() {
+        const address = '@Model.Indirizzo, @Model.Citta, @Model.Provincia, @Model.CAP';
+        const encodedAddress = encodeURIComponent(address);
+
+        Swal.fire({
+            title: '🗺️ Apri in Mappe',
+            html: `
+                <div class="text-left space-y-3">
+                    <p class="text-gray-600">Scegli come aprire l'indirizzo:</p>
+                    <div class="bg-gray-50 p-3 rounded-lg">
+                        <p class="font-medium">📍 ${address}</p>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-external-link-alt mr-2"></i>Apri Google Maps',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#7c3aed'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.open(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`, '_blank');
+            }
+        });
+    }
+
+    // Inizializzazione con funzionalità Tailwind native
+    document.addEventListener('DOMContentLoaded', function() {
+        // Le animazioni hover sono già gestite da Tailwind con le classi hover:
+        // hover:bg-gray-50, hover:shadow-xl, transition-colors, etc.
+
+        // Tooltips nativi del browser per le stelle del rating
+        document.querySelectorAll('[title]').forEach(element => {
+            if (!element.getAttribute('title')) {
+                element.setAttribute('title', 'Rating medio della sede');
+            }
+        });
+    });
+</script>

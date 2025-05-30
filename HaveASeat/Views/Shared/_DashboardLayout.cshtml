@@ -104,7 +104,7 @@
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar dark:bg-gray-800/80">
-            <div class="logo">
+            <div class="logo flex w-full justify-around items-center">
                 <h2>BeautyBook</h2>
                 <div class="flex items-center space-x-3">
                     <div class="theme-toggle bg-purple-100 dark:bg-purple-600" onclick="toggleTheme()">
@@ -220,10 +220,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })" class="nav-link dark:text-neutral-50">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        <span>Logout</span>
-                    </a>
+                    <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                        <button type="submit" class="nav-link dark:text-neutral-50 w-full">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                            <span>Logout</span>
+                        </button>
+                    </form>
                 </li> 
             </ul>
         </div>
@@ -232,8 +234,8 @@
         <!-- Main Content -->
     <div class="main-content dark:bg-gray-800/80">
          @RenderBody()
-                </div>
-   <script src="/js/ScriptProfilePage.js"></script>
+    </div>
+    <script src="/js/ScriptProfilePage.js"></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <!-- SweetAlert2 JS -->

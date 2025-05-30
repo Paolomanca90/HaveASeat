@@ -1,7 +1,491 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model List<HaveASeat.Models.Salone>
+
 @{
     Layout = "_DashboardLayout";
+    var hasSaloni = Model != null && Model.Count > 0;
 }
-<h1>SEDI</h1>
+
+<!-- Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Le Mie Sedi</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">Gestisci tutti i tuoi saloni e centri benessere</p>
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <button onclick="exportData()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <i class="fas fa-download mr-2"></i>
+            Esporta Dati
+        </button>
+        <button onclick="openAddSedeModal()" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <i class="fas fa-plus mr-2"></i>
+            Aggiungi Nuova Sede
+        </button>
+    </div>
+</div>
+
+@if (!hasSaloni)
+{
+    <!-- Empty State -->
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="text-center max-w-md mx-auto">
+            <div class="mx-auto mb-8">
+                <div class="w-32 h-32 mx-auto bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-store-slash text-6xl text-gray-400 dark:text-gray-600"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Nessuna sede registrata</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                Non hai ancora registrato nessun salone. Inizia aggiungendo la tua prima sede per iniziare a gestire prenotazioni e clienti.
+            </p>
+            <button onclick="openAddSedeModal()" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                <i class="fas fa-plus mr-2"></i>
+                Registra Prima Sede
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Sedi Totali</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Count</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-store text-purple-600 dark:text-purple-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-green-600 dark:text-green-400 mt-2">
+                <i class="fas fa-arrow-up mr-1"></i>
+                @Model.Count(s => s.Stato == HaveASeat.Utilities.Enum.Stato.Attivo) attive
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Prenotazioni Oggi</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Sum(s => s.Appuntamenti.Count(a => a.Data.Date == DateTime.Today))</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-check text-blue-600 dark:text-blue-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tutte le sedi</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Staff Totale</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Sum(s => s.Dipendenti.Count)</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-green-600 dark:text-green-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tutti i dipendenti</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Totali</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Sum(s => s.Servizi.Count)</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cut text-orange-600 dark:text-orange-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tutti i servizi</p>
+        </div>
+    </div>
+
+    <!-- Sedi Section -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 sm:mb-0">Le Tue Sedi</h2>
+            <div class="flex flex-wrap items-center gap-2">
+                <button onclick="filterSedi('all')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-purple-600 text-white">
+                    Tutte
+                </button>
+                <button onclick="filterSedi('attivo')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
+                    Attive
+                </button>
+                <button onclick="filterSedi('inattesadiapprovazione')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600">
+                    In Attesa
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            @foreach (var salone in Model)
+            {
+                <div class="sede-card bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 overflow-hidden hover:-translate-y-1" data-status="@salone.Stato.ToString().ToLower()">
+                    <!-- Card Header -->
+                    <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-store text-white text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg">@salone.Nome</h3>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm flex items-center">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                        @salone.Citta, @salone.Provincia
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div>
+                                @switch (salone.Stato)
+                                {
+                                    case HaveASeat.Utilities.Enum.Stato.Attivo:
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                                            Attivo
+                                        </span>
+                                        break;
+                                    case HaveASeat.Utilities.Enum.Stato.InAttesaDiApprovazione:
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400">
+                                            <span class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></span>
+                                            In Attesa
+                                        </span>
+                                        break;
+                                    default:
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400">
+                                            <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
+                                            Non Attivo
+                                        </span>
+                                        break;
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-6">
+                        <!-- Contact Info -->
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                                <i class="fas fa-phone w-4 text-gray-400"></i>
+                                <span class="ml-3">@salone.Telefono</span>
+                            </div>
+                            <div class="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                                <i class="fas fa-envelope w-4 text-gray-400"></i>
+                                <span class="ml-3 truncate">@salone.Email</span>
+                            </div>
+                            <div class="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                                <i class="fas fa-calendar w-4 text-gray-400"></i>
+                                <span class="ml-3">Creata il @salone.DataCreazione.ToShortDateString()</span>
+                            </div>
+                        </div>
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-3 gap-4 mb-6">
+                            <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">@salone.Appuntamenti.Count(a => a.Data.Date == DateTime.Today)</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">Oggi</div>
+                            </div>
+                            <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">@salone.Dipendenti.Count</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">Staff</div>
+                            </div>
+                            <div class="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">@salone.Servizi.Count</div>
+                                <div class="text-xs text-gray-600 dark:text-gray-400">Servizi</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Footer -->
+                    <div class="p-6 bg-gray-50 dark:bg-gray-700/30 border-t border-gray-100 dark:border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <a href="/Partner/SedeDetails/@salone.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-eye mr-2"></i>
+                                Dettagli
+                            </a>
+
+                            <div class="flex items-center space-x-2">
+                                <a href="Partner/ManageSede/@salone.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+                                    <i class="fas fa-cog mr-2"></i>
+                                    Gestisci
+                                </a>
+
+                                <div class="dropdown dropdown-end dropdown-top">
+                                    <div tabindex="0" role="button" class="inline-flex items-center justify-center w-8 h-8 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"><i class="fas fa-ellipsis-v text-gray-500"></i></div>
+                                    <ul tabindex="0" class="dropdown-content menu bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[1] w-52 p-2">
+                                        <li>
+                                            <a href="/Partner/EditSede/@salone.SaloneId" class="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-edit mr-3 text-blue-500"></i>
+                                                Modifica
+                                            </a>
+                                        </li>
+                                        @if (salone.Stato == HaveASeat.Utilities.Enum.Stato.Attivo)
+                                        {
+                                            <li>
+                                                <a onclick="deactivateSede('@salone.SaloneId')" class="flex items-center w-full px-4 py-2 text-sm text-yellow-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                    <i class="fas fa-pause mr-3"></i>
+                                                    Disattiva
+                                                </a>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li>
+                                                <a onclick="activateSede('@salone.SaloneId')" class="flex items-center w-full px-4 py-2 text-sm text-green-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                    <i class="fas fa-play mr-3"></i>
+                                                    Attiva
+                                                </a>
+                                            </li>
+                                        }
+                                        <li>
+                                            <hr class="my-1 border-gray-200 dark:border-gray-700 p-0">
+                                        </li>
+                                        <li>
+                                            <a onclick="deleteSede('@salone.SaloneId')" class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-trash mr-3"></i>
+                                                Elimina
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<script>
+    // Funzioni principali
+    function filterSedi(status) {
+        const cards = document.querySelectorAll('.sede-card');
+        const buttons = document.querySelectorAll('.filter-btn');
+
+        // Reset button styles
+        buttons.forEach(btn => {
+            btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600';
+        });
+
+        // Set active button
+        event.target.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-purple-600 text-white';
+
+        // Filter cards
+        cards.forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            card.style.display = (status === 'all' || cardStatus === status) ? 'block' : 'none';
+        });
+    }
+
+    function toggleDropdown(saloneId) {
+        const dropdown = document.getElementById(`dropdown-${saloneId}`);
+        const allDropdowns = document.querySelectorAll('[id^="dropdown-"]');
+
+        // Close all other dropdowns
+        allDropdowns.forEach(d => {
+            if (d.id !== `dropdown-${saloneId}`) {
+                d.classList.add('hidden');
+            }
+        });
+
+        // Toggle current dropdown
+        dropdown.classList.toggle('hidden');
+    }
+
+    function openAddSedeModal() {
+        Swal.fire({
+            title: '🏢 Aggiungi Nuova Sede',
+            html: `
+                <div class="text-left">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl">
+                            <i class="fas fa-store text-2xl text-purple-600"></i>
+                        </div>
+                        <p class="text-gray-600 text-center">Stai per aggiungere una nuova sede. Questo ti permetterà di:</p>
+                        <ul class="mt-4 space-y-2 text-sm text-gray-600">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Gestire prenotazioni separate per ogni sede
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Assegnare staff specifico a ogni location
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2"></i>
+                                Monitorare performance individuali
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-plus mr-2"></i>Continua',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#7c3aed',
+            cancelButtonColor: '#6b7280',
+            width: '600px'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = '/Salone/Create';
+            }
+        });
+    }
+
+    // SweetAlert2 functions
+    function activateSede(saloneId) {
+        Swal.fire({
+            title: '🚀 Attivare la sede?',
+            html: `
+                <div class="text-left space-y-3">
+                    <p class="text-gray-600">La sede diventerà:</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• ✅ Visibile ai clienti</li>
+                        <li>• 📅 Disponibile per prenotazioni</li>
+                        <li>• 🔍 Inclusa nelle ricerche</li>
+                    </ul>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-play mr-2"></i>Attiva',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#10b981'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('🎉 Sede Attivata!', 'La sede è ora attiva', 'success');
+            }
+        });
+    }
+
+    function deactivateSede(saloneId) {
+        Swal.fire({
+            title: '⏸️ Disattivare la sede?',
+            html: `
+                <div class="text-left space-y-3">
+                    <p class="text-gray-600">La sede sarà:</p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• ❌ Non visibile ai clienti</li>
+                        <li>• 🚫 Non disponibile per nuove prenotazioni</li>
+                        <li>• 👥 Gli appuntamenti esistenti rimarranno validi</li>
+                    </ul>
+                </div>
+            `,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-pause mr-2"></i>Disattiva',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#f59e0b'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('⏸️ Sede Disattivata', 'La sede non è più visibile', 'info');
+            }
+        });
+    }
+
+    function deleteSede(saloneId) {
+        Swal.fire({
+            title: '🗑️ Eliminare definitivamente?',
+            html: `
+                <div class="text-left space-y-3">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                        <p class="text-red-800 font-medium">⚠️ Attenzione: Questa azione è irreversibile!</p>
+                    </div>
+                    <p class="text-gray-600">Verranno eliminati tutti i dati della sede.</p>
+                    <div class="mt-4">
+                        <input type="text" id="confirmText" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Scrivi 'ELIMINA' per confermare">
+                    </div>
+                </div>
+            `,
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-trash-alt mr-2"></i>Elimina',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#ef4444',
+            preConfirm: () => {
+                const confirmText = document.getElementById('confirmText').value;
+                if (confirmText !== 'ELIMINA') {
+                    Swal.showValidationMessage('Devi scrivere "ELIMINA" per confermare');
+                    return false;
+                }
+                return true;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('✅ Sede Eliminata', 'La sede è stata eliminata', 'success');
+            }
+        });
+    }
+
+    function exportData() {
+        Swal.fire({
+            title: '📊 Esporta Dati Sedi',
+            html: `
+                <div class="text-left space-y-4">
+                    <p class="text-gray-600">Seleziona il formato:</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="radio" name="exportFormat" value="excel" class="text-purple-600" checked>
+                            <span class="text-sm">📊 Excel (.xlsx)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="radio" name="exportFormat" value="csv" class="text-purple-600">
+                            <span class="text-sm">📄 CSV (.csv)</span>
+                        </label>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-download mr-2"></i>Esporta',
+            confirmButtonColor: '#7c3aed'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire('✅ Export Completato!', 'File scaricato con successo', 'success');
+            }
+        });
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Gestione click fuori dal dropdown
+        document.addEventListener('click', function(e) {
+            // Se il click non è su un bottone dropdown o su un dropdown stesso
+            if (!e.target.closest('[onclick^="toggleDropdown"]') && !e.target.closest('.dropdown-menu')) {
+                closeAllDropdowns();
+            }
+        });
+
+        // Previeni la chiusura quando si clicca all'interno del dropdown
+        document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+            dropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+
+        // Chiudi dropdown quando si scrolla
+        window.addEventListener('scroll', function() {
+            closeAllDropdowns();
+        });
+
+        // Chiudi dropdown quando si ridimensiona la finestra
+        window.addEventListener('resize', function() {
+            closeAllDropdowns();
+        });
+
+        // Chiudi dropdown con tasto ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAllDropdowns();
+            }
+        });
+    });
+</script>
