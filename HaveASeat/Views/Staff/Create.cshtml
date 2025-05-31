@@ -1,4 +1,5 @@
-﻿@{
+﻿@model HaveASeat.Utilities.Dto.ApplicationUserDto
+@{
     Layout = "_DashboardLayout";
     var salone = ViewBag.Salone as HaveASeat.Models.Salone;
     var servizi = ViewBag.Servizi as List<HaveASeat.Models.Servizio>;
@@ -7,187 +8,314 @@
 <!-- Header -->
 <div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
     <div class="flex items-center space-x-4">
-        <a href="/Staff/Index?saloneId=@salone?.SaloneId" class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+        <a href="@Url.Action("Index", new { saloneId = salone?.SaloneId })"
+           class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
             <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
         </a>
         <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Aggiungi Nuovo Staff</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">Aggiungi un membro al team di @salone?.Nome</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">
+                Aggiungi un membro al team di <strong>@salone?.Nome</strong>
+                @if (!string.IsNullOrEmpty(salone?.Citta))
+                {
+                    <span class="text-gray-500"> - @salone.Citta, @salone.Provincia</span>
+                }
+            </p>
         </div>
     </div>
+
+    <!-- Breadcrumb -->
+    <nav class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+        <a href="@Url.Action("Index", "Partner")" class="hover:text-purple-600">Dashboard</a>
+        <i class="fas fa-chevron-right"></i>
+        <a href="@Url.Action("Index", new { saloneId = salone?.SaloneId })" class="hover:text-purple-600">Staff</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>@salone?.Nome</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="text-purple-600 dark:text-purple-400 font-medium">Nuovo Membro</span>
+    </nav>
 </div>
 
-<!-- Form Card -->
-<div class="max-w-4xl mx-auto">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
-        <form method="post" id="createStaffForm" class="space-y-8">
-
-            @if (!ViewData.ModelState.IsValid)
-            {
-                <div class="alert alert-error">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    Correggi gli errori evidenziati
+@if (salone == null)
+{
+    <!-- Error State -->
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="text-center max-w-md mx-auto">
+            <div class="mx-auto mb-8">
+                <div class="w-32 h-32 mx-auto bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/20 dark:to-red-800/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-6xl text-red-500"></i>
                 </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Salone non trovato</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                Il salone specificato non esiste o non hai i permessi per gestirlo.
+            </p>
+            <a href="@Url.Action("Index")"
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Torna alla Gestione Staff
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <!-- Alert Info sulla sede selezionata -->
+    <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4 mb-6">
+        <div class="flex items-start space-x-3">
+            <i class="fas fa-info-circle text-purple-500 mt-0.5"></i>
+            <div>
+                <p class="text-purple-800 dark:text-purple-200 text-sm font-medium">
+                    Stai aggiungendo un nuovo membro al team di @salone.Nome
+                </p>
+                <p class="text-purple-700 dark:text-purple-300 text-xs mt-1">
+                    Il nuovo staff sarà associato specificamente a questa sede e potrà offrire solo i servizi che selezionerai qui sotto.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-gray-700">
+
+            <form asp-action="Create" asp-controller="Staff" asp-route-saloneId="@salone.SaloneId" method="post"
+                  class="space-y-8" id="staff-form" novalidate>
+
+                <!-- Sede Selezionata -->
+                <div class="bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/10 dark:to-blue-900/10 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-store text-purple-600 dark:text-purple-400"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Sede: @salone.Nome</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-map-marker-alt mr-1"></i>
+                                @salone.Indirizzo, @salone.Citta (@salone.Provincia)
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informazioni Personali -->
+                <div class="space-y-6">
+                    <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Informazioni Personali</h2>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Dati del nuovo membro del team</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-control">
+                            <label asp-for="Nome" class="label">
+                                <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nome *</span>
+                            </label>
+                            <input asp-for="Nome"
+                                   class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100 peer"
+                                   placeholder="Mario"
+                                   autocomplete="given-name" />
+                            <span asp-validation-for="Nome" class="label-text-alt text-error mt-1 opacity-0 peer-invalid:opacity-100 transition-opacity"></span>
+                        </div>
+
+                        <div class="form-control">
+                            <label asp-for="Cognome" class="label">
+                                <span class="label-text font-medium text-gray-700 dark:text-gray-300">Cognome *</span>
+                            </label>
+                            <input asp-for="Cognome"
+                                   class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100 peer"
+                                   placeholder="Rossi"
+                                   autocomplete="family-name" />
+                            <span asp-validation-for="Cognome" class="label-text-alt text-error mt-1 opacity-0 peer-invalid:opacity-100 transition-opacity"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-control">
+                            <label asp-for="Email" class="label">
+                                <span class="label-text font-medium text-gray-700 dark:text-gray-300">Email *</span>
+                            </label>
+                            <input asp-for="Email"
+                                   class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100 peer"
+                                   placeholder="mario.rossi@esempio.com"
+                                   autocomplete="email" />
+                            <span asp-validation-for="Email" class="label-text-alt text-error mt-1 opacity-0 peer-invalid:opacity-100 transition-opacity"></span>
+                            <div class="label">
+                                <span class="label-text-alt text-gray-500">Se l'utente non esiste, verrà creato automaticamente</span>
+                            </div>
+                        </div>
+
+                        <div class="form-control">
+                            <label asp-for="PhoneNumber" class="label">
+                                <span class="label-text font-medium text-gray-700 dark:text-gray-300">Telefono</span>
+                            </label>
+                            <input asp-for="PhoneNumber"
+                                   class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100 peer"
+                                   placeholder="+39 333 123 4567"
+                                   autocomplete="tel" />
+                            <span asp-validation-for="PhoneNumber" class="label-text-alt text-error mt-1 opacity-0 peer-invalid:opacity-100 transition-opacity"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Servizi Assegnati -->
+                <div class="space-y-6">
+                    <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                        <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-cut text-green-600 dark:text-green-400"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Servizi Assegnati</h2>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">Seleziona i servizi che il membro può offrire in <strong>@salone.Nome</strong></p>
+                        </div>
+                    </div>
+
+                    @if (servizi != null && servizi.Any())
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            @for (int i = 0; i < servizi.Count; i++)
+                            {
+                                var servizio = servizi[i];
+                                <div class="form-control">
+                                    <label class="label cursor-pointer justify-start p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:bg-blue-50 has-[:checked]:dark:bg-blue-900/20 has-[:checked]:border-blue-300 has-[:checked]:dark:border-blue-700">
+                                        <input asp-for="ServiziIds"
+                                               type="checkbox"
+                                               value="@servizio.ServizioId"
+                                               class="checkbox checkbox-primary mr-3" />
+                                        <div class="flex-1">
+                                            <span class="label-text font-medium text-gray-900 dark:text-gray-100">@servizio.Nome</span>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                €@servizio.Prezzo.ToString("F2") • @servizio.Durata min
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(servizio.Descrizione))
+                                            {
+                                                <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                    @servizio.Descrizione
+                                                </div>
+                                            }
+                                        </div>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
+                                <div>
+                                    <p class="text-blue-800 dark:text-blue-200 text-sm font-medium">Nota</p>
+                                    <p class="text-blue-700 dark:text-blue-300 text-xs mt-1">
+                                        I servizi possono essere modificati in qualsiasi momento. Se non selezioni nessun servizio,
+                                        dovrai assegnarli successivamente dalla pagina di modifica.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Nessun servizio disponibile</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">
+                                Prima di aggiungere staff, devi configurare almeno un servizio per <strong>@salone?.Nome</strong>
+                            </p>
+                            <a href="@Url.Action("ManageSede", "Partner", new { id = salone?.SaloneId })"
+                               class="inline-flex items-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                <i class="fas fa-plus mr-2"></i>
+                                Configura Servizi
+                            </a>
+                        </div>
+                    }
+                </div>
+
+                <!-- Security Notice -->
+                <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-shield-alt text-gray-500 mt-0.5"></i>
+                        <div>
+                            <p class="text-gray-800 dark:text-gray-200 text-sm font-medium">Sicurezza e Privacy</p>
+                            <ul class="text-gray-600 dark:text-gray-400 text-xs mt-1 space-y-1">
+                                <li>• Se l'utente non esiste, verrà creata una password temporanea</li>
+                                <li>• Il nuovo membro riceverà un'email con le credenziali di accesso</li>
+                                <li>• Potrà accedere solo alle funzioni di <strong>@salone.Nome</strong></li>
+                                <li>• Non avrà accesso ad altre sedi o dati sensibili</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3 sm:space-y-0">
+                    <a href="@Url.Action("Index", new { saloneId = salone?.SaloneId })"
+                       class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-times mr-2"></i>
+                        Annulla
+                    </a>
+
+                    <button type="submit"
+                            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            id="submit-btn">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        <span>Aggiungi al Team di @salone.Nome</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('staff-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Auto-focus primo campo
+        const firstInput = document.querySelector('input[name="Nome"]');
+        if (firstInput) firstInput.focus();
+
+        // Gestione submit con SweetAlert
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Validazione client-side
+            if (!form.checkValidity()) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errore di validazione',
+                    text: 'Correggi i campi evidenziati prima di continuare',
+                    confirmButtonColor: '#3B82F6'
+                });
+                return;
             }
 
-            <!-- Informazioni Personali -->
-            <div class="space-y-6">
-                <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
-                        <i class="fas fa-user text-blue-600 dark:text-blue-400"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Informazioni Personali</h2>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Dati del nuovo membro del team</p>
-                    </div>
-                </div>
+            // Disabilita button e mostra loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creazione in corso...';
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Nome *</span>
-                        </label>
-                        <input name="nome"
-                               class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100"
-                               placeholder="Mario"
-                               required />
-                        <span class="label-text-alt text-error mt-1" id="nome-error"></span>
-                    </div>
+            // Submit del form
+            form.submit();
+        });
 
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Cognome *</span>
-                        </label>
-                        <input name="cognome"
-                               class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100"
-                               placeholder="Rossi"
-                               required />
-                        <span class="label-text-alt text-error mt-1" id="cognome-error"></span>
-                    </div>
-                </div>
+        // Gestione errori dal server (se presenti nel ViewBag)
+    @if (ViewData.ModelState.ErrorCount > 0)
+    {
+        <text>
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errori di validazione',
+                    html: '@Html.Raw(string.Join("<br>", ViewData.ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)))',
+                    confirmButtonColor: '#3B82F6'
+                });
+        </text>
+    }
+    });
+</script>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Email *</span>
-                        </label>
-                        <input name="email"
-                               type="email"
-                               class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100"
-                               placeholder="mario.rossi@esempio.com"
-                               required />
-                        <span class="label-text-alt text-error mt-1" id="email-error"></span>
-                        <div class="label">
-                            <span class="label-text-alt text-gray-500">Se l'utente non esiste, verrà creato automaticamente</span>
-                        </div>
-                    </div>
-
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium text-gray-700 dark:text-gray-300">Telefono</span>
-                        </label>
-                        <input name="telefono"
-                               type="tel"
-                               class="input input-bordered w-full focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-gray-700 dark:text-gray-100"
-                               placeholder="+39 333 123 4567" />
-                        <span class="label-text-alt text-error mt-1" id="telefono-error"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Servizi Assegnati -->
-            <div class="space-y-6">
-                <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3">
-                        <i class="fas fa-cut text-green-600 dark:text-green-400"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Servizi Assegnati</h2>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">Seleziona i servizi che il membro può offrire</p>
-                    </div>
-                </div>
-
-                @if (servizi != null && servizi.Any())
-                {
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @foreach (var servizio in servizi)
-                        {
-                            <div class="form-control">
-                                <label class="label cursor-pointer justify-start p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <input type="checkbox" name="serviziIds" value="@servizio.ServizioId" class="checkbox checkbox-primary mr-3" />
-                                    <div class="flex-1">
-                                        <span class="label-text font-medium text-gray-900 dark:text-gray-100">@servizio.Nome</span>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">
-                                            €@servizio.Prezzo.ToString("F2") • @servizio.Durata min
-                                        </div>
-                                        @if (!string.IsNullOrEmpty(servizio.Descrizione))
-                                        {
-                                            <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                                @servizio.Descrizione
-                                            </div>
-                                        }
-                                    </div>
-                                </label>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <div class="flex items-start space-x-3">
-                            <i class="fas fa-info-circle text-blue-500 mt-0.5"></i>
-                            <div>
-                                <p class="text-blue-800 dark:text-blue-200 text-sm font-medium">Nota</p>
-                                <p class="text-blue-700 dark:text-blue-300 text-xs mt-1">
-                                    I servizi possono essere modificati in qualsiasi momento. Se non selezioni nessun servizio,
-                                    dovrai assegnarli successivamente dalla pagina di modifica.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-8 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-4"></i>
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Nessun servizio disponibile</h3>
-                        <p class="text-gray-600 dark:text-gray-400 mb-4">
-                            Prima di aggiungere staff, devi configurare almeno un servizio per @salone?.Nome
-                        </p>
-                        <a href="/Partner/Servizi?saloneId=@salone?.SaloneId" class="inline-flex items-center px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors">
-                            <i class="fas fa-plus mr-2"></i>
-                            Aggiungi Servizi
-                        </a>
-                    </div>
-                }
-            </div>
-
-            <!-- Security Notice -->
-            <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
-                <div class="flex items-start space-x-3">
-                    <i class="fas fa-shield-alt text-gray-500 mt-0.5"></i>
-                    <div>
-                        <p class="text-gray-800 dark:text-gray-200 text-sm font-medium">Sicurezza e Privacy</p>
-                        <ul class="text-gray-600 dark:text-gray-400 text-xs mt-1 space-y-1">
-                            <li>• Se l'utente non esiste, verrà creata una password temporanea</li>
-                            <li>• Il nuovo membro riceverà un'email con le credenziali di accesso</li>
-                            <li>• Potrà accedere solo alle funzioni del salone assegnato</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Submit Buttons -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-6 border-t border-gray-200 dark:border-gray-700 space-y-3 sm:space-y-0">
-                <a href="/Staff/Index?saloneId=@salone?.SaloneId" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-times mr-2"></i>
-                    Annulla
-                </a>
-
-                <button type="submit" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Aggiungi al Team
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

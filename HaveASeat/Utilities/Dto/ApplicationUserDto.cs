@@ -57,5 +57,6 @@ namespace HaveASeat.Utilities.Dto
 		public string ConfirmPassword { get; set; }
 
 		public bool AcceptNewsletter { get; set; } = false;
+		public List<Guid> ServiziIds { get; set; } = new List<Guid>();
 	}
 }

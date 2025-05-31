@@ -37,19 +37,30 @@ namespace HaveASeat.Controllers
 				return RedirectToAction("Login", "Account", new { area = "Identity" });
 			}
 
-			// Se non è specificato un salone, prendi il primo disponibile
-			if (!saloneId.HasValue)
-			{
-				var primoSalone = await _context.Salone
-					.FirstOrDefaultAsync(s => s.ApplicationUserId == userId);
+			// Ottieni tutti i saloni dell'utente
+			var saloni = await _context.Salone
+				.Where(s => s.ApplicationUserId == userId)
+				.OrderBy(s => s.Nome)
+				.ToListAsync();
 
-				if (primoSalone != null)
+			// Se non ha nessun salone, reindirizza alla creazione
+			if (!saloni.Any())
+			{
+				TempData["ErrorMessage"] = "Devi prima creare almeno un salone per gestire lo staff.";
+				return RedirectToAction("Index", "Partner");
+			}
+
+			// Se non è specificato un salone o il salone specificato non esiste/non appartiene all'utente
+			if (!saloneId.HasValue || !saloni.Any(s => s.SaloneId == saloneId.Value))
+			{
+				// Prendi il primo salone disponibile
+				saloneId = saloni.First().SaloneId;
+
+				// Se ha più di un salone, reindirizza con il saloneId per evitare ambiguità
+				if (saloni.Count > 1)
 				{
-					saloneId = primoSalone.SaloneId;
-				}
-				else
-				{
-					return RedirectToAction("Index", "Partner");
+					TempData["InfoMessage"] = "Hai più sedi. È stato selezionato automaticamente il primo salone.";
+					return RedirectToAction("Index", new { saloneId = saloneId.Value });
 				}
 			}
 
@@ -67,17 +78,13 @@ namespace HaveASeat.Controllers
 
 			if (salone == null)
 			{
-				return NotFound();
+				TempData["ErrorMessage"] = "Salone non trovato o non autorizzato.";
+				return RedirectToAction("Index", "Partner");
 			}
-
-			// Ottieni tutti i saloni per il dropdown
-			var saloni = await _context.Salone
-				.Where(s => s.ApplicationUserId == userId)
-				.OrderBy(s => s.Nome)
-				.ToListAsync();
 
 			ViewBag.Saloni = saloni;
 			ViewBag.SaloneCorrente = salone;
+			ViewBag.HasMultipleSedi = saloni.Count > 1;
 
 			return View(salone.Dipendenti.OrderBy(d => d.ApplicationUser.Cognome).ToList());
 		}
@@ -86,13 +93,16 @@ namespace HaveASeat.Controllers
 		public async Task<IActionResult> Create(Guid saloneId)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+			// Verifica che il salone esista e appartenga all'utente
 			var salone = await _context.Salone
 				.Include(s => s.Servizi)
 				.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
 
 			if (salone == null)
 			{
-				return NotFound();
+				TempData["ErrorMessage"] = "Salone non trovato o non autorizzato.";
+				return RedirectToAction("Index");
 			}
 
 			ViewBag.Salone = salone;
@@ -107,13 +117,39 @@ namespace HaveASeat.Controllers
 		public async Task<IActionResult> Create(Guid saloneId, string nome, string cognome, string email, string telefono, List<Guid> serviziIds)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+			// Verifica che il salone esista e appartenga all'utente
 			var salone = await _context.Salone
 				.Include(s => s.Servizi)
 				.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
 
 			if (salone == null)
 			{
-				return NotFound();
+				TempData["ErrorMessage"] = "Salone non trovato o non autorizzato.";
+				return RedirectToAction("Index");
+			}
+
+			// Validazioni aggiuntive
+			if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(cognome) || string.IsNullOrWhiteSpace(email))
+			{
+				ModelState.AddModelError("", "Nome, cognome ed email sono obbligatori.");
+				ViewBag.Salone = salone;
+				ViewBag.Servizi = salone.Servizi.ToList();
+				return View();
+			}
+
+			// Verifica che i servizi selezionati appartengano al salone
+			if (serviziIds != null && serviziIds.Any())
+			{
+				var serviziFiltrati = serviziIds.Where(id => salone.Servizi.Any(s => s.ServizioId == id)).ToList();
+				if (serviziFiltrati.Count != serviziIds.Count)
+				{
+					ModelState.AddModelError("", "Alcuni servizi selezionati non sono validi per questo salone.");
+					ViewBag.Salone = salone;
+					ViewBag.Servizi = salone.Servizi.ToList();
+					return View();
+				}
+				serviziIds = serviziFiltrati;
 			}
 
 			if (ModelState.IsValid)
@@ -158,6 +194,18 @@ namespace HaveASeat.Controllers
 					}
 					else
 					{
+						// Verifica che l'utente non sia già dipendente di questo salone
+						var existingDipendente = await _context.Dipendente
+							.FirstOrDefaultAsync(d => d.ApplicationUserId == existingUser.Id && d.SaloneId == saloneId);
+
+						if (existingDipendente != null)
+						{
+							ModelState.AddModelError("", "Questo utente è già membro dello staff di questo salone.");
+							ViewBag.Salone = salone;
+							ViewBag.Servizi = salone.Servizi.ToList();
+							return View();
+						}
+
 						staffUser = existingUser;
 					}
 
@@ -189,7 +237,7 @@ namespace HaveASeat.Controllers
 						await _context.SaveChangesAsync();
 					}
 
-					TempData["SuccessMessage"] = $"Staff {nome} {cognome} aggiunto con successo!";
+					TempData["SuccessMessage"] = $"Staff {nome} {cognome} aggiunto con successo al {salone.Nome}!";
 					return RedirectToAction("Index", new { saloneId });
 				}
 				catch (Exception ex)
