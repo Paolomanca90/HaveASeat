@@ -1,0 +1,448 @@
+﻿@model HaveASeat.Models.Salone
+
+@{
+    Layout = "_DashboardLayout";
+}
+
+<!-- Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div class="flex items-center space-x-4">
+        <a href="/Partner/Sedi" class="inline-flex items-center justify-center w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+            <i class="fas fa-arrow-left text-gray-600 dark:text-gray-300"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Nuova Sede</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Inserisci le seguenti informazioni</p>
+        </div>
+    </div>
+</div>
+
+<!-- Form di Aggiunta -->
+<div class="max-w-4xl mx-auto">
+    <form method="post" id="createSedeForm" class="space-y-8">
+
+        <!-- Progress Steps -->
+        <div class="flex items-center justify-center mb-8">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="1">1</div>
+                    <span class="ml-2 text-sm font-medium text-purple-600">Dati Generali</span>
+                </div>
+                <div class="w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="2">2</div>
+                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Dati Fiscali</span>
+                </div>
+                <div class="w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="3">3</div>
+                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Indirizzo</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Dati Generali -->
+        <div id="step-1" class="form-step">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-info-circle text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Informazioni Generali</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Dati di base del tuo salone</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Nome Salone -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Nome Salone *
+                        </label>
+                        <input asp-for="Nome"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                               placeholder="Es. Beauty Center Roma"
+                               required />
+                        <span asp-validation-for="Nome" class="text-red-500 text-sm mt-1"></span>
+                    </div>
+
+                    <!-- Telefono e Email -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Telefono *
+                            </label>
+                            <input asp-for="Telefono"
+                                   type="tel"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                   placeholder="Es. 3331234567"
+                                   required />
+                            <span asp-validation-for="Telefono" class="text-red-500 text-sm mt-1"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Email *
+                            </label>
+                            <input asp-for="Email"
+                                   type="email"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                   placeholder="Es. info@beautycenter.it"
+                                   required />
+                            <span asp-validation-for="Email" class="text-red-500 text-sm mt-1"></span>
+                        </div>
+                    </div>
+
+                    <!-- Sito Web -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Sito Web
+                        </label>
+                        <input asp-for="SitoWeb"
+                               type="url"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                               placeholder="Es. www.beautycenter.it" />
+                        <span asp-validation-for="SitoWeb" class="text-red-500 text-sm mt-1"></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-8">
+                    <button type="button" onclick="nextStep(2)" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
+                        Avanti
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Dati Fiscali -->
+        <div id="step-2" class="form-step hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-file-invoice text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Dati Fiscali</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Informazioni per fatturazione e pagamenti</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Ragione Sociale -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Ragione Sociale *
+                        </label>
+                        <input asp-for="RagioneSociale"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                               placeholder="Es. Beauty Center Srl"
+                               required />
+                        <span asp-validation-for="RagioneSociale" class="text-red-500 text-sm mt-1"></span>
+                    </div>
+
+                    <!-- Partita IVA e Codice SDI -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Partita IVA *
+                            </label>
+                            <input asp-for="PartitaIVA"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                   placeholder="Es. 12345678901"
+                                   maxlength="11"
+                                   required />
+                            <span asp-validation-for="PartitaIVA" class="text-red-500 text-sm mt-1"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Codice SDI *
+                            </label>
+                            <input asp-for="SDI"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                   placeholder="Es. ABCDEF1"
+                                   maxlength="7"
+                                   required />
+                            <span asp-validation-for="SDI" class="text-red-500 text-sm mt-1"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="previousStep(1)" class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Indietro
+                    </button>
+                    <button type="button" onclick="nextStep(3)" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
+                        Avanti
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Indirizzo -->
+        <div id="step-3" class="form-step hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-map-marker-alt text-green-600 dark:text-green-400"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Indirizzo Sede</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Dove si trova il tuo salone</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Indirizzo -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Indirizzo *
+                        </label>
+                        <input asp-for="Indirizzo"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                               placeholder="Es. Via Roma, 10"
+                               required />
+                        <span asp-validation-for="Indirizzo" class="text-red-500 text-sm mt-1"></span>
+                    </div>
+
+                    <!-- Città, CAP, Provincia -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Città *
+                            </label>
+                            <input asp-for="Citta"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                   placeholder="Es. Roma"
+                                   required />
+                            <span asp-validation-for="Citta" class="text-red-500 text-sm mt-1"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                CAP *
+                            </label>
+                            <input asp-for="CAP"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                   placeholder="Es. 00100"
+                                   maxlength="5"
+                                   pattern="[0-9]{5}"
+                                   required />
+                            <span asp-validation-for="CAP" class="text-red-500 text-sm mt-1"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Provincia *
+                            </label>
+                            <input asp-for="Provincia"
+                                   class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                   placeholder="Es. RM"
+                                   maxlength="2"
+                                   required />
+                            <span asp-validation-for="Provincia" class="text-red-500 text-sm mt-1"></span>
+                        </div>
+                    </div>
+
+                    <!-- Regione -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Regione *
+                        </label>
+                        <select asp-for="Regione"
+                                class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 transition-colors"
+                                required>
+                            <option value="">Seleziona Regione</option>
+                            <option value="Abruzzo">Abruzzo</option>
+                            <option value="Basilicata">Basilicata</option>
+                            <option value="Calabria">Calabria</option>
+                            <option value="Campania">Campania</option>
+                            <option value="Emilia-Romagna">Emilia-Romagna</option>
+                            <option value="Friuli-Venezia Giulia">Friuli-Venezia Giulia</option>
+                            <option value="Lazio">Lazio</option>
+                            <option value="Liguria">Liguria</option>
+                            <option value="Lombardia">Lombardia</option>
+                            <option value="Marche">Marche</option>
+                            <option value="Molise">Molise</option>
+                            <option value="Piemonte">Piemonte</option>
+                            <option value="Puglia">Puglia</option>
+                            <option value="Sardegna">Sardegna</option>
+                            <option value="Sicilia">Sicilia</option>
+                            <option value="Toscana">Toscana</option>
+                            <option value="Trentino-Alto Adige">Trentino-Alto Adige</option>
+                            <option value="Umbria">Umbria</option>
+                            <option value="Valle d'Aosta">Valle d'Aosta</option>
+                            <option value="Veneto">Veneto</option>
+                        </select>
+                        <span asp-validation-for="Regione" class="text-red-500 text-sm mt-1"></span>
+                    </div>
+                </div>
+
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="previousStep(2)" class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Indietro
+                    </button>
+                    <button type="submit" onclick="submitForm()" class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-save mr-2"></i>
+                        Salva Modifiche
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    let currentStep = 1;
+
+    function updateStepIndicators(step) {
+        // Reset all indicators
+        document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+            const stepNumber = index + 1;
+            const stepSpan = indicator.nextElementSibling;
+
+            if (stepNumber < step) {
+                // Completed steps
+                indicator.className = 'w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator';
+                indicator.innerHTML = '<i class="fas fa-check"></i>';
+                stepSpan.className = 'ml-2 text-sm font-medium text-green-600';
+            } else if (stepNumber === step) {
+                // Current step
+                indicator.className = 'w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator';
+                indicator.textContent = stepNumber;
+                stepSpan.className = 'ml-2 text-sm font-medium text-purple-600';
+            } else {
+                // Future steps
+                indicator.className = 'w-8 h-8 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full flex items-center justify-center text-sm font-medium step-indicator';
+                indicator.textContent = stepNumber;
+                stepSpan.className = 'ml-2 text-sm font-medium text-gray-500 dark:text-gray-400';
+            }
+        });
+    }
+
+    function validateStep(step) {
+        const stepElement = document.getElementById(`step-${step}`);
+        const requiredFields = stepElement.querySelectorAll('input[required], select[required]');
+        let isValid = true;
+
+        requiredFields.forEach(field => {
+            // Remove previous error styling
+            field.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+
+            if (!field.value.trim()) {
+                field.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                isValid = false;
+            }
+        });
+
+        if (!isValid) {
+            Swal.fire({
+                title: '⚠️ Campi Obbligatori',
+                text: 'Compila tutti i campi obbligatori prima di continuare.',
+                icon: 'warning',
+                confirmButtonColor: '#7c3aed',
+                timer: 3000,
+                timerProgressBar: true
+            });
+        }
+
+        return isValid;
+    }
+
+    function nextStep(step) {
+        if (validateStep(currentStep)) {
+            // Hide current step
+            document.getElementById(`step-${currentStep}`).classList.add('hidden');
+
+            // Show next step
+            document.getElementById(`step-${step}`).classList.remove('hidden');
+
+            // Update current step
+            currentStep = step;
+
+            // Update indicators
+            updateStepIndicators(step);
+
+            // Smooth scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function previousStep(step) {
+        // Hide current step
+        document.getElementById(`step-${currentStep}`).classList.add('hidden');
+
+        // Show previous step
+        document.getElementById(`step-${step}`).classList.remove('hidden');
+
+        // Update current step
+        currentStep = step;
+
+        // Update indicators
+        updateStepIndicators(step);
+
+        // Smooth scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function submitForm() {
+        if (validateStep(currentStep)) {
+            Swal.fire({
+                title: '💾 Salvare le modifiche?',
+                html: `
+                    <div class="text-left space-y-3">
+                        <p class="text-gray-600">Stai per aggiornare:</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>• 📝 Informazioni generali</li>
+                            <li>• 🏢 Dati fiscali</li>
+                            <li>• 📍 Indirizzo sede</li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-save mr-2"></i>Salva',
+                cancelButtonText: 'Annulla',
+                confirmButtonColor: '#7c3aed',
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                    return new Promise((resolve) => {
+                        // Submit the form
+                        document.getElementById('createSedeForm').submit();
+                        resolve();
+                    });
+                }
+            });
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateStepIndicators(1);
+
+        // Add real-time validation feedback
+        document.querySelectorAll('input[required], select[required]').forEach(field => {
+            field.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                    this.classList.add('border-green-500', 'ring-2', 'ring-green-200');
+                }
+            });
+
+            field.addEventListener('input', function() {
+                if (this.classList.contains('border-red-500')) {
+                    this.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                }
+            });
+        });
+    });
+</script>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
