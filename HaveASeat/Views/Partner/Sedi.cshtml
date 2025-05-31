@@ -421,7 +421,25 @@ else
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire('✅ Sede Eliminata', 'La sede è stata eliminata', 'success');
+                fetch(`/Partner/DeleteSede/${saloneId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        Swal.fire('✅ Sede Eliminata', 'La sede è stata eliminata', 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Errore', 'Si è verificato un errore durante l\'eliminazione della sede.', 'error');
+                    }
+                })
+                .catch(() => {
+                    Swal.fire('Errore', 'Si è verificato un errore di rete.', 'error');
+                });
             }
         });
     }
