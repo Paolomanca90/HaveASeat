@@ -280,44 +280,60 @@
     <div>
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Staff</h2>
-            <a href="/Staff/reate?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                <i class="fas fa-user-plus mr-2"></i>
-                Gestisci Staff
+            <a href="/Staff/Create?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")"
+            @(Model.Servizi.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
+            <i class="fas fa-user-plus mr-2"></i>
+            Gestisci Staff
             </a>
-        </div>
+            </div>
 
-        @if (Model.Dipendenti.Any())
-        {
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                <div class="space-y-4">
-                    @foreach (var dipendente in Model.Dipendenti.Take(5))
+            @if (Model.Dipendenti.Any())
+            {
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="space-y-4">
+                        @foreach (var dipendente in Model.Dipendenti.Take(5))
+                        {
+                            <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-gray-900 dark:text-gray-100">@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">@dipendente.ApplicationUser.Email</div>
+                                    <div class="text-xs text-purple-600 dark:text-purple-400 font-medium">@dipendente.ServiziOfferti.Count servizi</div>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
+                                    Attivo
+                                </span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <i class="fas fa-user-slash text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
+                    <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun membro dello staff registrato</p>
+                    <a href="/Staff/Create?saloneId=@Model.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")
+                    @(Model.Servizi.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Aggiungi Staff
+                    </a>
+                    @if (!Model.Servizi.Any())
                     {
-                        <div class="flex items-center p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
-                                <i class="fas fa-user text-white"></i>
+                        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-6 w-1/2 mx-auto">
+                            <div class="flex items-start space-x-3">
+                                <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5"></i>
+                                <div>
+                                    <p class="text-yellow-800 dark:text-yellow-200 text-sm font-medium">Prima configura i servizi</p>
+                                    <p class="text-yellow-700 dark:text-yellow-300 text-xs mt-1">
+                                        Per aggiungere staff devi prima configurare almeno un servizio per questo salone.
+                                    </p>
+                                </div>
                             </div>
-                            <div class="flex-1">
-                                <div class="font-semibold text-gray-900 dark:text-gray-100">@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome</div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">@dipendente.ApplicationUser.Email</div>
-                                <div class="text-xs text-purple-600 dark:text-purple-400 font-medium">@dipendente.ServiziOfferti.Count servizi</div>
-                            </div>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                                Attivo
-                            </span>
                         </div>
                     }
-                </div>
-            </div>
-        }
-        else
-        {
-            <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                <i class="fas fa-user-slash text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
-                <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun membro dello staff registrato</p>
-                <a href="/Staff/Create?saloneId=@Model.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Aggiungi Staff
-                </a>
             </div>
         }
     </div>
@@ -428,7 +444,6 @@
 }
 
 <script>
-    // Funzioni essenziali con SweetAlert2
     function copyToClipboard(text, type) {
         navigator.clipboard.writeText(text).then(() => {
             Swal.fire({
@@ -477,11 +492,7 @@
         });
     }
 
-    // Inizializzazione con funzionalità Tailwind native
     document.addEventListener('DOMContentLoaded', function() {
-        // Le animazioni hover sono già gestite da Tailwind con le classi hover:
-        // hover:bg-gray-50, hover:shadow-xl, transition-colors, etc.
-
         // Tooltips nativi del browser per le stelle del rating
         document.querySelectorAll('[title]').forEach(element => {
             if (!element.getAttribute('title')) {
