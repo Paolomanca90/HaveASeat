@@ -156,13 +156,11 @@ namespace HaveASeat.Controllers
 			{
 				try
 				{
-					// Verifica se l'utente esiste già
 					var existingUser = await _userManager.FindByEmailAsync(email);
 					ApplicationUser staffUser;
 
 					if (existingUser == null)
 					{
-						// Crea nuovo utente
 						staffUser = new ApplicationUser
 						{
 							Nome = nome,
@@ -187,7 +185,6 @@ namespace HaveASeat.Controllers
 							return View();
 						}
 
-						// Assegna il ruolo User (o Staff se esiste)
 						await _userManager.AddToRoleAsync(staffUser, "User");
 
 						// TODO: Invia email con credenziali temporanee
@@ -209,7 +206,6 @@ namespace HaveASeat.Controllers
 						staffUser = existingUser;
 					}
 
-					// Crea il record Dipendente
 					var dipendente = new Dipendente
 					{
 						DipendenteId = Guid.NewGuid(),
@@ -221,7 +217,6 @@ namespace HaveASeat.Controllers
 					_context.Dipendente.Add(dipendente);
 					await _context.SaveChangesAsync();
 
-					// Assegna i servizi selezionati
 					if (serviziIds != null && serviziIds.Any())
 					{
 						foreach (var servizioId in serviziIds)
@@ -237,7 +232,7 @@ namespace HaveASeat.Controllers
 						await _context.SaveChangesAsync();
 					}
 
-					TempData["SuccessMessage"] = $"Staff {nome} {cognome} aggiunto con successo al {salone.Nome}!";
+					TempData["Success"] = $"Utente {nome} {cognome} aggiunto con successo al {salone.Nome}!";
 					return RedirectToAction("Index", new { saloneId });
 				}
 				catch (Exception ex)

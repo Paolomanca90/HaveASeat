@@ -443,6 +443,20 @@
     </div>
 }
 
+@if (TempData["Success"] != null)
+{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Operazione completata',
+            text: '@TempData["Success"]',
+            confirmButtonColor: '#7c3aed'
+        });
+    </script>
+}
+
+
 <script>
     function copyToClipboard(text, type) {
         navigator.clipboard.writeText(text).then(() => {

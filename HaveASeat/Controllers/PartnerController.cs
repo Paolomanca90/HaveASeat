@@ -368,7 +368,6 @@ namespace HaveASeat.Controllers
 				return RedirectToAction("Login", "Auth");
 			}
 
-			// Verifica che il salone appartenga all'utente
 			var existingSalone = await _context.Salone
 				.FirstOrDefaultAsync(s => s.SaloneId == model.SaloneId && s.ApplicationUserId == userId);
 
@@ -379,7 +378,6 @@ namespace HaveASeat.Controllers
 
 			if (ModelState.IsValid)
 			{
-				// Aggiorna i campi modificabili
 				existingSalone.Nome = model.Nome;
 				existingSalone.Indirizzo = model.Indirizzo;
 				existingSalone.Citta = model.Citta;
@@ -396,8 +394,8 @@ namespace HaveASeat.Controllers
 				try
 				{
 					await _context.SaveChangesAsync();
-					TempData["SuccessMessage"] = "Sede aggiornata con successo!";
-					return RedirectToAction("Sedi");
+					TempData["Success"] = "Sede aggiornata con successo!";
+					return RedirectToAction("SedeDetails", new {id = existingSalone.SaloneId});
 				}
 				catch (Exception ex)
 				{

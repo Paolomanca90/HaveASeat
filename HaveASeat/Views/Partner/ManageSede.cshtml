@@ -162,7 +162,8 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Gestisci il tuo team</p>
                 </div>
             </div>
-            <button onclick="addStaff()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <button onclick="addStaff()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")
+                    @(Model.Servizi.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
                 <i class="fas fa-user-plus mr-2"></i>
                 Aggiungi
             </button>
@@ -207,11 +208,26 @@
             <div class="text-center py-8">
                 <i class="fas fa-user-slash text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
                 <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun membro dello staff</p>
-                <button onclick="addStaff()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <button onclick="addStaff()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")
+                    @(Model.Servizi.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
                     <i class="fas fa-user-plus mr-2"></i>
                     Aggiungi Primo Membro
                 </button>
             </div>
+            @if (!Model.Servizi.Any())
+            {
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 w-1/2 mx-auto">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5"></i>
+                        <div class="text-center">
+                            <p class="text-yellow-800 dark:text-yellow-200 text-sm font-medium">Prima configura i servizi</p>
+                            <p class="text-yellow-700 dark:text-yellow-300 text-xs mt-1">
+                                Per aggiungere staff devi prima configurare almeno un servizio per questo salone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
         }
     </div>
 
@@ -283,7 +299,8 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Gestisci fasce orarie disponibili</p>
                 </div>
             </div>
-            <button onclick="addSlot()" class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <button onclick="addSlot()" class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Dipendenti.Any() ? "" : "opacity-50 cursor-not-allowed")
+                    @(Model.Dipendenti.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
                 <i class="fas fa-plus mr-2"></i>
                 Aggiungi
             </button>
@@ -326,11 +343,26 @@
             <div class="text-center py-8">
                 <i class="fas fa-calendar-times text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
                 <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun slot configurato</p>
-                <button onclick="addSlot()" class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <button onclick="addSlot()" class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Dipendenti.Any() ? "" : "opacity-50 cursor-not-allowed")
+                    @(Model.Dipendenti.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
                     <i class="fas fa-calendar-plus mr-2"></i>
                     Aggiungi Primo Slot
                 </button>
             </div>
+            @if (!Model.Dipendenti.Any())
+            {
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 w-1/2 mx-auto">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5"></i>
+                        <div class="text-center">
+                            <p class="text-yellow-800 dark:text-yellow-200 text-sm font-medium">Prima configura i dipendenti</p>
+                            <p class="text-yellow-700 dark:text-yellow-300 text-xs mt-1">
+                                Per aggiungere slot devi prima configurare almeno un dipendente per questo salone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
         }
     </div>
 </div>
@@ -410,40 +442,216 @@
     }
 
     // Staff management functions
-    function addStaff() {
-        Swal.fire({
+    async function addStaff() {
+        // Prima recupera i servizi disponibili per questo salone
+        let servizi = [];
+        try {
+            const servicesResponse = await fetch(`/Staff/GetServizi?saloneId=${currentSaloneId}`);
+            if (servicesResponse.ok) {
+                servizi = await servicesResponse.json();
+            }
+        } catch (error) {
+            console.error('Errore nel recupero servizi:', error);
+        }
+
+        // Genera HTML per i servizi
+        const serviziHtml = `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Servizi Assegnati</label>
+                <div class="max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2 space-y-2">
+                    ${servizi.map(servizio => `
+                        <label class="flex items-center space-x-2 text-sm">
+                            <input type="checkbox" name="serviziIds" value="${servizio.servizioId}" class="rounded">
+                            <span>${servizio.nome} - €${servizio.prezzo} (${servizio.durata} min)</span>
+                        </label>
+                    `).join('')}
+                </div>
+                <small class="text-gray-500">I servizi possono essere modificati successivamente</small>
+            </div>
+        ` ;
+
+        const { value: formValues } = await Swal.fire({
             title: '👤 Aggiungi Membro Staff',
             html: `
-                <div class="text-left space-y-4">
+                <form id="staffForm" class="text-left space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nome *</label>
-                            <input type="text" id="staffName" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Mario">
+                            <input type="text"
+                                   name="nome"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                   placeholder="Mario"
+                                   required
+                                   minlength="2"
+                                   maxlength="50">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Cognome *</label>
-                            <input type="text" id="staffSurname" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Rossi">
+                            <input type="text"
+                                   name="cognome"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                                   placeholder="Rossi"
+                                   required
+                                   minlength="2"
+                                   maxlength="50">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email *</label>
-                        <input type="email" id="staffEmail" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="mario.rossi@esempio.com">
+                        <input type="email"
+                               name="email"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                               placeholder="mario.rossi@esempio.com"
+                               required
+                               maxlength="100">
+                        <small class="text-gray-500">Se l'utente non esiste, verrà creato automaticamente</small>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Telefono</label>
-                        <input type="tel" id="staffPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="+39 333 123 4567">
+                        <input type="tel"
+                               name="telefono"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                               placeholder="+39 333 123 4567"
+                               pattern="[\+]?[0-9\s\-\(\)]+"
+                               maxlength="20">
                     </div>
-                </div>
+                    ${serviziHtml}
+                </form>
             `,
             showCancelButton: true,
             confirmButtonText: '<i class="fas fa-user-plus mr-2"></i>Aggiungi',
             cancelButtonText: 'Annulla',
-            confirmButtonColor: '#3b82f6'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire('✅ Staff Aggiunto!', 'Il membro dello staff è stato aggiunto', 'success');
+            confirmButtonColor: '#3b82f6',
+            focusConfirm: false,
+            width: '600px',
+            preConfirm: () => {
+                const form = document.getElementById('staffForm');
+
+                // Validazione nativa del browser
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return false;
+                }
+
+                // Raccolta dati con FormData
+                const formData = new FormData(form);
+
+                // Gestione servizi selezionati
+                const serviziIds = [];
+                const checkboxes = form.querySelectorAll('input[name="serviziIds"]:checked');
+                checkboxes.forEach(cb => serviziIds.push(cb.value));
+
+                return {
+                    nome: formData.get('nome'),
+                    cognome: formData.get('cognome'),
+                    email: formData.get('email'),
+                    telefono: formData.get('telefono') || '',
+                    serviziIds: serviziIds
+                };
             }
         });
+
+        if (formValues) {
+            try {
+                // Mostra loading
+                Swal.fire({
+                    title: 'Aggiunta in corso...',
+                    text: 'Creazione del nuovo membro staff',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Prepara FormData per invio come form POST
+                const formData = new FormData();
+                formData.append('nome', formValues.nome);
+                formData.append('cognome', formValues.cognome);
+                formData.append('email', formValues.email);
+                formData.append('telefono', formValues.telefono);
+
+                // Aggiungi servizi
+                formValues.serviziIds.forEach(id => {
+                    formData.append('serviziIds', id);
+                });
+
+                // Aggiungi token CSRF
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                formData.append('__RequestVerificationToken', token);
+
+                // Chiamata API
+                const response = await fetch(`/Staff/Create?saloneId=${currentSaloneId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Controlla se la risposta è un redirect (successo)
+                    if (response.redirected || response.url.includes('/Staff/Index')) {
+                        // Successo - il controller ha fatto redirect
+                        await Swal.fire({
+                            icon: 'success',
+                            title: '✅ Staff Aggiunto!',
+                            text: 'Il membro dello staff è stato aggiunto con successo',
+                            confirmButtonColor: '#10b981',
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+
+                        // Ricarica la pagina o aggiorna la lista
+                        if (typeof loadStaffList === 'function') {
+                            loadStaffList();
+                        } else {
+                            location.reload();
+                        }
+                    } else {
+                        // Probabilmente ci sono errori di validazione
+                        const text = await response.text();
+                        if (text.includes('ModelState') || text.includes('error')) {
+                            await Swal.fire({
+                                icon: 'error',
+                                title: 'Errori di Validazione',
+                                text: 'Controlla i dati inseriti e riprova',
+                                confirmButtonColor: '#ef4444'
+                            });
+                        }
+                    }
+                } else {
+                    // Errore HTTP
+                    await Swal.fire({
+                        icon: 'error',
+                        title: 'Errore Server',
+                        text: `Errore ${response.status}: ${response.statusText}`,
+                        confirmButtonColor: '#ef4444'
+                    });
+                }
+
+            } catch (error) {
+                console.error('Errore durante l\'aggiunta dello staff:', error);
+
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Errore di Connessione',
+                    text: 'Impossibile completare l\'operazione. Controlla la connessione e riprova.',
+                    confirmButtonColor: '#ef4444'
+                });
+            }
+        }
+    }
+
+    // Funzione di utilità per recuperare servizi (opzionale - se preferisci endpoint separato)
+    async function getServiziForSalone(saloneId) {
+        try {
+            const response = await fetch(`/Staff/GetServizi?saloneId=${saloneId}`);
+            if (response.ok) {
+                return await response.json();
+            }
+        } catch (error) {
+            console.error('Errore nel recupero servizi:', error);
+        }
+        return [];
     }
 
     function editStaff(staffId) {
