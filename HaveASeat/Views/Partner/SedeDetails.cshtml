@@ -280,7 +280,7 @@
     <div>
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Staff</h2>
-            <a href="/Staff/Create?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")"
+            <a href="/Staff?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")"
             @(Model.Servizi.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
             <i class="fas fa-user-plus mr-2"></i>
             Gestisci Staff
@@ -342,7 +342,7 @@
     <div>
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Servizi</h2>
-            <a href="/Partner/Servizi?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            <a href="/Servizio/Index?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <i class="fas fa-plus mr-2"></i>
                 Gestisci Servizi
             </a>

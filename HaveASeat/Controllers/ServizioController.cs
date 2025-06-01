@@ -52,6 +52,10 @@ namespace HaveASeat.Controllers
 
 			var salone = await _context.Salone
 				.Include(s => s.Servizi)
+				.Include(d => d.Dipendenti)
+					.ThenInclude(o => o.ServiziOfferti)
+				.Include(d => d.Dipendenti)
+					.ThenInclude(u => u.ApplicationUser)
 				.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
 
 			if (salone == null)
@@ -125,6 +129,7 @@ namespace HaveASeat.Controllers
 			{
 				servizio.ServizioId = Guid.NewGuid();
 				servizio.SaloneId = saloneId;
+				servizio.Salone = salone;
 
 				_context.Servizio.Add(servizio);
 				await _context.SaveChangesAsync();

@@ -276,6 +276,8 @@ namespace HaveASeat.Controllers
 					.ThenInclude(a => a.ApplicationUser)
 				.Include(s => s.Dipendenti)
 					.ThenInclude(d => d.ApplicationUser)
+				.Include(s => s.Dipendenti)
+					.ThenInclude(o => o.ServiziOfferti)
 				.Include(s => s.Servizi)
 				.Include(s => s.SaloneAbbonamenti)
 					.ThenInclude(sa => sa.Abbonamento)

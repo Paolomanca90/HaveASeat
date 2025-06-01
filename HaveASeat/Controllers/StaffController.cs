@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using HaveASeat.Utilities.Dto;
 
 namespace HaveASeat.Controllers
 {
@@ -108,13 +109,13 @@ namespace HaveASeat.Controllers
 			ViewBag.Salone = salone;
 			ViewBag.Servizi = salone.Servizi.ToList();
 
-			return View();
+			return View(new StaffDto());
 		}
 
 		// POST: Staff/Create
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create(Guid saloneId, string nome, string cognome, string email, string telefono, List<Guid> serviziIds)
+		public async Task<IActionResult> Create(Guid saloneId, StaffDto model)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -130,44 +131,44 @@ namespace HaveASeat.Controllers
 			}
 
 			// Validazioni aggiuntive
-			if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(cognome) || string.IsNullOrWhiteSpace(email))
+			if (string.IsNullOrWhiteSpace(model.Nome) || string.IsNullOrWhiteSpace(model.Cognome) || string.IsNullOrWhiteSpace(model.Email))
 			{
 				ModelState.AddModelError("", "Nome, cognome ed email sono obbligatori.");
 				ViewBag.Salone = salone;
 				ViewBag.Servizi = salone.Servizi.ToList();
-				return View();
+				return View(model);
 			}
 
 			// Verifica che i servizi selezionati appartengano al salone
-			if (serviziIds != null && serviziIds.Any())
+			if (model.ServiziIds != null && model.ServiziIds.Any())
 			{
-				var serviziFiltrati = serviziIds.Where(id => salone.Servizi.Any(s => s.ServizioId == id)).ToList();
-				if (serviziFiltrati.Count != serviziIds.Count)
+				var serviziFiltrati = model.ServiziIds.Where(id => salone.Servizi.Any(s => s.ServizioId == id)).ToList();
+				if (serviziFiltrati.Count != model.ServiziIds.Count)
 				{
 					ModelState.AddModelError("", "Alcuni servizi selezionati non sono validi per questo salone.");
 					ViewBag.Salone = salone;
 					ViewBag.Servizi = salone.Servizi.ToList();
-					return View();
+					return View(model);
 				}
-				serviziIds = serviziFiltrati;
+				model.ServiziIds = serviziFiltrati;
 			}
 
 			if (ModelState.IsValid)
 			{
 				try
 				{
-					var existingUser = await _userManager.FindByEmailAsync(email);
+					var existingUser = await _userManager.FindByEmailAsync(model.Email);
 					ApplicationUser staffUser;
 
 					if (existingUser == null)
 					{
 						staffUser = new ApplicationUser
 						{
-							Nome = nome,
-							Cognome = cognome,
-							Email = email,
-							PhoneNumber = telefono,
-							UserName = email,
+							Nome = model.Nome,
+							Cognome = model.Cognome,
+							Email = model.Email,
+							PhoneNumber = model.PhoneNumber,
+							UserName = model.Email,
 							EmailConfirmed = true
 						};
 
@@ -182,7 +183,7 @@ namespace HaveASeat.Controllers
 							}
 							ViewBag.Salone = salone;
 							ViewBag.Servizi = salone.Servizi.ToList();
-							return View();
+							return View(model);
 						}
 
 						await _userManager.AddToRoleAsync(staffUser, "User");
@@ -200,7 +201,7 @@ namespace HaveASeat.Controllers
 							ModelState.AddModelError("", "Questo utente è già membro dello staff di questo salone.");
 							ViewBag.Salone = salone;
 							ViewBag.Servizi = salone.Servizi.ToList();
-							return View();
+							return View(model);
 						}
 
 						staffUser = existingUser;
@@ -211,28 +212,33 @@ namespace HaveASeat.Controllers
 						DipendenteId = Guid.NewGuid(),
 						SaloneId = saloneId,
 						ApplicationUserId = staffUser.Id,
-						DataCreazione = DateTime.Now
+						DataCreazione = DateTime.Now,
+						ApplicationUser = staffUser,
+						Salone = salone
 					};
 
 					_context.Dipendente.Add(dipendente);
 					await _context.SaveChangesAsync();
 
-					if (serviziIds != null && serviziIds.Any())
+					if (model.ServiziIds != null && model.ServiziIds.Any())
 					{
-						foreach (var servizioId in serviziIds)
+						var servizi = _context.Servizio.Where(x => model.ServiziIds.Contains(x.ServizioId)).ToList();
+						foreach (var servizioId in model.ServiziIds)
 						{
 							var dipendenteServizio = new DipendenteServizio
 							{
 								DipendenteServizioId = Guid.NewGuid(),
 								DipendenteId = dipendente.DipendenteId,
-								ServizioId = servizioId
+								ServizioId = servizioId,
+								Dipendente = dipendente,
+								Servizio = servizi.FirstOrDefault(x => x.ServizioId == servizioId)
 							};
 							_context.DipendenteServizio.Add(dipendenteServizio);
 						}
 						await _context.SaveChangesAsync();
 					}
 
-					TempData["Success"] = $"Utente {nome} {cognome} aggiunto con successo al {salone.Nome}!";
+					TempData["Success"] = $"Utente {model.Nome} {model.Cognome} aggiunto con successo al {salone.Nome}!";
 					return RedirectToAction("Index", new { saloneId });
 				}
 				catch (Exception ex)
@@ -243,7 +249,7 @@ namespace HaveASeat.Controllers
 
 			ViewBag.Salone = salone;
 			ViewBag.Servizi = salone.Servizi.ToList();
-			return View();
+			return View(model);
 		}
 
 		// GET: Staff/Details/5

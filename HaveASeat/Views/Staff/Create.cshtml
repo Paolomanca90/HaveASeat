@@ -1,4 +1,4 @@
-﻿@model HaveASeat.Utilities.Dto.ApplicationUserDto
+﻿@model HaveASeat.Utilities.Dto.StaffDto
 @{
     Layout = "_DashboardLayout";
     var salone = ViewBag.Salone as HaveASeat.Models.Salone;
@@ -182,10 +182,12 @@ else
                                 var servizio = servizi[i];
                                 <div class="form-control">
                                     <label class="label cursor-pointer justify-start p-4 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors has-[:checked]:bg-blue-50 has-[:checked]:dark:bg-blue-900/20 has-[:checked]:border-blue-300 has-[:checked]:dark:border-blue-700">
-                                        <input asp-for="ServiziIds"
-                                               type="checkbox"
+                                        <input type="checkbox"
+                                               name="ServiziIds"
                                                value="@servizio.ServizioId"
+                                               @(Model.ServiziIds != null && Model.ServiziIds.Contains(servizio.ServizioId) ? "checked" : "")
                                                class="checkbox checkbox-primary mr-3" />
+
                                         <div class="flex-1">
                                             <span class="label-text font-medium text-gray-900 dark:text-gray-100">@servizio.Nome</span>
                                             <div class="text-sm text-gray-500 dark:text-gray-400">

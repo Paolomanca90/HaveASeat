@@ -1,6 +1,6 @@
 ﻿namespace HaveASeat.Utilities.Dto
 {
-	public class SloDto
+	public class SlotDto
 	{
 		public Guid SlotId { get; set; }
 		public DateTime OraInizio { get; set; }
