@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using HaveASeat.Utilities.Dto;
+using System.Text.Json;
 
 namespace HaveASeat.Controllers
 {
@@ -392,7 +393,8 @@ namespace HaveASeat.Controllers
 			var dipendente = await _context.Dipendente
 				.Include(d => d.Salone)
 				.Include(d => d.Appuntamenti)
-				.FirstOrDefaultAsync(d => d.DipendenteId == id && d.Salone.ApplicationUserId == userId);
+				.Include(d => d.ApplicationUser)
+				.FirstOrDefaultAsync(d => d.DipendenteId == id);
 
 			if (dipendente == null)
 			{
@@ -423,32 +425,72 @@ namespace HaveASeat.Controllers
 		public async Task<IActionResult> Schedule(Guid id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
 			var dipendente = await _context.Dipendente
 				.Include(d => d.ApplicationUser)
 				.Include(d => d.Salone)
+					.ThenInclude(s => s.Orari)
 				.Include(d => d.Orari)
-				.FirstOrDefaultAsync(d => d.DipendenteId == id && d.Salone.ApplicationUserId == userId);
+				.FirstOrDefaultAsync(d => d.DipendenteId == id);
 
 			if (dipendente == null)
 			{
 				return NotFound();
 			}
 
+			// Assicurati che ci siano orari per tutti i 7 giorni
+			for (int giorno = 0; giorno < 7; giorno++)
+			{
+				var orarioEsistente = dipendente.Orari.FirstOrDefault(o => (int)o.Giorno == giorno);
+				if (orarioEsistente == null)
+				{
+					// Se non esiste, crea un orario di default (giorno di riposo)
+					dipendente.Orari.Add(new OrarioDipendente
+					{
+						Giorno = (DayOfWeek)giorno,
+						IsDayOff = true,
+						Apertura = TimeSpan.FromHours(9),
+						Chiusura = TimeSpan.FromHours(18)
+					});
+				}
+			}
+
+			// Prepara i dati degli orari del salone per JavaScript
+			ViewBag.SalonHoursJson = GetSalonHoursJson(dipendente.Salone);
+
 			return View(dipendente);
+		}
+
+		private string GetSalonHoursJson(Salone salone)
+		{
+			var salonHours = new Dictionary<int, Dictionary<string, string>>();
+
+			if (salone.Orari != null)
+			{
+				foreach (var orario in salone.Orari.Where(o => !o.IsDayOff))
+				{
+					salonHours[(int)orario.Giorno] = new Dictionary<string, string>
+			{
+				{ "apertura", orario.Apertura.ToString(@"hh\:mm") },
+				{ "chiusura", orario.Chiusura.ToString(@"hh\:mm") }
+			};
+				}
+			}
+
+			return JsonSerializer.Serialize(salonHours);
 		}
 
 		// POST: Staff/Schedule/5
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Schedule(Guid id, Dictionary<int, string> apertura, Dictionary<int, string> chiusura, List<int> giorniRiposo)
+		public async Task<IActionResult> Schedule(Guid id, ScheduleForm form)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
 			var dipendente = await _context.Dipendente
 				.Include(d => d.Salone)
+					.ThenInclude(s => s.Orari)
 				.Include(d => d.Orari)
-				.FirstOrDefaultAsync(d => d.DipendenteId == id && d.Salone.ApplicationUserId == userId);
+				.Include(d => d.ApplicationUser)
+				.FirstOrDefaultAsync(d => d.DipendenteId == id);
 
 			if (dipendente == null)
 			{
@@ -457,28 +499,54 @@ namespace HaveASeat.Controllers
 
 			try
 			{
-				// Rimuovi gli orari esistenti
-				_context.OrarioDipendente.RemoveRange(dipendente.Orari);
+				// Rimuovi tutti gli orari esistenti
+				if (dipendente.Orari.Any())
+				{
+					_context.OrarioDipendente.RemoveRange(dipendente.Orari);
+					await _context.SaveChangesAsync();
+				}
 
-				// Aggiungi i nuovi orari
+				// Crea nuovi orari per ogni giorno
 				for (int giorno = 0; giorno < 7; giorno++)
 				{
+					var isWorkDay = form.WorkDays?.Contains(giorno) == true;
+					var orarioSalone = dipendente.Salone.Orari?.FirstOrDefault(o => (int)o.Giorno == giorno);
+
 					var orarioDipendente = new OrarioDipendente
 					{
 						OrarioDipendenteId = Guid.NewGuid(),
 						DipendenteId = dipendente.DipendenteId,
 						Giorno = (DayOfWeek)giorno,
 						DataCreazione = DateTime.Now,
-						IsDayOff = giorniRiposo?.Contains(giorno) ?? false
+						IsDayOff = !isWorkDay,
+						Dipendente = dipendente
 					};
 
-					if (!orarioDipendente.IsDayOff && apertura.ContainsKey(giorno) && chiusura.ContainsKey(giorno))
+					if (isWorkDay)
 					{
-						if (TimeSpan.TryParse(apertura[giorno], out var oraApertura) &&
-							TimeSpan.TryParse(chiusura[giorno], out var oraChiusura))
+						// Cerca gli orari personalizzati per questo giorno
+						var aperturaKey = $"apertura_{giorno}";
+						var chiusuraKey = $"chiusura_{giorno}";
+
+						if (form.Orari.ContainsKey(aperturaKey) && form.Orari.ContainsKey(chiusuraKey) &&
+							TimeSpan.TryParse(form.Orari[aperturaKey], out var apertura) &&
+							TimeSpan.TryParse(form.Orari[chiusuraKey], out var chiusura))
 						{
-							orarioDipendente.Apertura = oraApertura;
-							orarioDipendente.Chiusura = oraChiusura;
+							// Usa orari personalizzati
+							orarioDipendente.Apertura = apertura;
+							orarioDipendente.Chiusura = chiusura;
+						}
+						else if (orarioSalone != null && !orarioSalone.IsDayOff)
+						{
+							// Fallback agli orari del salone
+							orarioDipendente.Apertura = orarioSalone.Apertura;
+							orarioDipendente.Chiusura = orarioSalone.Chiusura;
+						}
+						else
+						{
+							// Fallback agli orari di default
+							orarioDipendente.Apertura = TimeSpan.FromHours(9);
+							orarioDipendente.Chiusura = TimeSpan.FromHours(18);
 						}
 					}
 
@@ -487,14 +555,21 @@ namespace HaveASeat.Controllers
 
 				await _context.SaveChangesAsync();
 				TempData["SuccessMessage"] = "Orari del dipendente aggiornati con successo!";
-
 				return RedirectToAction("Details", new { id });
 			}
 			catch (Exception ex)
 			{
 				ModelState.AddModelError("", "Errore durante l'aggiornamento degli orari: " + ex.Message);
+				ViewBag.SalonHoursJson = GetSalonHoursJson(dipendente.Salone);
 				return View(dipendente);
 			}
+		}
+
+		// Modello semplificato per il form
+		public class ScheduleForm
+		{
+			public List<int> WorkDays { get; set; } = new List<int>();
+			public Dictionary<string, string> Orari { get; set; } = new Dictionary<string, string>();
 		}
 
 		// Helper Methods

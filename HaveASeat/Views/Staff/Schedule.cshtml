@@ -55,7 +55,7 @@
                 <div class="text-right">
                     <div class="text-white text-sm">
                         <i class="fas fa-calendar-week mr-2"></i>
-                        @Model.Orari.Count(o => !o.IsDayOff) giorni lavorativi
+                        <span id="work-days-display">@Model.Orari.Count(o => !o.IsDayOff) giorni lavorativi</span>
                     </div>
                 </div>
             </div>
@@ -66,9 +66,11 @@
                 @for (int i = 0; i < 7; i++)
                 {
                     var orario = Model.Orari.FirstOrDefault(o => (int)o.Giorno == i);
+                    var orarioSalone = Model.Salone.Orari?.FirstOrDefault(o => (int)o.Giorno == i);
                     var isWorkDay = orario != null && !orario.IsDayOff;
 
                     <div class="schedule-day bg-gray-50 dark:bg-gray-700/50 rounded-xl p-6 border border-gray-200 dark:border-gray-600" data-day="@i">
+
                         <div class="flex items-center justify-between mb-4">
                             <div class="flex items-center space-x-4">
                                 <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
@@ -77,11 +79,30 @@
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">@giorni[i]</h3>
                                     <p class="text-sm text-gray-500 dark:text-gray-400" id="status-@i">
-                                        @if (isWorkDay)
+                                        @if (isWorkDay && orario != null)
                                         {
-                                            @if (orario != null)
+                                            var aperturaStr = orario.Apertura.ToString(@"hh\:mm");
+                                            var chiusuraStr = orario.Chiusura.ToString(@"hh\:mm");
+
+                                            <span>@aperturaStr - @chiusuraStr</span>
+
+                                            @if (orarioSalone != null && !orarioSalone.IsDayOff)
                                             {
-                                                <span>@orario.Apertura.ToString(@"hh\:mm") - @orario.Chiusura.ToString(@"hh\:mm")</span>
+                                                var salonAperturaStr = orarioSalone.Apertura.ToString(@"hh\:mm");
+                                                var salonChiusuraStr = orarioSalone.Chiusura.ToString(@"hh\:mm");
+
+                                                @if (aperturaStr == salonAperturaStr && chiusuraStr == salonChiusuraStr)
+                                                {
+                                                    <span class="text-gray-500 text-xs">(Come salone)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-blue-600 text-xs">(Personalizzato)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-blue-600 text-xs">(Personalizzato)</span>
                                             }
                                         }
                                         else
@@ -89,6 +110,12 @@
                                             <span>Giorno di riposo</span>
                                         }
                                     </p>
+                                    @if (orarioSalone != null && !orarioSalone.IsDayOff)
+                                    {
+                                        <p class="text-xs text-gray-400">
+                                            Salone: @orarioSalone.Apertura.ToString(@"hh\:mm") - @orarioSalone.Chiusura.ToString(@"hh\:mm")
+                                        </p>
+                                    }
                                 </div>
                             </div>
 
@@ -98,6 +125,8 @@
                                     <span class="label-text mr-3 font-medium text-gray-700 dark:text-gray-300">Giorno lavorativo</span>
                                     <input type="checkbox"
                                            class="toggle toggle-success work-day-toggle"
+                                           name="WorkDays"
+                                           value="@i"
                                            data-day="@i"
                                     @(isWorkDay ? "checked" : "")
                                            onchange="toggleWorkDay(@i)" />
@@ -115,8 +144,8 @@
                                     </span>
                                 </label>
                                 <input type="time"
-                                       name="apertura[@i]"
-                                       value="@(orario?.Apertura.ToString(@"hh\:mm") ?? "09:00")"
+                                       name="Orari[apertura_@i]"
+                                       value="@(isWorkDay && orario != null ? orario.Apertura.ToString(@"hh\:mm") : (orarioSalone?.Apertura.ToString(@"hh\:mm") ?? "09:00"))"
                                        class="input input-bordered focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:bg-gray-700 dark:text-gray-100"
                                        onchange="updateStatus(@i)" />
                             </div>
@@ -129,17 +158,23 @@
                                     </span>
                                 </label>
                                 <input type="time"
-                                       name="chiusura[@i]"
-                                       value="@(orario?.Chiusura.ToString(@"hh\:mm") ?? "18:00")"
+                                       name="Orari[chiusura_@i]"
+                                       value="@(isWorkDay && orario != null ? orario.Chiusura.ToString(@"hh\:mm") : (orarioSalone?.Chiusura.ToString(@"hh\:mm") ?? "18:00"))"
                                        class="input input-bordered focus:border-green-500 focus:ring-2 focus:ring-green-200 dark:bg-gray-700 dark:text-gray-100"
                                        onchange="updateStatus(@i)" />
                             </div>
                         </div>
 
-                        <!-- Rest Day Input -->
-                        @if (!isWorkDay)
+                        @if (orarioSalone != null && !orarioSalone.IsDayOff && isWorkDay)
                         {
-                            <input type="hidden" name="giorniRiposo" value="@i" />
+                            <div class="mt-3">
+                                <button type="button"
+                                        onclick="useSalonHours(@i)"
+                                        class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <i class="fas fa-copy mr-1"></i>
+                                    Usa orari salone (@orarioSalone.Apertura.ToString(@"hh\:mm") - @orarioSalone.Chiusura.ToString(@"hh\:mm"))
+                                </button>
+                            </div>
                         }
                     </div>
                 }
@@ -148,7 +183,11 @@
             <!-- Quick Actions -->
             <div class="mt-8 p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Azioni Rapide</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <button type="button" onclick="copyFromSalon()" class="btn btn-outline">
+                        <i class="fas fa-copy mr-2"></i>
+                        Copia dal Salone
+                    </button>
                     <button type="button" onclick="setStandardHours()" class="btn btn-outline">
                         <i class="fas fa-business-time mr-2"></i>
                         Orari Standard (9:00-18:00)
@@ -200,45 +239,59 @@
 </div>
 
 <script>
+    // Dati del salone per JavaScript
+    const salonHours = @Html.Raw(ViewBag.SalonHoursJson);
+
     function toggleWorkDay(day) {
         const timeInputs = document.getElementById(`time-inputs-${day}`);
-        const toggle = document.querySelector(`[data-day="${day}"]`);
-        const restDayInput = document.querySelector(`input[name="giorniRiposo"][value="${day}"]`);
+        const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
 
         if (toggle.checked) {
             timeInputs.classList.remove('hidden');
-            if (restDayInput) {
-                restDayInput.remove();
+            // Se non c'è un orario impostato e il salone ha orari per questo giorno, usali
+            const aperturaInput = document.querySelector(`input[name="Orari[apertura_${day}]"]`);
+            const chiusuraInput = document.querySelector(`input[name="Orari[chiusura_${day}]"]`);
+
+            if (salonHours[day] && (!aperturaInput.value || !chiusuraInput.value)) {
+                aperturaInput.value = salonHours[day].apertura;
+                chiusuraInput.value = salonHours[day].chiusura;
             }
         } else {
             timeInputs.classList.add('hidden');
-            // Add rest day input
-            const form = document.getElementById('scheduleForm');
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'giorniRiposo';
-            input.value = day;
-            form.appendChild(input);
         }
 
         updateStatus(day);
         updateSummary();
     }
 
+    function useSalonHours(day) {
+        if (salonHours[day]) {
+            document.querySelector(`input[name="Orari[apertura_${day}]"]`).value = salonHours[day].apertura;
+            document.querySelector(`input[name="Orari[chiusura_${day}]"]`).value = salonHours[day].chiusura;
+            updateStatus(day);
+        }
+    }
+
     function updateStatus(day) {
         const status = document.getElementById(`status-${day}`);
-        const toggle = document.querySelector(`[data-day="${day}"]`);
+        const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
 
         if (!toggle.checked) {
             status.textContent = 'Giorno di riposo';
             return;
         }
 
-        const apertura = document.querySelector(`input[name="apertura[${day}]"]`).value;
-        const chiusura = document.querySelector(`input[name="chiusura[${day}]"]`).value;
+        const apertura = document.querySelector(`input[name="Orari[apertura_${day}]"]`).value;
+        const chiusura = document.querySelector(`input[name="Orari[chiusura_${day}]"]`).value;
 
         if (apertura && chiusura) {
-            status.textContent = `${apertura} - ${chiusura}`;
+            // Verifica se è personalizzato confrontando con il salone
+            let isCustom = true;
+            if (salonHours[day]) {
+                isCustom = apertura !== salonHours[day].apertura || chiusura !== salonHours[day].chiusura;
+            }
+
+            status.innerHTML = `${apertura} - ${chiusura} ${isCustom ? '<span class="text-blue-600 text-xs">(Personalizzato)</span>' : '<span class="text-gray-500 text-xs">(Come salone)</span>'}`;
         } else {
             status.textContent = 'Orari non impostati';
         }
@@ -251,12 +304,12 @@
         let totalMinutes = 0;
 
         for (let day = 0; day < 7; day++) {
-            const toggle = document.querySelector(`[data-day="${day}"]`);
-            if (toggle.checked) {
+            const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
+            if (toggle && toggle.checked) {
                 workDays++;
 
-                const apertura = document.querySelector(`input[name="apertura[${day}]"]`).value;
-                const chiusura = document.querySelector(`input[name="chiusura[${day}]"]`).value;
+                const apertura = document.querySelector(`input[name="Orari[apertura_${day}]"]`)?.value;
+                const chiusura = document.querySelector(`input[name="Orari[chiusura_${day}]"]`)?.value;
 
                 if (apertura && chiusura) {
                     const start = new Date(`2000-01-01T${apertura}`);
@@ -270,6 +323,7 @@
         }
 
         document.getElementById('work-days-count').textContent = workDays;
+        document.getElementById('work-days-display').textContent = `${workDays} giorni lavorativi`;
 
         const totalHours = Math.floor(totalMinutes / 60);
         const remainingMinutes = totalMinutes % 60;
@@ -279,13 +333,48 @@
         document.getElementById('average-hours').textContent = `${averageHours.toFixed(1)}h`;
     }
 
-    // Quick action functions
+    function copyFromSalon() {
+        for (let day = 0; day < 7; day++) {
+            const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
+
+            if (salonHours[day]) {
+                // Imposta come giorno lavorativo
+                if (!toggle.checked) {
+                    toggle.checked = true;
+                    toggleWorkDay(day);
+                }
+
+                // Imposta gli orari del salone
+                document.querySelector(`input[name="Orari[apertura_${day}]"]`).value = salonHours[day].apertura;
+                document.querySelector(`input[name="Orari[chiusura_${day}]"]`).value = salonHours[day].chiusura;
+            } else {
+                // Se il salone non ha orari per questo giorno, impostalo come riposo
+                if (toggle.checked) {
+                    toggle.checked = false;
+                    toggleWorkDay(day);
+                }
+            }
+
+            updateStatus(day);
+        }
+
+        updateSummary();
+
+        Swal.fire({
+            icon: 'success',
+            title: '✅ Orari Copiati!',
+            text: 'Gli orari del salone sono stati applicati',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    }
+
     function setStandardHours() {
         for (let day = 0; day < 7; day++) {
-            const toggle = document.querySelector(`[data-day="${day}"]`);
-            if (toggle.checked) {
-                document.querySelector(`input[name="apertura[${day}]"]`).value = '09:00';
-                document.querySelector(`input[name="chiusura[${day}]"]`).value = '18:00';
+            const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
+            if (toggle && toggle.checked) {
+                document.querySelector(`input[name="Orari[apertura_${day}]"]`).value = '09:00';
+                document.querySelector(`input[name="Orari[chiusura_${day}]"]`).value = '18:00';
                 updateStatus(day);
             }
         }
@@ -293,10 +382,9 @@
     }
 
     function setWeekendOff() {
-        // Sabato (5) e Domenica (6)
         [5, 6].forEach(day => {
-            const toggle = document.querySelector(`[data-day="${day}"]`);
-            if (toggle.checked) {
+            const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
+            if (toggle && toggle.checked) {
                 toggle.checked = false;
                 toggleWorkDay(day);
             }
@@ -305,28 +393,12 @@
 
     function setAllWorkDays() {
         for (let day = 0; day < 7; day++) {
-            const toggle = document.querySelector(`[data-day="${day}"]`);
-            if (!toggle.checked) {
+            const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
+            if (toggle && !toggle.checked) {
                 toggle.checked = true;
                 toggleWorkDay(day);
             }
         }
-    }
-
-    function copyFromSalon() {
-        Swal.fire({
-            title: '📋 Copia Orari Salone',
-            text: 'Vuoi copiare gli orari di apertura del salone come base per questo dipendente?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Copia Orari',
-            cancelButtonText: 'Annulla',
-            confirmButtonColor: '#10b981'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire('✅ Orari Copiati!', 'Gli orari del salone sono stati applicati', 'success');
-            }
-        });
     }
 
     function resetSchedule() {
@@ -340,19 +412,32 @@
             confirmButtonColor: '#f59e0b'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Reset all toggles and inputs
                 for (let day = 0; day < 7; day++) {
-                    const toggle = document.querySelector(`[data-day="${day}"]`);
-                    toggle.checked = false;
-                    toggleWorkDay(day);
+                    const toggle = document.querySelector(`input[data-day="${day}"].work-day-toggle`);
+                    if (toggle) {
+                        toggle.checked = false;
+                        toggleWorkDay(day);
+                    }
                 }
-                Swal.fire('✅ Reset Completato!', 'Tutti gli orari sono stati azzerati', 'success');
+
+                updateSummary();
+
+                Swal.fire({
+                    icon: 'success',
+                    title: '✅ Reset Completato!',
+                    text: 'Tutti gli orari sono stati azzerati',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             }
         });
     }
 
-    // Initialize summary on page load
+    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
+        for (let day = 0; day < 7; day++) {
+            updateStatus(day);
+        }
         updateSummary();
     });
 </script>
