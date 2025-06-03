@@ -420,9 +420,8 @@ else
     </div>
 }
 
+<script src="~/js/promotion.js"></script>
 <script>
-    console.log('Script Index caricato');
-
     // Funzioni di filtro
     function filterServizi(type) {
         const cards = document.querySelectorAll('.servizio-card');
@@ -443,64 +442,54 @@ else
         });
     }
 
-    // Nuova funzione togglePromotion con debug
+    // Funzione togglePromotion migliorata
     function togglePromotion(servizioId) {
-        console.log('togglePromotion chiamata con servizioId:', servizioId);
-
         const url = `/Servizio/GetPromotionModal/${servizioId}`;
-        console.log('URL chiamata:', url);
 
         fetch(url)
             .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response ok:', response.ok);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
                 return response.text();
             })
             .then(html => {
-                console.log('HTML ricevuto (primi 200 caratteri):', html.substring(0, 200));
-
                 // Rimuovi eventuali modal esistenti
                 const existingModal = document.getElementById('promotionModal');
                 if (existingModal) {
-                    console.log('Rimuovo modal esistente');
                     existingModal.remove();
                 }
 
                 // Aggiungi il nuovo modal
                 document.body.insertAdjacentHTML('beforeend', html);
-                console.log('Modal aggiunto al DOM');
 
                 // Verifica che il modal sia stato aggiunto
                 const newModal = document.getElementById('promotionModal');
-                console.log('Modal nel DOM:', newModal ? 'SI' : 'NO');
+
+                if (newModal) {
+                    // Aggiungi event listeners per chiusura modal
+                    newModal.addEventListener('click', function(e) {
+                        if (e.target === this) {
+                            window.closeModal();
+                        }
+                    });
+
+                    // ESC key
+                    document.addEventListener('keydown', function escHandler(e) {
+                        if (e.key === 'Escape' && document.getElementById('promotionModal')) {
+                            window.closeModal();
+                            document.removeEventListener('keydown', escHandler);
+                        }
+                    });
+                }
             })
             .catch(error => {
-                console.error('Errore fetch:', error);
-                Swal.fire('Errore', 'Impossibile caricare il modal: ' + error.message, 'error');
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Errore', 'Impossibile caricare il modal: ' + error.message, 'error');
+                } else {
+                    alert('Errore: ' + error.message);
+                }
             });
     }
-
-    // Rendi la funzione globale
-    window.togglePromotion = togglePromotion;
-    console.log('togglePromotion definita globalmente');
-
-    // Auto-dismiss degli alert
-    function dismissAlerts() {
-        setTimeout(function() {
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                alert.classList.add('opacity-0', '-translate-y-4');
-                setTimeout(() => alert.remove(), 300);
-            });
-        }, 5000);
-    }
-
-    // Inizializzazione
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM caricato');
-        dismissAlerts();
-    });
-
-    // Test immediato
-    console.log('Fine script, togglePromotion è:', typeof window.togglePromotion);
 </script>

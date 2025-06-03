@@ -2,6 +2,9 @@
 
 @{
     Layout = "_DashboardLayout";
+    var prezzoEffettivo = Model.IsPromotion && Model.DataFinePromozione > DateTime.Now ? Model.PrezzoPromozione : Model.Prezzo;
+    var isPromoAttiva = Model.IsPromotion && Model.DataFinePromozione > DateTime.Now;
+    var percentualeSconto = isPromoAttiva ? ((Model.Prezzo - Model.PrezzoPromozione) / Model.Prezzo * 100) : 0;
 }
 
 <!-- Header -->
@@ -26,11 +29,11 @@
 
     <div class="flex items-center space-x-3">
         <!-- Status Badge -->
-        @if (Model.IsPromotion && Model.DataFinePromozione > DateTime.Now)
+        @if (isPromoAttiva)
         {
             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400 animate-pulse">
                 <span class="w-2 h-2 bg-orange-400 rounded-full mr-2"></span>
-                In Promozione
+                In Promozione (-@percentualeSconto.ToString("F0")%)
             </span>
         }
         else
@@ -43,7 +46,7 @@
 
         <button onclick="togglePromotion('@Model.ServizioId')" class="inline-flex items-center px-4 py-2 @(Model.IsPromotion ? "bg-orange-600 hover:bg-orange-700 text-white" : "border border-orange-300 dark:border-orange-600 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20") text-sm font-medium rounded-lg transition-colors">
             <i class="fas fa-tag mr-2"></i>
-            @(Model.IsPromotion ? "Disattiva Promo" : "Attiva Promo")
+            @(Model.IsPromotion ? "Gestisci Promo" : "Attiva Promo")
         </button>
         <a href="/Servizio/Edit/@Model.ServizioId" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <i class="fas fa-edit mr-2"></i>
@@ -54,17 +57,41 @@
 
 <!-- Stats Cards -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+    <!-- Card Prezzo - Mostra prezzo effettivo -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 @(isPromoAttiva ? "ring-2 ring-orange-200 dark:ring-orange-800" : "")">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Prezzo</p>
-                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">€@Model.Prezzo.ToString("F2")</p>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    @(isPromoAttiva ? "Prezzo Promozionale" : "Prezzo")
+                </p>
+                <div class="flex items-baseline space-x-2">
+                    <p class="text-3xl font-bold @(isPromoAttiva ? "text-orange-600 dark:text-orange-400" : "text-gray-900 dark:text-gray-100")">
+                        €@prezzoEffettivo.ToString("F2")
+                    </p>
+                    @if (isPromoAttiva)
+                    {
+                        <p class="text-lg text-gray-500 dark:text-gray-400 line-through">
+                            €@Model.Prezzo.ToString("F2")
+                        </p>
+                    }
+                </div>
             </div>
-            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                <i class="fas fa-euro-sign text-green-600 dark:text-green-400"></i>
+            <div class="w-12 h-12 @(isPromoAttiva ? "bg-orange-100 dark:bg-orange-900/30" : "bg-green-100 dark:bg-green-900/30") rounded-lg flex items-center justify-center">
+                <i class="fas @(isPromoAttiva ? "fa-tag text-orange-600 dark:text-orange-400" : "fa-euro-sign text-green-600 dark:text-green-400")"></i>
             </div>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">€@((Model.Prezzo / Model.Durata * 60).ToString("F2"))/ora</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            @if (isPromoAttiva)
+            {
+                <span class="text-orange-600 dark:text-orange-400 font-medium">
+                    Risparmio: €@((Model.Prezzo - prezzoEffettivo).ToString("F2")) (-@percentualeSconto.ToString("F0")%)
+                </span>
+            }
+            else
+            {
+                <span>€@((prezzoEffettivo / Model.Durata * 60).ToString("F2"))/ora</span>
+            }
+        </p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -77,7 +104,9 @@
                 <i class="fas fa-clock text-blue-600 dark:text-blue-400"></i>
             </div>
         </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">minuti di servizio</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            minuti • €@((prezzoEffettivo / Model.Durata * 60).ToString("F2"))/ora
+        </p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -98,9 +127,13 @@
             <div>
                 <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Stato</p>
                 <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                    @if (Model.IsPromotion && Model.DataFinePromozione > DateTime.Now)
+                    @if (isPromoAttiva)
                     {
                         <span class="text-orange-600 dark:text-orange-400">PROMO</span>
+                    }
+                    else if (Model.IsPromotion)
+                    {
+                        <span class="text-red-600 dark:text-red-400">SCADUTA</span>
                     }
                     else
                     {
@@ -113,16 +146,24 @@
             </div>
         </div>
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            @if (Model.IsPromotion)
+            @if (isPromoAttiva)
             {
-                @if (Model.DataFinePromozione > DateTime.Now)
-                {
-                    <span>Fino al @Model.DataFinePromozione.ToString("dd/MM/yyyy")</span>
-                }
-                else
-                {
-                    <span class="text-red-500">Scaduta</span>
-                }
+                var remainingDays = (Model.DataFinePromozione - DateTime.Now).Days;
+
+                <span class="text-orange-600 dark:text-orange-400">
+                    @if (remainingDays > 0)
+                    {
+                        @($"Ancora {remainingDays} giorni")
+                    }
+                    else
+                    {
+                        @("Ultimo giorno!")
+                    }
+                </span>
+            }
+            else if (Model.IsPromotion)
+            {
+                <span class="text-red-500">Scaduta il @Model.DataFinePromozione.ToString("dd/MM/yyyy")</span>
             }
             else
             {
@@ -161,10 +202,34 @@
                         }
                     </span>
                 </div>
-                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                    <span class="font-medium text-gray-600 dark:text-gray-400">Prezzo</span>
-                    <span class="font-semibold text-green-600 dark:text-green-400 text-lg">€@Model.Prezzo.ToString("F2")</span>
+                
+                <!-- Sezione Prezzi Migliorata -->
+                <div class="py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400 block mb-2">Prezzo</span>
+                    @if (isPromoAttiva)
+                    {
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-500 dark:text-gray-400">Prezzo standard:</span>
+                                <span class="text-gray-500 dark:text-gray-400 line-through">€@Model.Prezzo.ToString("F2")</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-orange-600 dark:text-orange-400">Prezzo promozionale:</span>
+                                <span class="font-bold text-orange-600 dark:text-orange-400 text-lg">€@Model.PrezzoPromozione.ToString("F2")</span>
+                            </div>
+                            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2 mt-2">
+                                <span class="text-xs text-orange-700 dark:text-orange-300 font-medium">
+                                    🏷️ Risparmio: €@((Model.Prezzo - Model.PrezzoPromozione).ToString("F2")) (-@percentualeSconto.ToString("F0")%)
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <span class="font-semibold text-green-600 dark:text-green-400 text-lg">€@Model.Prezzo.ToString("F2")</span>
+                    }
                 </div>
+                
                 <div class="flex justify-between items-center py-3">
                     <span class="font-medium text-gray-600 dark:text-gray-400">Durata</span>
                     <span class="font-semibold text-blue-600 dark:text-blue-400">@Model.Durata minuti</span>
@@ -238,12 +303,23 @@
                     <i class="fas fa-fire text-orange-600 dark:text-orange-400 text-xl"></i>
                 </div>
                 <div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Servizio in Promozione</h3>
-                    <p class="text-gray-600 dark:text-gray-400 text-sm">Questo servizio è attualmente promosso</p>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                        @(isPromoAttiva ? "Servizio in Promozione" : "Promozione Scaduta")
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-400 text-sm">
+                        @if (isPromoAttiva)
+                        {
+                            <span>Questo servizio è attualmente promosso con uno sconto del @percentualeSconto.ToString("F0")%</span>
+                        }
+                        else
+                        {
+                            <span>La promozione per questo servizio è scaduta</span>
+                        }
+                    </p>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-700">
                     <div class="text-orange-600 dark:text-orange-400 text-lg font-bold">
                         @Model.DataInizioPromozione.ToString("dd/MM/yyyy")
@@ -265,6 +341,12 @@
                     </div>
                     <div class="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Rimanenti</div>
                 </div>
+                <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <div class="text-orange-600 dark:text-orange-400 text-lg font-bold">
+                        -@percentualeSconto.ToString("F0")%
+                    </div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400 uppercase tracking-wide">Sconto</div>
+                </div>
             </div>
 
             @if (remainingDays <= 0)
@@ -276,9 +358,9 @@
                             <p class="text-red-800 dark:text-red-200 font-medium">Promozione Scaduta</p>
                             <p class="text-red-700 dark:text-red-300 text-sm">La promozione per questo servizio è scaduta. Aggiorna le date o disattivala.</p>
                         </div>
-                        <a href="/Servizio/Edit/@Model.ServizioId" class="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
-                            Aggiorna
-                        </a>
+                        <button onclick="togglePromotion('@Model.ServizioId')" class="ml-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                            Gestisci
+                        </button>
                     </div>
                 </div>
             }
@@ -291,6 +373,9 @@
                             <p class="text-yellow-800 dark:text-yellow-200 font-medium">Promozione in Scadenza</p>
                             <p class="text-yellow-700 dark:text-yellow-300 text-sm">La promozione scadrà tra @remainingDays giorni. Considera di estenderla.</p>
                         </div>
+                        <button onclick="togglePromotion('@Model.ServizioId')" class="ml-auto px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm font-medium rounded-lg transition-colors">
+                            Estendi
+                        </button>
                     </div>
                 </div>
             }
@@ -315,7 +400,7 @@
 
         <button onclick="togglePromotion('@Model.ServizioId')" class="inline-flex items-center justify-center px-4 py-3 @(Model.IsPromotion ? "bg-orange-600 hover:bg-orange-700" : "bg-yellow-600 hover:bg-yellow-700") text-white font-medium rounded-lg transition-colors">
             <i class="fas fa-tag mr-2"></i>
-            @(Model.IsPromotion ? "Disattiva" : "Attiva") Promo
+            @(Model.IsPromotion ? "Gestisci" : "Attiva") Promo
         </button>
 
         <a href="/Staff/Index?saloneId=@Model.SaloneId" class="inline-flex items-center justify-center px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
@@ -325,8 +410,8 @@
     </div>
 </div>
 
+<script src="~/js/promotion.js"></script>
 <script>
-    // Nuova funzione togglePromotion che apre il modal
     function togglePromotion(servizioId) {
         fetch(`/Servizio/GetPromotionModal/${servizioId}`)
             .then(response => response.text())
