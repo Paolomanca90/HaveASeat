@@ -175,17 +175,34 @@ else
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Servizi attivi</p>
         </div>
 
+        <!-- Sostituisci la card "Prezzo Medio" nelle statistiche con questa -->
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Prezzo Medio</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">€@Model.Average(s => s.Prezzo).ToString("F0")</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                        €@{
+                            var prezzoMedio = Model.Average(s => s.IsPromotion && s.DataFinePromozione > DateTime.Now ? s.PrezzoPromozione : s.Prezzo);
+                        }@prezzoMedio.ToString("F0")
+                    </p>
                 </div>
                 <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-euro-sign text-green-600 dark:text-green-400"></i>
                 </div>
             </div>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Prezzo medio servizi</p>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                @{
+                    var serviziInPromo = Model.Count(s => s.IsPromotion && s.DataFinePromozione > DateTime.Now);
+                }
+                @if (serviziInPromo > 0)
+                {
+                    <span>Include @serviziInPromo prezzi promozionali</span>
+                }
+                else
+                {
+                    <span>Prezzo medio servizi</span>
+                }
+            </p>
         </div>
 
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -222,6 +239,7 @@ else
             <div class="flex items-center space-x-3">
                 <div class="relative">
                     <form method="get" class="flex items-center">
+                        @Html.AntiForgeryToken()
                         <input type="hidden" name="saloneId" value="@salone.SaloneId" />
                         <input type="text" name="search" value="@ViewContext.HttpContext.Request.Query["search"]" placeholder="Cerca servizi..." class="input input-bordered input-sm w-64 pl-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
@@ -277,10 +295,29 @@ else
                         <!-- Pricing & Duration -->
                         <div class="grid grid-cols-2 gap-4 mb-6">
                             <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
-                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                    €@servizio.Prezzo.ToString("F2")
-                                </div>
-                                <div class="text-xs text-gray-600 dark:text-gray-400">Prezzo</div>
+                                @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                                {
+                                    <!-- Prezzo in promozione -->
+                                    <div class="space-y-1">
+                                        <div class="text-xl font-bold text-orange-600 dark:text-orange-400">
+                                            €@servizio.PrezzoPromozione.ToString("F2")
+                                        </div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400 line-through">
+                                            €@servizio.Prezzo.ToString("F2")
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-orange-600 dark:text-orange-400 font-medium">
+                                        Prezzo Promo
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- Prezzo normale -->
+                                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                        €@servizio.Prezzo.ToString("F2")
+                                    </div>
+                                    <div class="text-xs text-gray-600 dark:text-gray-400">Prezzo</div>
+                                }
                             </div>
                             <div class="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                                 <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -384,6 +421,8 @@ else
 }
 
 <script>
+    console.log('Script Index caricato');
+
     // Funzioni di filtro
     function filterServizi(type) {
         const cards = document.querySelectorAll('.servizio-card');
@@ -404,37 +443,46 @@ else
         });
     }
 
-    // Toggle promozione
+    // Nuova funzione togglePromotion con debug
     function togglePromotion(servizioId) {
-        fetch(`/Servizio/TogglePromotion/${servizioId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: data.message,
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire('Errore', data.message, 'error');
-            }
-        })
-        .catch(() => {
-            Swal.fire('Errore', 'Si è verificato un errore di rete.', 'error');
-        });
+        console.log('togglePromotion chiamata con servizioId:', servizioId);
+
+        const url = `/Servizio/GetPromotionModal/${servizioId}`;
+        console.log('URL chiamata:', url);
+
+        fetch(url)
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                return response.text();
+            })
+            .then(html => {
+                console.log('HTML ricevuto (primi 200 caratteri):', html.substring(0, 200));
+
+                // Rimuovi eventuali modal esistenti
+                const existingModal = document.getElementById('promotionModal');
+                if (existingModal) {
+                    console.log('Rimuovo modal esistente');
+                    existingModal.remove();
+                }
+
+                // Aggiungi il nuovo modal
+                document.body.insertAdjacentHTML('beforeend', html);
+                console.log('Modal aggiunto al DOM');
+
+                // Verifica che il modal sia stato aggiunto
+                const newModal = document.getElementById('promotionModal');
+                console.log('Modal nel DOM:', newModal ? 'SI' : 'NO');
+            })
+            .catch(error => {
+                console.error('Errore fetch:', error);
+                Swal.fire('Errore', 'Impossibile caricare il modal: ' + error.message, 'error');
+            });
     }
+
+    // Rendi la funzione globale
+    window.togglePromotion = togglePromotion;
+    console.log('togglePromotion definita globalmente');
 
     // Auto-dismiss degli alert
     function dismissAlerts() {
@@ -449,6 +497,10 @@ else
 
     // Inizializzazione
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM caricato');
         dismissAlerts();
     });
+
+    // Test immediato
+    console.log('Fine script, togglePromotion è:', typeof window.togglePromotion);
 </script>

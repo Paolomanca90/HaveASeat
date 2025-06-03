@@ -326,35 +326,21 @@
 </div>
 
 <script>
-    // Toggle promozione
+    // Nuova funzione togglePromotion che apre il modal
     function togglePromotion(servizioId) {
-        fetch(`/Servizio/TogglePromotion/${servizioId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: data.message,
-                    showConfirmButton: false,
-                    timer: 2000,
-                    timerProgressBar: true
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire('Errore', data.message, 'error');
-            }
-        })
-        .catch(() => {
-            Swal.fire('Errore', 'Si è verificato un errore di rete.', 'error');
-        });
+        fetch(`/Servizio/GetPromotionModal/${servizioId}`)
+            .then(response => response.text())
+            .then(html => {
+                // Rimuovi eventuali modal esistenti
+                const existingModal = document.getElementById('promotionModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                // Aggiungi il nuovo modal
+                document.body.insertAdjacentHTML('beforeend', html);
+            })
+            .catch(() => {
+                Swal.fire('Errore', 'Impossibile caricare il modal.', 'error');
+            });
     }
 </script>

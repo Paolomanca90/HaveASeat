@@ -1,0 +1,249 @@
+﻿@model HaveASeat.Models.Servizio
+
+<!-- Modal Gestione Promozione -->
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center" id="promotionModal">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    @(Model.IsPromotion ? "Modifica Promozione" : "Attiva Promozione")
+                </h3>
+                <button type="button" id="closeModalBtn" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="promotionForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="servizioId" value="@Model.ServizioId">
+
+                <!-- Prezzi attuali -->
+                <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">Prezzi Attuali</h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Prezzo Standard</label>
+                            <div class="text-lg font-bold text-gray-900 dark:text-gray-100">€@Model.Prezzo.ToString("F2")</div>
+                        </div>
+                        @if (Model.IsPromotion)
+                        {
+                            <div>
+                                <label class="text-sm font-medium text-gray-600 dark:text-gray-400">Prezzo Promo Attuale</label>
+                                <div class="text-lg font-bold text-orange-600 dark:text-orange-400">€@Model.PrezzoPromozione.ToString("F2")</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (Model.IsPromotion)
+                {
+                    <!-- Opzioni per promozione attiva -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                            <div>
+                                <div class="font-medium text-gray-900 dark:text-gray-100">Promozione Attiva</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Scade il @Model.DataFinePromozione.ToString("dd/MM/yyyy")</div>
+                            </div>
+                            <button type="button" id="disattivaPromoBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                Disattiva
+                            </button>
+                        </div>
+
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <h4 class="font-medium text-gray-900 dark:text-gray-100 mb-3">Modifica Promozione</h4>
+                        </div>
+                    </div>
+                }
+
+                <!-- Form per nuova promozione o modifica -->
+                <div class="space-y-4">
+                    <div>
+                        <label for="prezzoPromozione" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Prezzo Promozionale
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">€</span>
+                            <input type="number"
+                                   id="prezzoPromozione"
+                                   step="0.01"
+                                   min="0.01"
+                                   max="@(Model.Prezzo - 0.01m)"
+                                   value="@(Model.IsPromotion ? Model.PrezzoPromozione : "")"
+                                   placeholder="0.00"
+                                   class="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Deve essere inferiore a €@Model.Prezzo.ToString("F2")
+                        </p>
+                    </div>
+
+                    <div>
+                        <label for="dataFinePromozione" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Data Fine Promozione
+                        </label>
+                        <input type="date"
+                               id="dataFinePromozione"
+                               min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                               value="@(Model.IsPromotion ? Model.DataFinePromozione.ToString("yyyy-MM-dd") : DateTime.Now.AddDays(7).ToString("yyyy-MM-dd"))"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+
+                    <!-- Calcolo sconto -->
+                    <div id="scontoInfo" class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800" style="display: none;">
+                        <div class="text-sm font-medium text-green-800 dark:text-green-200">
+                            Sconto: <span id="percentualeSconto"></span>
+                        </div>
+                        <div class="text-xs text-green-600 dark:text-green-400">
+                            Risparmio: €<span id="risparmio"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" id="cancelBtn" class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Annulla
+                    </button>
+                    <button type="button" id="submitBtn" class="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors">
+                        @(Model.IsPromotion ? "Aggiorna" : "Attiva") Promozione
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Funzioni globali
+    window.closePromotionModal = function() {
+        const modal = document.getElementById('promotionModal');
+        if (modal) {
+            modal.remove();
+        }
+    };
+
+    window.disattivaPromozione = function() {
+        const servizioId = document.getElementById('servizioId').value;
+
+        const requestData = {
+            ServizioId: servizioId,
+            IsPromotion: false
+        };
+
+        fetch('/Servizio/TogglePromotion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: data.message,
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(() => {
+                    closePromotionModal();
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Errore', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            Swal.fire('Errore', 'Si è verificato un errore di rete.', 'error');
+        });
+    };
+
+    window.function attivaPromozione() {
+        const servizioId = document.getElementById('servizioId').value;
+        const prezzoPromozione = parseFloat(document.getElementById('prezzoPromozione').value);
+        const dataFinePromozione = document.getElementById('dataFinePromozione').value;
+
+        if (!prezzoPromozione || !dataFinePromozione) {
+            Swal.fire('Errore', 'Tutti i campi sono obbligatori', 'error');
+            return;
+        }
+
+        const requestData = {
+            ServizioId: servizioId,
+            IsPromotion: true,
+            PrezzoPromozione: prezzoPromozione,
+            DataFinePromozione: dataFinePromozione
+        };
+
+        fetch('/Servizio/TogglePromotion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+            },
+            body: JSON.stringify(requestData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: data.message,
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                }).then(() => {
+                    closePromotionModal();
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Errore', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Fetch error:', error);
+            Swal.fire('Errore', 'Si è verificato un errore di rete.', 'error');
+        });
+    };
+
+    // Inizializzazione quando il DOM è pronto
+    document.addEventListener('DOMContentLoaded', function() {
+        const prezzoStandard = @Model.Prezzo;
+
+        // Calcola e mostra lo sconto
+        function calcolaSconto() {
+            const prezzoPromo = parseFloat(document.getElementById('prezzoPromozione').value);
+            const scontoInfo = document.getElementById('scontoInfo');
+
+            if (prezzoPromo && prezzoPromo < prezzoStandard) {
+                const risparmio = prezzoStandard - prezzoPromo;
+                const percentuale = ((risparmio / prezzoStandard) * 100).toFixed(1);
+
+                document.getElementById('percentualeSconto').textContent = percentuale + '%';
+                document.getElementById('risparmio').textContent = risparmio.toFixed(2);
+                scontoInfo.style.display = 'block';
+            } else {
+                scontoInfo.style.display = 'none';
+            }
+        }
+
+        // Event listeners
+        document.getElementById('prezzoPromozione')?.addEventListener('input', calcolaSconto);
+        document.getElementById('disattivaPromoBtn')?.addEventListener('click', window.disattivaPromozione);
+        document.getElementById('closeModalBtn')?.addEventListener('click', window.closePromotionModal);
+        document.getElementById('cancelBtn')?.addEventListener('click', window.closePromotionModal);
+        document.getElementById('submitBtn')?.addEventListener('click', attivaPromozione);
+
+        // Calcola lo sconto iniziale se è una promozione attiva
+    @if (Model.IsPromotion)
+    {
+        <text>calcolaSconto();</text>
+    }
+    });
+</script>

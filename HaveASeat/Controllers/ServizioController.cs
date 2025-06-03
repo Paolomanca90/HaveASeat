@@ -1,5 +1,6 @@
 ﻿using HaveASeat.Data;
 using HaveASeat.Models;
+using HaveASeat.Utilities.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -289,15 +290,30 @@ namespace HaveASeat.Controllers
 			return RedirectToAction("Index", new { saloneId });
 		}
 
-		// POST: Servizio/TogglePromotion
-		[HttpPost]
-		public async Task<IActionResult> TogglePromotion(Guid id)
+		[HttpGet]
+		public async Task<IActionResult> GetPromotionModal(Guid id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
 			var servizio = await _context.Servizio
 				.Include(s => s.Salone)
 				.FirstOrDefaultAsync(s => s.ServizioId == id && s.Salone.ApplicationUserId == userId);
+
+			if (servizio == null)
+			{
+				return NotFound();
+			}
+
+			return PartialView("_PromotionModal", servizio);
+		}
+
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> TogglePromotion([FromBody] TogglePromotionDto dto)
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var servizio = await _context.Servizio
+				.Include(s => s.Salone)
+				.FirstOrDefaultAsync(s => s.ServizioId == dto.ServizioId && s.Salone.ApplicationUserId == userId);
 
 			if (servizio == null)
 			{
@@ -306,15 +322,40 @@ namespace HaveASeat.Controllers
 
 			try
 			{
-				servizio.IsPromotion = !servizio.IsPromotion;
-
-				if (servizio.IsPromotion)
+				if (dto.IsPromotion)
 				{
-					// Se attiva la promozione, imposta date di default se non sono già impostate
-					if (servizio.DataInizioPromozione == default)
-						servizio.DataInizioPromozione = DateTime.Now;
-					if (servizio.DataFinePromozione <= servizio.DataInizioPromozione)
-						servizio.DataFinePromozione = DateTime.Now.AddDays(30);
+					// Attiva promozione
+					if (!dto.PrezzoPromozione.HasValue || !dto.DataFinePromozione.HasValue)
+					{
+						return Json(new { success = false, message = "Prezzo e data di fine promozione sono obbligatori" });
+					}
+
+					if (dto.PrezzoPromozione.Value <= 0)
+					{
+						return Json(new { success = false, message = "Il prezzo promozionale deve essere maggiore di zero" });
+					}
+
+					if (dto.PrezzoPromozione.Value >= servizio.Prezzo)
+					{
+						return Json(new { success = false, message = "Il prezzo promozionale deve essere inferiore al prezzo standard" });
+					}
+
+					if (dto.DataFinePromozione.Value <= DateTime.Now)
+					{
+						return Json(new { success = false, message = "La data di fine deve essere futura" });
+					}
+
+					// Attiva la promozione
+					servizio.IsPromotion = true;
+					servizio.PrezzoPromozione = dto.PrezzoPromozione.Value;
+					servizio.DataInizioPromozione = DateTime.Now;
+					servizio.DataFinePromozione = dto.DataFinePromozione.Value;
+				}
+				else
+				{
+					// Disattiva promozione
+					servizio.IsPromotion = false;
+					servizio.PrezzoPromozione = 0;
 				}
 
 				await _context.SaveChangesAsync();
@@ -323,7 +364,9 @@ namespace HaveASeat.Controllers
 				{
 					success = true,
 					isPromotion = servizio.IsPromotion,
-					message = servizio.IsPromotion ? "Promozione attivata" : "Promozione disattivata"
+					prezzoStandard = servizio.Prezzo,
+					prezzoPromozione = servizio.PrezzoPromozione,
+					message = servizio.IsPromotion ? "Promozione attivata con successo" : "Promozione disattivata"
 				});
 			}
 			catch (Exception ex)
