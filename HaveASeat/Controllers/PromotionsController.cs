@@ -49,7 +49,6 @@ namespace HaveASeat.Controllers
 			}
 
 			var salone = await _context.Salone
-				.Include(s => s.Servizi.Where(serv => serv.IsPromotion))
 				.Include(s => s.Servizi)
 					.ThenInclude(serv => serv.DipendenteServizi)
 						.ThenInclude(ds => ds.Dipendente)
@@ -71,19 +70,14 @@ namespace HaveASeat.Controllers
 				.Where(s => s.IsPromotion && s.DataFinePromozione > DateTime.Now)
 				.ToList();
 
-			var promozioniScadute = salone.Servizi
-				.Where(s => s.IsPromotion && s.DataFinePromozione <= DateTime.Now)
-				.ToList();
-
 			var serviziSenzaPromo = salone.Servizi
 				.Where(s => !s.IsPromotion)
 				.ToList();
 
 			ViewBag.PromozioniAttive = promozioniAttive;
-			ViewBag.PromozioniScadute = promozioniScadute;
 			ViewBag.ServiziSenzaPromo = serviziSenzaPromo;
 
-			return View(salone.Servizi.Where(s => s.IsPromotion).OrderByDescending(s => s.DataInizioPromozione).ToList());
+			return View(salone.Servizi.ToList());
 		}
 
 		// POST: Promotions/ActivatePromotion
