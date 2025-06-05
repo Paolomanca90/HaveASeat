@@ -14,6 +14,8 @@ namespace HaveASeat.Models
 		public Guid? DipendenteId { get; set; } // ID del dipendente assegnato all'appuntamento (opzionale)
 		public DateTime Data { get; set; } // Data dell'appuntamento
 		public StatoAppuntamento Stato { get; set; } // Stato dell'appuntamento (in attesa, confermato, annullato, ecc.)
+		public Guid? ServizioId { get; set; }
+		public Servizio? Servizio { get; set; }
 		public Salone Salone { get; set; } = new Salone();
 		public ApplicationUser ApplicationUser { get; set; } = new ApplicationUser();
 		public Slot Slot { get; set; } = new Slot();

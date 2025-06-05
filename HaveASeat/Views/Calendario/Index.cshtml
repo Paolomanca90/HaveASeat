@@ -1,0 +1,527 @@
+﻿@using HaveASeat.Utilities.Enum
+@model HaveASeat.ViewModels.CalendarioViewModel
+
+@{
+    Layout = "_DashboardLayout";
+    var oggi = DateTime.Today;
+}
+
+<!-- Header -->
+<div class="bg-white p-6 rounded-xl shadow-sm mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <!-- Today Button -->
+            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" onclick="vaiOggi()">
+                Oggi
+            </button>
+            
+            <!-- Navigation -->
+            <div class="flex items-center gap-2">
+                <button class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors" onclick="cambiaGiorno(-1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="text-lg font-semibold px-4 text-gray-900">
+                    @Model.DataSelezionata.ToString("dddd, dd MMM yyyy")
+                </span>
+                <button class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors" onclick="cambiaGiorno(1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <!-- Selettore Salone -->
+            @if (Model.HasMultipleSedi)
+            {
+                <select id="saloneSelector" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    @foreach (var salone in Model.Saloni)
+                    {
+                        <option value="@salone.SaloneId" selected="@(salone.SaloneId == Model.SaloneCorrente.SaloneId ? "selected" : "")">
+                            @salone.Nome
+                        </option>
+                    }
+                </select>
+            }
+
+            <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2" onclick="nuovoAppuntamento()">
+                <i class="fas fa-plus"></i>
+                Nuovo Appuntamento
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar Grid -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+    <!-- Header con foto dipendenti -->
+    <div class="grid border-b border-gray-200" style="grid-template-columns: 80px repeat(@Model.Dipendenti.Count, 1fr);">
+        <!-- Colonna orario vuota -->
+        <div class="bg-gray-50 p-4"></div>
+        
+        <!-- Headers dipendenti -->
+        @foreach (var dipendente in Model.Dipendenti)
+        {
+            <div class="bg-gray-50 p-4 text-center border-r border-gray-200 last:border-r-0">
+                <!-- Avatar con iniziali -->
+                <div class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-semibold mb-2 mx-auto">
+                    @dipendente.ApplicationUser.Nome.Substring(0, 1)@dipendente.ApplicationUser.Cognome.Substring(0, 1)
+                </div>
+                <div class="font-semibold text-sm text-gray-900">@dipendente.ApplicationUser.Nome</div>
+                <div class="text-xs text-gray-500">@dipendente.ApplicationUser.Cognome</div>
+            </div>
+        }
+    </div>
+
+    <!-- Contenitore con scroll per la griglia orari -->
+    <div class="max-h-screen overflow-y-auto">
+        <div class="relative">
+            <!-- Griglia base degli orari -->
+            <div class="grid" style="grid-template-columns: 80px repeat(@Model.Dipendenti.Count, 1fr);">
+                <!-- Colonna orari -->
+                <div class="bg-gray-50">
+                    @for (int h = 9; h < 18; h++)
+                    {
+                        <div class="h-20 border-b border-gray-200 flex items-start justify-center pt-2 text-xs font-medium text-gray-600">
+                            <div class="text-center">
+                                <div class="font-medium">@String.Format("{0:D2}:00", h)</div>
+                                <div class="text-xs text-gray-400 mt-0.5">@String.Format("{0:D2}:00", h)</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Colonne dipendenti - solo griglia base -->
+                @foreach (var dipendente in Model.Dipendenti)
+                {
+                    <div class="border-r border-gray-200 last:border-r-0">
+                        @for (int h = 9; h < 18; h++)
+                        {
+                            <div class="h-20 border-b border-gray-100 hover:bg-gray-50 cursor-pointer relative group transition-colors"
+                                 data-dipendente="@dipendente.DipendenteId"
+                                 data-ora="@String.Format("{0:D2}:00", h)"
+                                 onclick="nuovoAppuntamentoSlot('@Model.DataSelezionata.ToString("yyyy-MM-dd")', '@String.Format("{0:D2}:00", h)', '@dipendente.DipendenteId')">
+                                
+                                <!-- Slot vuoto con icona + al hover -->
+                                <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i class="fas fa-plus text-gray-400 text-lg"></i>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- Layer degli appuntamenti - posizionamento assoluto -->
+            <div class="absolute inset-0 pointer-events-none">
+                <div class="grid h-full" style="grid-template-columns: 80px repeat(@Model.Dipendenti.Count, 1fr);">
+                    <!-- Colonna orari vuota -->
+                    <div></div>
+                    
+                    <!-- Colonne appuntamenti per ogni dipendente -->
+                    @for (int dipIndex = 0; dipIndex < Model.Dipendenti.Count; dipIndex++)
+                    {
+                        var dipendente = Model.Dipendenti[dipIndex];
+                        <div class="relative">
+                            @{
+                                var appuntamentiDipendente = Model.Appuntamenti
+                                    .Where(a => a.Data.Date == Model.DataSelezionata.Date && 
+                                               a.DipendenteId == dipendente.DipendenteId &&
+                                               a.Stato != StatoAppuntamento.Annullato)
+                                    .OrderBy(a => a.Slot != null ? a.Slot.OraInizio : TimeSpan.Zero)
+                                    .ToList();
+                            }
+
+                            @foreach (var appuntamento in appuntamentiDipendente)
+                            {
+                                    // Trova l'ora di inizio dell'appuntamento
+                                    var oraInizioApp = appuntamento.Slot?.OraInizio ?? TimeSpan.FromHours(9);
+                                    
+                                    // Calcola in quale slot si trova (slot da 9 a 18)
+                                    var slotIndex = oraInizioApp.Hours - 9;
+                                    if (slotIndex < 0) slotIndex = 0;
+                                    if (slotIndex >= 9) slotIndex = 8;
+                                    
+                                    var topPosition = slotIndex * 80; // 80px per slot
+                                    
+                                    // Calcola durata e altezza
+                                    var durataMinuti = appuntamento.Servizio?.Durata ?? 60;
+                                    var altezzaPixel = (durataMinuti / 60.0m) * 80; // 80px per ora
+                                    
+                                    // Colori in base al tipo di servizio
+                                    var colorClass = "bg-blue-500 text-white";
+                                    if (appuntamento.Servizio != null)
+                                    {
+                                        var nomeServizio = appuntamento.Servizio.Nome.ToLower();
+                                        if (nomeServizio.Contains("taglio")) colorClass = "bg-blue-500 text-white";
+                                        else if (nomeServizio.Contains("colore") || nomeServizio.Contains("tinta")) colorClass = "bg-orange-500 text-white";
+                                        else if (nomeServizio.Contains("piega")) colorClass = "bg-green-500 text-white";
+                                        else if (nomeServizio.Contains("barba")) colorClass = "bg-purple-500 text-white";
+                                        else if (nomeServizio.Contains("massaggio")) colorClass = "bg-teal-500 text-white";
+                                        else if (nomeServizio.Contains("manicure") || nomeServizio.Contains("unghie")) colorClass = "bg-pink-500 text-white";
+                                    }
+                                    
+                                    if (appuntamento.Stato != StatoAppuntamento.Prenotato)
+                                    {
+                                        colorClass = "bg-red-500 text-white";
+                                    }
+
+                                <div class="absolute left-1 right-1 rounded-lg p-3 text-xs shadow-lg cursor-pointer pointer-events-auto @colorClass hover:shadow-xl transition-shadow"
+                                     style="top: @(topPosition + 2)px; height: @(altezzaPixel - 4)px; min-height: 60px;"
+                                     onclick="apriAppuntamento('@appuntamento.AppuntamentoId')">
+                                    
+                                    <div class="font-semibold truncate text-sm">
+                                        @appuntamento.ApplicationUser.Nome @appuntamento.ApplicationUser.Cognome
+                                    </div>
+                                    
+                                    @if (appuntamento.Servizio != null)
+                                    {
+                                        <div class="opacity-90 truncate text-xs mt-1">
+                                            @appuntamento.Servizio.Nome
+                                        </div>
+                                    }
+                                    
+                                    <div class="text-xs opacity-75 mt-1">
+                                        @(appuntamento.Slot?.OraInizio != null ? String.Format("{0:D2}:{1:D2}", appuntamento.Slot.OraInizio.Hours, appuntamento.Slot.OraInizio.Minutes) : "09:00") - @(appuntamento.Slot?.OraFine != null ? String.Format("{0:D2}:{1:D2}", appuntamento.Slot.OraFine.Hours, appuntamento.Slot.OraFine.Minutes) : "10:00")
+                                    </div>
+                                    
+                                    @if (!string.IsNullOrEmpty(appuntamento.Note))
+                                    {
+                                        <div class="text-xs opacity-75 truncate mt-1">
+                                            📝 @appuntamento.Note
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuovo Appuntamento -->
+<div id="modalNuovoAppuntamento" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">📅 Nuovo Appuntamento</h3>
+        </div>
+        
+        <form id="formNuovoAppuntamento" class="p-6 space-y-4">
+            @Html.AntiForgeryToken()
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data *</label>
+                    <input type="date" id="dataAppuntamento" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Orario *</label>
+                    <select id="orarioAppuntamento" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        <option value="">Seleziona orario</option>
+                        @for (int h = 9; h < 18; h++)
+                        {
+                            <option value="@String.Format("{0:D2}:00", h)">
+                                @String.Format("{0:D2}:00", h) - @String.Format("{0:D2}:00", h + 1)
+                            </option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
+                <input type="text" id="ricercaCliente" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Cerca cliente per nome o email..." required>
+                <input type="hidden" id="clienteSelezionato">
+                <div id="suggerimentiClienti" class="hidden bg-white border border-gray-300 rounded-lg mt-1 max-h-40 overflow-y-auto shadow-lg"></div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Dipendente *</label>
+                <select id="dipendenteAppuntamento" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                    <option value="">Seleziona dipendente</option>
+                    @foreach (var dipendente in Model.Dipendenti)
+                    {
+                        <option value="@dipendente.DipendenteId">
+                            @dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Servizio *</label>
+                <select id="servizioAppuntamento" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                    <option value="">Seleziona servizio</option>
+                    @if (Model.Servizi != null)
+                    {
+                        @foreach (var servizio in Model.Servizi)
+                        {
+                            <option value="@servizio.ServizioId" data-durata="@servizio.Durata">
+                                @servizio.Nome (@servizio.Durata min - €@servizio.Prezzo)
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                <textarea id="noteAppuntamento" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" rows="3" placeholder="Note aggiuntive..."></textarea>
+            </div>
+        </form>
+
+        <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" onclick="chiudiModal()">
+                Annulla
+            </button>
+            <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2" onclick="salvaAppuntamento()">
+                <i class="fas fa-save"></i>
+                Salva Appuntamento
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Dettagli Appuntamento -->
+<div id="modalDettagliAppuntamento" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
+        <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">👤 Dettagli Appuntamento</h3>
+        </div>
+        
+        <div id="contenutoDettagli" class="p-6 space-y-4">
+            <!-- Contenuto caricato dinamicamente -->
+        </div>
+
+        <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" onclick="chiudiModalDettagli()">
+                Chiudi
+            </button>
+            <button class="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2" onclick="modificaAppuntamento()">
+                <i class="fas fa-edit"></i>
+                Modifica
+            </button>
+            <button class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2" onclick="annullaAppuntamento()">
+                <i class="fas fa-times"></i>
+                Annulla
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variabili globali
+let dataCorrente = new Date('@Model.DataSelezionata.ToString("yyyy-MM-dd")');
+let saloneCorrente = '@Model.SaloneCorrente.SaloneId';
+let appuntamentoCorrente = null;
+
+// Navigazione
+function cambiaGiorno(direzione) {
+    dataCorrente.setDate(dataCorrente.getDate() + direzione);
+    ricaricaCalendario();
+}
+
+function vaiOggi() {
+    dataCorrente = new Date();
+    ricaricaCalendario();
+}
+
+function ricaricaCalendario() {
+    const dataStr = dataCorrente.toISOString().split('T')[0];
+    window.location.href = '@Url.Action("Index")?saloneId=' + saloneCorrente + '&data=' + dataStr;
+}
+
+// Gestione appuntamenti
+function nuovoAppuntamento() {
+    document.getElementById('modalNuovoAppuntamento').classList.remove('hidden');
+}
+
+function nuovoAppuntamentoSlot(data, orario, dipendenteId) {
+    document.getElementById('dataAppuntamento').value = data;
+    document.getElementById('orarioAppuntamento').value = orario;
+    if (dipendenteId) {
+        document.getElementById('dipendenteAppuntamento').value = dipendenteId;
+    }
+    nuovoAppuntamento();
+}
+
+function chiudiModal() {
+    document.getElementById('modalNuovoAppuntamento').classList.add('hidden');
+}
+
+function salvaAppuntamento() {
+    const data = {
+        saloneId: saloneCorrente,
+        clienteId: document.getElementById('clienteSelezionato').value,
+        orario: document.getElementById('orarioAppuntamento').value,
+        dipendenteId: document.getElementById('dipendenteAppuntamento').value,
+        servizioId: document.getElementById('servizioAppuntamento').value,
+        data: document.getElementById('dataAppuntamento').value,
+        note: document.getElementById('noteAppuntamento').value
+    };
+
+    if (!data.clienteId || !data.orario || !data.data || !data.dipendenteId || !data.servizioId) {
+        alert('Compila tutti i campi obbligatori');
+        return;
+    }
+
+    fetch('@Url.Action("CreateAppuntamento")', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            chiudiModal();
+            ricaricaCalendario();
+        } else {
+            alert('Errore: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Errore:', error);
+        alert('Errore durante la creazione dell\'appuntamento');
+    });
+}
+
+function apriAppuntamento(appuntamentoId) {
+    appuntamentoCorrente = appuntamentoId;
+    
+    fetch('@Url.Action("GetAppuntamentoDetails")?id=' + appuntamentoId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const dettagli = data.appuntamento;
+                document.getElementById('contenutoDettagli').innerHTML = 
+                    '<div class="grid grid-cols-2 gap-4">' +
+                        '<div><label class="font-semibold text-gray-700">Cliente:</label><p class="text-gray-900">' + dettagli.cliente + '</p></div>' +
+                        '<div><label class="font-semibold text-gray-700">Telefono:</label><p class="text-gray-900">' + (dettagli.telefono || 'Non specificato') + '</p></div>' +
+                        '<div><label class="font-semibold text-gray-700">Data e ora:</label><p class="text-gray-900">' + dettagli.data + ' ' + dettagli.oraInizio + ' - ' + dettagli.oraFine + '</p></div>' +
+                        '<div><label class="font-semibold text-gray-700">Dipendente:</label><p class="text-gray-900">' + (dettagli.dipendente || 'Non assegnato') + '</p></div>' +
+                        '<div><label class="font-semibold text-gray-700">Servizio:</label><p class="text-gray-900">' + (dettagli.servizio || 'Non specificato') + '</p></div>' +
+                        '<div><label class="font-semibold text-gray-700">Stato:</label><span class="inline-flex px-2 py-1 text-xs font-medium rounded-full ' + (dettagli.stato === 'Prenotato' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + dettagli.stato + '</span></div>' +
+                    '</div>' +
+                    (dettagli.note ? '<div class="mt-4"><label class="font-semibold text-gray-700">Note:</label><p class="text-gray-900 mt-1">' + dettagli.note + '</p></div>' : '');
+                document.getElementById('modalDettagliAppuntamento').classList.remove('hidden');
+            } else {
+                alert('Impossibile caricare i dettagli');
+            }
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore durante il caricamento');
+        });
+}
+
+function chiudiModalDettagli() {
+    document.getElementById('modalDettagliAppuntamento').classList.add('hidden');
+    appuntamentoCorrente = null;
+}
+
+function modificaAppuntamento() {
+    if (!appuntamentoCorrente) return;
+    alert('Funzione di modifica da implementare');
+}
+
+function annullaAppuntamento() {
+    if (!appuntamentoCorrente) return;
+    
+    if (confirm('Annullare l\'appuntamento?')) {
+        fetch('@Url.Action("DeleteAppuntamento")/' + appuntamentoCorrente, {
+            method: 'DELETE',
+            headers: {
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Appuntamento annullato');
+                chiudiModalDettagli();
+                ricaricaCalendario();
+            } else {
+                alert('Errore: ' + data.message);
+            }
+        });
+    }
+}
+
+// Ricerca clienti
+function setupRicercaClienti() {
+    const ricercaInput = document.getElementById('ricercaCliente');
+    if (!ricercaInput) return;
+    
+    ricercaInput.addEventListener('input', function() {
+        const termine = this.value;
+        if (termine.length < 2) {
+            document.getElementById('suggerimentiClienti').classList.add('hidden');
+            return;
+        }
+
+        // Chiamata AJAX per cercare i clienti
+            fetch('@Url.Action("SearchClienti")?termine=' + encodeURIComponent(termine))
+            .then(response => response.json())
+            .then(clienti => {
+                const suggerimenti = document.getElementById('suggerimentiClienti');
+                if (clienti.length > 0) {
+                    suggerimenti.innerHTML = clienti.map(cliente => 
+                        '<div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" onclick="selezionaCliente(\'' + cliente.id + '\', \'' + cliente.nome + '\')">' +
+                        '<div class="font-medium text-gray-900">' + cliente.nome + '</div>' +
+                        '<div class="text-sm text-gray-500">' + cliente.email + ' • ' + cliente.telefono + '</div>' +
+                        '</div>'
+                    ).join('');
+                    suggerimenti.classList.remove('hidden');
+                } else {
+                    suggerimenti.classList.add('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Errore ricerca clienti:', error);
+            });
+    });
+}
+
+function selezionaCliente(id, nome) {
+    document.getElementById('clienteSelezionato').value = id;
+    document.getElementById('ricercaCliente').value = nome;
+    document.getElementById('suggerimentiClienti').classList.add('hidden');
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Calendario inizializzato');
+    setupRicercaClienti();
+    
+    // Cambio salone
+    const saloneSelector = document.getElementById('saloneSelector');
+    if (saloneSelector) {
+        saloneSelector.addEventListener('change', function() {
+            saloneCorrente = this.value;
+            ricaricaCalendario();
+        });
+    }
+    
+    // Chiudi modal cliccando fuori
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'modalNuovoAppuntamento') {
+            chiudiModal();
+        }
+        if (e.target.id === 'modalDettagliAppuntamento') {
+            chiudiModalDettagli();
+        }
+        
+        // Chiudi suggerimenti clienti
+        if (!e.target.closest('#ricercaCliente') && !e.target.closest('#suggerimentiClienti')) {
+            const suggerimenti = document.getElementById('suggerimentiClienti');
+            if (suggerimenti) {
+                suggerimenti.classList.add('hidden');
+            }
+        }
+    });
+});
+</script>
