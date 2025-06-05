@@ -429,27 +429,27 @@ function executeDisablePromotion(servizioId) {
 /**
  * Apre il modal per promozioni multiple
  */
-function openBulkPromotionModal() {
-    if (!currentSaloneId) {
-        showError('Nessun salone selezionato');
-        return;
-    }
+//function openBulkPromotionModal() {
+//    if (!currentSaloneId) {
+//        showError('Nessun salone selezionato');
+//        return;
+//    }
 
-    // Carica servizi disponibili
-    loadAvailableServices()
-        .then(services => {
-            // Usa la funzione globale definita nel modal
-            if (typeof window.openBulkPromotionModal === 'function') {
-                window.openBulkPromotionModal(currentSaloneId, services);
-            } else {
-                showBulkModal(services);
-            }
-        })
-        .catch(error => {
-            console.error('Errore caricamento servizi:', error);
-            showError('Impossibile caricare i servizi disponibili');
-        });
-}
+//    // Carica servizi disponibili
+//    loadAvailableServices()
+//        .then(services => {
+//            // Usa la funzione globale definita nel modal
+//            if (typeof window.openBulkPromotionModal === 'function') {
+//                window.openBulkPromotionModal(currentSaloneId, services);
+//            } else {
+//                showBulkModal(services);
+//            }
+//        })
+//        .catch(error => {
+//            console.error('Errore caricamento servizi:', error);
+//            showError('Impossibile caricare i servizi disponibili');
+//        });
+//}
 
 /**
  * Carica servizi disponibili per promozioni

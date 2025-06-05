@@ -65,33 +65,8 @@
                 </ul>
             </div>
         }
-
-        @if (salone != null && serviziSenzaPromo.Any())
-        {
-            <button onclick="openBulkPromotionModal()" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
-                <i class="fas fa-fire mr-2"></i>
-                Promozione Multipla
-            </button>
-        }
     </div>
 </div>
-
-<!-- Messaggi -->
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success mb-6">
-        <i class="fas fa-check-circle mr-2"></i>
-        @TempData["SuccessMessage"]
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-error mb-6">
-        <i class="fas fa-exclamation-circle mr-2"></i>
-        @TempData["ErrorMessage"]
-    </div>
-}
 
 @if (salone == null)
 {
@@ -506,7 +481,6 @@ else
 
     function submitBulkPromotion() {
         const form = document.getElementById('bulkPromotionForm');
-        const formData = new FormData(form);
 
         const serviziIds = Array.from(form.querySelectorAll('input[name="serviziIds"]:checked')).map(cb => cb.value);
         const percentualeSconto = document.getElementById('percentualeSconto').value;
@@ -546,10 +520,10 @@ else
                 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
             },
             body: JSON.stringify({
-                saloneId: saloneId,
-                serviziIds: serviziIds,
-                percentualeSconto: parseFloat(percentualeSconto),
-                dataFine: dataFine
+                SaloneId: saloneId,
+                ServiziIds: serviziIds,
+                PercentualeSconto: parseFloat(percentualeSconto),
+                DataFine: dataFine
             })
         })
         .then(response => response.json())

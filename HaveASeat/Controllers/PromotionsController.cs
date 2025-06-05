@@ -196,13 +196,13 @@ namespace HaveASeat.Controllers
 		// POST: Promotions/BulkActivate
 		[HttpPost]
 		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> BulkActivate(Guid saloneId, List<Guid> serviziIds, decimal percentualeSconto, DateTime dataFine)
+		public async Task<IActionResult> BulkActivate([FromBody] BulkActivateDto dto)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 			var servizi = await _context.Servizio
 				.Include(s => s.Salone)
-				.Where(s => serviziIds.Contains(s.ServizioId) && s.Salone.ApplicationUserId == userId && s.SaloneId == saloneId)
+				.Where(s => dto.ServiziIds.Contains(s.ServizioId) && s.Salone.ApplicationUserId == userId && s.SaloneId == dto.SaloneId)
 				.ToListAsync();
 
 			if (!servizi.Any())
@@ -210,12 +210,12 @@ namespace HaveASeat.Controllers
 				return Json(new { success = false, message = "Nessun servizio trovato" });
 			}
 
-			if (percentualeSconto <= 0 || percentualeSconto >= 100)
+			if (dto.PercentualeSconto <= 0 || dto.PercentualeSconto >= 100)
 			{
 				return Json(new { success = false, message = "La percentuale di sconto deve essere tra 1 e 99" });
 			}
 
-			if (dataFine <= DateTime.Now)
+			if (dto.DataFine <= DateTime.Now)
 			{
 				return Json(new { success = false, message = "La data di fine deve essere futura" });
 			}
@@ -226,12 +226,12 @@ namespace HaveASeat.Controllers
 
 				foreach (var servizio in servizi)
 				{
-					var prezzoPromo = servizio.Prezzo * (1 - percentualeSconto / 100);
+					var prezzoPromo = servizio.Prezzo * (1 - dto.PercentualeSconto / 100);
 
 					servizio.IsPromotion = true;
 					servizio.PrezzoPromozione = prezzoPromo;
 					servizio.DataInizioPromozione = DateTime.Now;
-					servizio.DataFinePromozione = dataFine;
+					servizio.DataFinePromozione = dto.DataFine;
 
 					promozioniAttivate++;
 				}
