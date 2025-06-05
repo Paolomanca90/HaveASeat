@@ -1,0 +1,748 @@
+﻿@model List<HaveASeat.Models.Servizio>
+
+@{
+    Layout = "_DashboardLayout";
+    var salone = ViewBag.SaloneCorrente as HaveASeat.Models.Salone;
+    var saloni = ViewBag.Saloni as List<HaveASeat.Models.Salone>;
+    var hasMultipleSedi = ViewBag.HasMultipleSedi as bool? ?? false;
+    var promozioniAttive = ViewBag.PromozioniAttive as List<HaveASeat.Models.Servizio> ?? new List<HaveASeat.Models.Servizio>();
+    var serviziSenzaPromo = ViewBag.ServiziSenzaPromo as List<HaveASeat.Models.Servizio> ?? new List<HaveASeat.Models.Servizio>();
+}
+
+<!-- Header -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestione Promozioni</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">
+            @if (hasMultipleSedi)
+            {
+                <span>Gestisci le promozioni di <strong>@salone?.Nome</strong></span>
+            }
+            else
+            {
+                <span>Gestisci le promozioni del tuo salone</span>
+            }
+        </p>
+        @if (hasMultipleSedi)
+        {
+            <div class="mt-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400">
+                    <i class="fas fa-tag mr-1"></i>
+                    Hai @saloni?.Count sedi - Seleziona quella da gestire
+                </span>
+            </div>
+        }
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <!-- Selector Salone - Solo se ha più sedi -->
+        @if (hasMultipleSedi && saloni != null && saloni.Count > 1)
+        {
+            <div class="dropdown dropdown-bottom dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px]">
+                    <i class="fas fa-store mr-2"></i>
+                    <span class="truncate">@salone?.Nome</span>
+                    <i class="fas fa-chevron-down ml-2"></i>
+                </div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 dark:bg-gray-800 rounded-box z-[1] w-64 p-2 shadow-xl border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto">
+                    @foreach (var s in saloni)
+                    {
+                        <li>
+                            <a href="@Url.Action("Index", new { saloneId = s.SaloneId })"
+                               class="@(s.SaloneId == salone?.SaloneId ? "active bg-orange-50 dark:bg-orange-900/20" : "") hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-store mr-2 @(s.SaloneId == salone?.SaloneId ? "text-orange-600" : "")"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium">@s.Nome</div>
+                                    <div class="text-xs text-gray-500">@s.Citta, @s.Provincia</div>
+                                </div>
+                                @if (s.SaloneId == salone?.SaloneId)
+                                {
+                                    <i class="fas fa-check ml-auto text-green-500"></i>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        @if (salone != null && serviziSenzaPromo.Any())
+        {
+            <button onclick="openBulkPromotionModal()" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                <i class="fas fa-fire mr-2"></i>
+                Promozione Multipla
+            </button>
+        }
+    </div>
+</div>
+
+<!-- Messaggi -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success mb-6">
+        <i class="fas fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-error mb-6">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (salone == null)
+{
+    <!-- No Salon Selected State -->
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="text-center max-w-md mx-auto">
+            <div class="mx-auto mb-8">
+                <div class="w-32 h-32 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-full flex items-center justify-center">
+                    <i class="fas fa-store text-6xl text-gray-400 dark:text-gray-600"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Seleziona una sede</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                @if (hasMultipleSedi)
+                {
+                    <span>Hai più sedi registrate. Seleziona una sede dal menu a tendina per gestire le relative promozioni.</span>
+                }
+                else
+                {
+                    <span>Sembra che ci sia un problema con la selezione della sede. Riprova o contatta il supporto.</span>
+                }
+            </p>
+            @if (saloni != null && saloni.Any())
+            {
+                <a href="@Url.Action("Index", new { saloneId = saloni.First().SaloneId })" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-lg hover:from-orange-700 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Vai a @saloni.First().Nome
+                </a>
+            }
+        </div>
+    </div>
+}
+else if (!salone.Servizi.Any())
+{
+    <!-- No Services State -->
+    <div class="flex items-center justify-center min-h-[60vh]">
+        <div class="text-center max-w-md mx-auto">
+            <div class="mx-auto mb-8">
+                <div class="w-32 h-32 mx-auto bg-gradient-to-br from-orange-100 to-red-100 dark:from-orange-900/20 dark:to-red-900/20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-cut text-6xl text-gray-400 dark:text-gray-600"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Nessun servizio configurato</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+                Non hai ancora configurato nessun servizio per <strong>@salone.Nome</strong>. Devi prima aggiungere servizi per poter creare promozioni.
+            </p>
+            <a href="/Servizio/Index?saloneId=@salone.SaloneId" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                <i class="fas fa-plus mr-2"></i>
+                Aggiungi Servizi
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    @Html.AntiForgeryToken()
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Promozioni Attive</p>
+                    <p class="text-3xl font-bold text-orange-600 dark:text-orange-400">@promozioniAttive.Count</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-fire text-orange-600 dark:text-orange-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-orange-600 dark:text-orange-400 mt-2">In corso ora</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Normali</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@serviziSenzaPromo.Count</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cut text-blue-600 dark:text-blue-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Senza promozione</p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Sconto Medio</p>
+                    <p class="text-3xl font-bold text-green-600 dark:text-green-400">
+                        @{
+                            var scontoMedio = promozioniAttive.Any() ?
+                            promozioniAttive.Average(s => ((s.Prezzo - s.PrezzoPromozione) / s.Prezzo) * 100) : 0;
+                        }
+                        @scontoMedio.ToString("F0")%
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-percentage text-green-600 dark:text-green-400"></i>
+                </div>
+            </div>
+            <p class="text-sm text-green-600 dark:text-green-400 mt-2">Risparmio medio</p>
+        </div>
+    </div>
+
+    <!-- Toggle Switch per visualizzare solo servizi in promo o tutti -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-4">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">I Tuoi Servizi</h2>
+            <div class="flex items-center space-x-3">
+                <span class="text-sm text-gray-600 dark:text-gray-400">Mostra tutto</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="showOnlyPromotions" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 dark:peer-focus:ring-orange-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-orange-600"></div>
+                </label>
+                <span class="text-sm text-gray-600 dark:text-gray-400">Solo promozioni</span>
+            </div>
+        </div>
+
+        @if (serviziSenzaPromo.Any())
+        {
+            <button onclick="openBulkPromotionModal()" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <i class="fas fa-fire mr-2"></i>
+                Attiva Promozioni Multiple
+            </button>
+        }
+    </div>
+
+    <!-- Griglia Servizi Unificata -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="servizi-grid">
+        <!-- Servizi con Promozione Attiva -->
+        @foreach (var servizio in promozioniAttive)
+        {
+            var percentualeSconto = ((servizio.Prezzo - servizio.PrezzoPromozione) / servizio.Prezzo * 100);
+            var giorniRimanenti = servizio.DataFinePromozione != null ? (servizio.DataFinePromozione - DateTime.Now).Days : 0;
+
+            <div class="servizio-card servizio-promo bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl shadow-lg border-2 border-orange-200 dark:border-orange-800 overflow-hidden">
+                <!-- Badge Promozione -->
+                <div class="bg-gradient-to-r from-orange-600 to-red-600 px-4 py-2">
+                    <div class="flex items-center justify-between text-white">
+                        <span class="font-bold text-lg flex items-center">
+                            <i class="fas fa-fire mr-2"></i>
+                            -@percentualeSconto.ToString("F0")%
+                        </span>
+                        @if (servizio.DataFinePromozione != null)
+                        {
+                            <span class="text-sm">
+                                @if (giorniRimanenti > 0)
+                                {
+                                    <span>@giorniRimanenti giorni rimasti</span>
+                                }
+                                else if (giorniRimanenti == 0)
+                                {
+                                    <span class="animate-pulse">Ultimo giorno!</span>
+                                }
+                                else
+                                {
+                                    <span class="opacity-75">Scaduta</span>
+                                }
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-sm">Senza scadenza</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg mb-2">@servizio.Nome</h3>
+
+                    <!-- Prezzi -->
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="text-2xl font-bold text-orange-600 dark:text-orange-400">€@servizio.PrezzoPromozione.ToString("F2")</span>
+                        <span class="text-lg text-gray-500 line-through">€@servizio.Prezzo.ToString("F2")</span>
+                    </div>
+
+                    <!-- Info servizio -->
+                    <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
+                        <span><i class="fas fa-clock mr-1"></i>@servizio.Durata min</span>
+                        @if (servizio.DataFinePromozione != null)
+                        {
+                            <span><i class="fas fa-calendar mr-1"></i>Fino al @servizio.DataFinePromozione.ToString("dd/MM")</span>
+                        }
+                        else
+                        {
+                            <span><i class="fas fa-infinity mr-1"></i>Illimitata</span>
+                        }
+                    </div>
+
+                    <!-- Staff assegnato -->
+                    @if (servizio.DipendenteServizi.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 mb-4">
+                            @foreach (var dipServ in servizio.DipendenteServizi.Take(2))
+                            {
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400">
+                                    @dipServ.Dipendente.ApplicationUser.Nome @dipServ.Dipendente.ApplicationUser.Cognome.Substring(0, 1).
+                                </span>
+                            }
+                            @if (servizio.DipendenteServizi.Count > 2)
+                            {
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                                    +@(servizio.DipendenteServizi.Count - 2) altri
+                                </span>
+                            }
+                        </div>
+                    }
+
+                    <!-- Azioni -->
+                    <div class="flex items-center justify-between pt-4 border-t border-orange-200 dark:border-orange-800">
+                        <button onclick="extendPromotionCustom('@servizio.ServizioId')" class="inline-flex items-center px-3 py-2 text-sm font-medium text-orange-600 bg-white border border-orange-300 rounded-lg hover:bg-orange-50 transition-colors">
+                            <i class="fas fa-calendar-plus mr-1"></i>
+                            Estendi
+                        </button>
+
+                        <div class="flex space-x-2">
+                            <a href="/Servizio/Details/@servizio.ServizioId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-eye mr-1"></i>
+                                Dettagli
+                            </a>
+                            <button onclick="disablePromotionCustom('@servizio.ServizioId')" class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 bg-white border border-red-300 rounded-lg hover:bg-red-50 transition-colors">
+                                <i class="fas fa-stop mr-1"></i>
+                                Disattiva
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Servizi Senza Promozione -->
+        @foreach (var servizio in serviziSenzaPromo)
+        {
+            <div class="servizio-card servizio-normale bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow">
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg">@servizio.Nome</h3>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                            <i class="fas fa-tag mr-1"></i>
+                            Prezzo normale
+                        </span>
+                    </div>
+
+                    <!-- Prezzo attuale -->
+                    <div class="flex items-center space-x-3 mb-4">
+                        <span class="text-2xl font-bold text-gray-900 dark:text-gray-100">€@servizio.Prezzo.ToString("F2")</span>
+                        <span class="text-sm text-gray-500"><i class="fas fa-clock mr-1"></i>@servizio.Durata min</span>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(servizio.Descrizione))
+                    {
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">@servizio.Descrizione</p>
+                    }
+
+                    <!-- Staff assegnato -->
+                    @if (servizio.DipendenteServizi.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 mb-4">
+                            @foreach (var dipServ in servizio.DipendenteServizi.Take(2))
+                            {
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                                    @dipServ.Dipendente.ApplicationUser.Nome @dipServ.Dipendente.ApplicationUser.Cognome.Substring(0, 1).
+                                </span>
+                            }
+                            @if (servizio.DipendenteServizi.Count > 2)
+                            {
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400">
+                                    +@(servizio.DipendenteServizi.Count - 2) altri
+                                </span>
+                            }
+                        </div>
+                    }
+
+                    <!-- Azioni -->
+                    <div class="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button onclick="activatePromotionCustom('@servizio.ServizioId')" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-sm font-medium rounded-lg transition-colors">
+                            <i class="fas fa-fire mr-2"></i>
+                            Attiva Promo
+                        </button>
+
+                        <a href="/Servizio/Details/@servizio.ServizioId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-eye mr-1"></i>
+                            Dettagli
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Empty state quando il filtro non mostra niente -->
+    <div id="empty-state" class="hidden text-center py-12 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
+        <i class="fas fa-search text-6xl text-gray-400 mb-4"></i>
+        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Nessun risultato</h3>
+        <p class="text-gray-600 dark:text-gray-400">Cambia il filtro per vedere i servizi.</p>
+    </div>
+}
+
+<!-- Modal Promozione Multipla -->
+<div id="bulkPromotionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full mx-4">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">🔥 Promozione Multipla</h3>
+                <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" onclick="closeBulkPromotionModal()">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <form id="bulkPromotionForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="bulkSaloneId" value="@salone?.SaloneId">
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Seleziona Servizi
+                        </label>
+                        <div class="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-lg p-3 space-y-2">
+                            @foreach (var servizio in serviziSenzaPromo)
+                            {
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" name="serviziIds" value="@servizio.ServizioId" class="rounded text-orange-600">
+                                    <span class="flex-1">
+                                        <div class="font-medium text-gray-900 dark:text-gray-100">@servizio.Nome</div>
+                                        <div class="text-sm text-gray-500">€@servizio.Prezzo.ToString("F2") • @servizio.Durata min</div>
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="percentualeSconto" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Percentuale di Sconto (%)
+                        </label>
+                        <input type="number" id="percentualeSconto" min="1" max="99" value="20"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+
+                    <div>
+                        <label for="dataFinePromo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Data Fine Promozione
+                        </label>
+                        <input type="date" id="dataFinePromo"
+                               min="@DateTime.Now.AddDays(1).ToString("yyyy-MM-dd")"
+                               value="@DateTime.Now.AddDays(30).ToString("yyyy-MM-dd")"
+                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    </div>
+                </div>
+
+                <div class="flex space-x-3 mt-6">
+                    <button type="button" onclick="closeBulkPromotionModal()" class="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        Annulla
+                    </button>
+                    <button type="button" onclick="submitBulkPromotion()" class="flex-1 px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg transition-colors">
+                        Attiva Promozioni
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle per mostrare solo promozioni o tutti i servizi
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggle = document.getElementById('showOnlyPromotions');
+        const serviziGrid = document.getElementById('servizi-grid');
+        const emptyState = document.getElementById('empty-state');
+
+        toggle.addEventListener('change', function() {
+            const showOnlyPromotions = this.checked;
+            const promoCards = document.querySelectorAll('.servizio-promo');
+            const normaliCards = document.querySelectorAll('.servizio-normale');
+
+            if (showOnlyPromotions) {
+                // Mostra solo le promozioni
+                promoCards.forEach(card => card.style.display = 'block');
+                normaliCards.forEach(card => card.style.display = 'none');
+
+                // Se non ci sono promozioni, mostra empty state
+                if (promoCards.length === 0) {
+                    serviziGrid.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    emptyState.classList.remove('hidden');
+                } else {
+                    serviziGrid.style.display = 'grid';
+                    emptyState.style.display = 'none';
+                    emptyState.classList.add('hidden');
+                }
+            } else {
+                // Mostra tutti i servizi
+                promoCards.forEach(card => card.style.display = 'block');
+                normaliCards.forEach(card => card.style.display = 'block');
+                serviziGrid.style.display = 'grid';
+                emptyState.style.display = 'none';
+                emptyState.classList.add('hidden');
+            }
+        });
+    });
+
+    // Funzioni per i modali
+    function openBulkPromotionModal() {
+        document.getElementById('bulkPromotionModal').classList.remove('hidden');
+    }
+
+    function closeBulkPromotionModal() {
+        document.getElementById('bulkPromotionModal').classList.add('hidden');
+    }
+
+    function submitBulkPromotion() {
+        const form = document.getElementById('bulkPromotionForm');
+        const formData = new FormData(form);
+
+        const serviziIds = Array.from(form.querySelectorAll('input[name="serviziIds"]:checked')).map(cb => cb.value);
+        const percentualeSconto = document.getElementById('percentualeSconto').value;
+        const dataFine = document.getElementById('dataFinePromo').value;
+        const saloneId = document.getElementById('bulkSaloneId').value;
+
+        if (serviziIds.length === 0) {
+            Swal.fire('Errore', 'Seleziona almeno un servizio', 'error');
+            return;
+        }
+
+        if (!percentualeSconto || percentualeSconto < 1 || percentualeSconto > 99) {
+            Swal.fire('Errore', 'Inserisci una percentuale di sconto valida (1-99%)', 'error');
+            return;
+        }
+
+        if (!dataFine) {
+            Swal.fire('Errore', 'Seleziona una data di fine promozione', 'error');
+            return;
+        }
+
+        // Mostra loading
+        Swal.fire({
+            title: 'Attivazione in corso...',
+            text: 'Sto attivando le promozioni selezionate',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        fetch('/Promotions/BulkActivate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                saloneId: saloneId,
+                serviziIds: serviziIds,
+                percentualeSconto: parseFloat(percentualeSconto),
+                dataFine: dataFine
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeBulkPromotionModal();
+                Swal.fire({
+                    icon: 'success',
+                    title: '🔥 Promozioni Attivate!',
+                    text: data.message,
+                    confirmButtonColor: '#ea580c'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Errore', data.message, 'error');
+            }
+        })
+        .catch(error => {
+            Swal.fire('Errore', 'Si è verificato un errore di rete', 'error');
+        });
+    }
+
+    // Funzione per estendere una promozione
+    function extendPromotionCustom(servizioId) {
+        Swal.fire({
+            title: '📅 Estendi Promozione',
+            html: `
+                <div class="text-left">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Nuova Data Fine</label>
+                    <input type="date" id="nuovaDataFine" min="${new Date().toISOString().split('T')[0]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Estendi',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#ea580c',
+            preConfirm: () => {
+                const nuovaData = document.getElementById('nuovaDataFine').value;
+                if (!nuovaData) {
+                    Swal.showValidationMessage('Seleziona una data');
+                    return false;
+                }
+                return nuovaData;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch('/Promotions/ExtendPromotion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: `servizioId=${servizioId}&nuovaDataFine=${result.value}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('✅ Estesa!', 'Promozione estesa con successo', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Errore', data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire('Errore', 'Si è verificato un errore', 'error');
+                });
+            }
+        });
+    }
+
+    // Funzione per disattivare una promozione
+    function disablePromotionCustom(servizioId) {
+        Swal.fire({
+            title: '⏹ Disattivare Promozione?',
+            text: 'Il servizio tornerà al prezzo standard',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Disattiva',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#dc2626'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mostra loading
+                Swal.fire({
+                    title: 'Disattivazione in corso...',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const requestData = {
+                    servizioId: servizioId,
+                    isPromotion: false
+                };
+
+                fetch('/Servizio/TogglePromotion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('✅ Disattivata!', 'Promozione disattivata con successo', 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Errore', data.message || 'Errore durante la disattivazione', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore disattivazione promozione:', error);
+                    Swal.fire('Errore', 'Errore di rete durante la disattivazione', 'error');
+                });
+            }
+        });
+    }
+
+    // Funzione per attivare una promozione
+    function activatePromotionCustom(servizioId) {
+        // Usa la funzione esistente di promotion.js se disponibile
+        if (typeof togglePromotion === 'function') {
+            togglePromotion(servizioId, true); // true = attiva
+        } else {
+            // Fallback: mostra un modal personalizzato per attivare la promozione
+            Swal.fire({
+                title: '🔥 Attiva Promozione',
+                html: `
+                    <div class="text-left space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Percentuale di Sconto (%)</label>
+                            <input type="number" id="singlePercentualeSconto" min="1" max="99" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Fine Promozione</label>
+                            <input type="date" id="singleDataFine" min="${new Date().toISOString().split('T')[0]}" value="${new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]}" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Attiva',
+                cancelButtonText: 'Annulla',
+                confirmButtonColor: '#ea580c',
+                preConfirm: () => {
+                    const percentualeSconto = document.getElementById('singlePercentualeSconto').value;
+                    const dataFine = document.getElementById('singleDataFine').value;
+
+                    if (!percentualeSconto || percentualeSconto < 1 || percentualeSconto > 99) {
+                        Swal.showValidationMessage('Inserisci una percentuale di sconto valida (1-99%)');
+                        return false;
+                    }
+
+                    if (!dataFine) {
+                        Swal.showValidationMessage('Seleziona una data di fine');
+                        return false;
+                    }
+
+                    return { percentualeSconto, dataFine };
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Implementa qui la chiamata per attivare la singola promozione
+                    console.log('Attivazione promozione singola:', result.value);
+
+                    // Per ora usa un placeholder
+                    Swal.fire('Info', 'Funzione di attivazione promozione non ancora implementata. Usa la promozione multipla.', 'info');
+                }
+            });
+        }
+    }
+
+    // Event listeners per i modali
+    document.addEventListener('DOMContentLoaded', function() {
+        // Click outside modal to close
+        document.getElementById('bulkPromotionModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBulkPromotionModal();
+            }
+        });
+
+        // ESC key to close modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBulkPromotionModal();
+            }
+        });
+    });
+</script>
+
+<script src="~/js/promotion.js"></script>
