@@ -1,0 +1,41 @@
+﻿.sede-selector {
+    min-width: 250px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.chart-container {
+    position: relative;
+    min-height: 300px;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+}
+
+.stats-loading {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .5;
+    }
+}

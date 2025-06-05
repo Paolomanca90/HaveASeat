@@ -1,7 +1,10 @@
-﻿@model HaveASeat.Models.Salone
- 
+﻿@* @model HaveASeat.Models.Salone *@
+ @model HaveASeat.ViewModels.DashboardViewModel
 @{
     Layout = "_DashboardLayout";
+}
+@section Styles{
+<link href="/css/ReportDashboard.css" rel="stylesheet" />
 }
 <!-- Header -->
 <div class="header">
@@ -11,17 +14,49 @@
     </div>
 
     <div class="header-actions">
-        <button class="btn btn-outline">
+        @if (Model.SaloniUtente.Any())
+        {
+            <!-- Selettore Sedi -->
+            <select id="sedeSelector" class="select select-bordered sede-selector mr-4">
+                @foreach (var salone in Model.SaloniUtente)
+                {
+                    @if (salone.SaloneId == Model.SelectedSaloneId)
+                    {
+                        <option value="@salone.SaloneId" selected>
+                            @salone.Nome - @salone.Citta
+                        </option>
+                    }
+                    else
+                    {
+                        <option value="@salone.SaloneId">
+                            @salone.Nome - @salone.Citta
+                        </option>
+                    }
+                }
+            </select>
+        }
+
+        <button class="btn btn-outline" id="exportBtn">
             <i class="fas fa-download"></i> Esporta
         </button>
-        <button class="btn btn-primary">
+        <button class="btn btn-primary" onclick="window.location.href='@Url.Action("Dipendenti", "Partner")'">
             <i class="fas fa-plus"></i> Aggiungi staff
         </button>
     </div>
 </div>
-
+@if (!Model.SaloniUtente.Any())
+{
+    <!-- Messaggio per utenti senza sedi -->
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <span>Non hai ancora creato nessuna sede. Crea la tua prima sede per iniziare a utilizzare la dashboard.</span>
+    </div>
+}
+else
+{
+    
 <!-- Stats Cards -->
-<div class="dashboard-stats">
+    <div class="dashboard-stats" id="statsContainer">
     <div class="stat-card">
         <div class="stat-card-header">
             <div class="stat-card-title">Prenotazioni Oggi</div>
@@ -29,9 +64,10 @@
                 <i class="fas fa-calendar-check"></i>
             </div>
         </div>
-        <div class="stat-card-value">24</div>
-        <div class="stat-card-change change-positive">
-            <i class="fas fa-arrow-up"></i> 12% rispetto a ieri
+            <div class="stat-card-value" id="prenotazioniOggi">@Model.Stats.PrenotazioniOggi</div>
+            <div class="stat-card-change @(Model.Stats.IsPrenotazioniPositive ? "change-positive" : "change-negative")">
+                <i class="fas fa-arrow-@(Model.Stats.IsPrenotazioniPositive ? "up" : "down")"></i>
+                <span id="percPrenotazioni">@Math.Abs(Model.Stats.PercentualePrenotazioni)%</span> rispetto a ieri
         </div>
     </div>
 
@@ -42,10 +78,11 @@
                 <i class="fas fa-users"></i>
             </div>
         </div>
-        <div class="stat-card-value">8</div>
-        <div class="stat-card-change change-positive">
-            <i class="fas fa-arrow-up"></i> 5% questa settimana
-        </div>
+            <div class="stat-card-value" id="nuoviClienti">@Model.Stats.NuoviClienti</div>
+            <div class="stat-card-change @(Model.Stats.IsNuoviClientiPositive ? "change-positive" : "change-negative")">
+                <i class="fas fa-arrow-@(Model.Stats.IsNuoviClientiPositive ? "up" : "down")"></i>
+                <span id="percClienti">@Math.Abs(Model.Stats.PercentualeNuoviClienti)%</span> questa settimana
+            </div>
     </div>
 
     <div class="stat-card">
@@ -55,10 +92,11 @@
                 <i class="fas fa-euro-sign"></i>
             </div>
         </div>
-        <div class="stat-card-value">€1,240</div>
-        <div class="stat-card-change change-positive">
-            <i class="fas fa-arrow-up"></i> 8% rispetto a ieri
-        </div>
+            <div class="stat-card-value" id="incassoGiornaliero">€@Model.Stats.IncassoGiornaliero.ToString("N0")</div>
+            <div class="stat-card-change @(Model.Stats.IsIncassoPositive ? "change-positive" : "change-negative")">
+                <i class="fas fa-arrow-@(Model.Stats.IsIncassoPositive ? "up" : "down")"></i>
+                <span id="percIncasso">@Math.Abs(Model.Stats.PercentualeIncasso)%</span> rispetto a ieri
+            </div>
     </div>
 
     <div class="stat-card">
@@ -68,10 +106,11 @@
                 <i class="fas fa-clipboard-check"></i>
             </div>
         </div>
-        <div class="stat-card-value">18</div>
-        <div class="stat-card-change change-negative">
-            <i class="fas fa-arrow-down"></i> 3% rispetto a ieri
-        </div>
+            <div class="stat-card-value" id="serviziCompletati">@Model.Stats.ServiziCompletati</div>
+            <div class="stat-card-change @(Model.Stats.IsServiziPositive ? "change-positive" : "change-negative")">
+                <i class="fas fa-arrow-@(Model.Stats.IsServiziPositive ? "up" : "down")"></i>
+                <span id="percServizi">@Math.Abs(Model.Stats.PercentualeServizi)%</span> rispetto a ieri
+            </div>
     </div>
 </div>
 
@@ -79,11 +118,11 @@
 <div class="charts-section">
     <div class="chart-container">
         <div class="chart-header">
-            <div class="chart-title">Prenotazioni e Incassi</div>
+                <div class="chart-title">Prenotazioni e Incassi - @Model.SaloneCorrente?.Nome</div>
             <div class="chart-duration">
-                <button class="duration-btn">Giorno</button>
-                <button class="duration-btn active">Settimana</button>
-                <button class="duration-btn">Mese</button>
+                    <button class="duration-btn @(Model.PeriodoSelezionato == "giorno" ? "active" : "")" data-periodo="giorno">Giorno</button>
+                    <button class="duration-btn @(Model.PeriodoSelezionato == "settimana" ? "active" : "")" data-periodo="settimana">Settimana</button>
+                    <button class="duration-btn @(Model.PeriodoSelezionato == "mese" ? "active" : "")" data-periodo="mese">Mese</button>
             </div>
         </div>
         <div class="canvas-container">
@@ -96,60 +135,33 @@
             <div class="chart-title">Servizi Più Richiesti</div>
         </div>
 
-        <div class="service-item">
-            <div class="service-info">
-                <div class="service-name">Taglio e Piega</div>
-                <div class="service-bookings">34 prenotazioni</div>
+            <div id="topServiziContainer">
+                @foreach (var servizio in Model.TopServizi)
+                {
+                    <div class="service-item">
+                        <div class="service-info">
+                            <div class="service-name">@servizio.Nome</div>
+                            <div class="service-bookings">@servizio.NumeroPrenotazioni prenotazioni</div>
+                        </div>
+                        <div class="service-revenue">€@servizio.IncassoTotale.ToString("N0")</div>
+                    </div>
+                }
             </div>
-            <div class="service-revenue">€1,360</div>
-        </div>
-
-        <div class="service-item">
-            <div class="service-info">
-                <div class="service-name">Colorazione Capelli</div>
-                <div class="service-bookings">28 prenotazioni</div>
-            </div>
-            <div class="service-revenue">€2,240</div>
-        </div>
-
-        <div class="service-item">
-            <div class="service-info">
-                <div class="service-name">Manicure</div>
-                <div class="service-bookings">21 prenotazioni</div>
-            </div>
-            <div class="service-revenue">€840</div>
-        </div>
-
-        <div class="service-item">
-            <div class="service-info">
-                <div class="service-name">Trattamento Viso</div>
-                <div class="service-bookings">15 prenotazioni</div>
-            </div>
-            <div class="service-revenue">€1,050</div>
-        </div>
-
-        <div class="service-item">
-            <div class="service-info">
-                <div class="service-name">Massaggio Rilassante</div>
-                <div class="service-bookings">12 prenotazioni</div>
-            </div>
-            <div class="service-revenue">€960</div>
         </div>
     </div>
-</div>
 
 <!-- Appointments Section -->
 <div class="section">
     <div class="section-title">
         <h2>Prenotazioni di Oggi</h2>
-        <a href="#">Vedi tutte</a>
+            <a href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
     </div>
 
     <div class="tabs">
-        <div class="tab active">Tutti</div>
-        <div class="tab">Confermati</div>
-        <div class="tab">In attesa</div>
-        <div class="tab">Cancellati</div>
+            <div class="tab active" data-filter="tutti">Tutti</div>
+            <div class="tab" data-filter="confermati">Confermati</div>
+            <div class="tab" data-filter="inAttesa">In attesa</div>
+            <div class="tab" data-filter="cancellati">Cancellati</div>
     </div>
 
     <div class="card">
@@ -162,7 +174,7 @@
 
             <div class="appointment-search">
                 <i class="fas fa-search"></i>
-                <input type="text" placeholder="Cerca cliente o servizio...">
+                    <input type="text" placeholder="Cerca cliente o servizio..." id="searchAppointments">
             </div>
 
             <div class="appointment-actions">
@@ -173,108 +185,62 @@
         </div>
 
         <div class="appointment-list">
-            <table class="appointment-table">
-                <thead>
-                    <tr>
-                        <th>Cliente</th>
-                        <th>Servizio</th>
-                        <th>Operatore</th>
-                        <th>Orario</th>
-                        <th>Prezzo</th>
-                        <th>Stato</th>
-                        <th>Azioni</th>
-                    </tr>
+                @if (Model.AppuntamentiOggi.Any())
+                {
+                    <table class="appointment-table">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Servizio</th>
+                                <th>Operatore</th>
+                                <th>Orario</th>
+                                <th>Prezzo</th>
+                                <th>Stato</th>
+                                <th>Azioni</th>
+                            </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <div class="client-name">Maria Rossi</div>
-                            <div class="client-info">+39 333 1234567</div>
-                        </td>
-                        <td>Taglio e Piega</td>
-                        <td>Luisa B.</td>
-                        <td>10:00 - 11:00</td>
-                        <td>€40</td>
-                        <td><span class="status status-confirmed">Confermato</span></td>
-                        <td>
-                            <div class="appointment-actions-cell">
-                                <button class="action-btn">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn">
-                                    <i class="fas fa-comment"></i>
-                                </button>
-                                <button class="action-btn">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-name">Francesca Bianchi</div>
-                            <div class="client-info">+39 345 7654321</div>
-                        </td>
-                        <td>Manicure e Pedicure</td>
-                        <td>Sara M.</td>
-                        <td>11:30 - 13:00</td>
-                        <td>€65</td>
-                        <td><span class="status status-confirmed">Confermato</span></td>
-                        <td>
-                            <div class="appointment-actions-cell">
-                                <button class="action-btn">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn">
-                                    <i class="fas fa-comment"></i>
-                                </button>
-                                <button class="action-btn">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-name">Marco Verdi</div>
-                            <div class="client-info">+39 347 9876543</div>
-                        </td>
-                        <td>Barba e Capelli</td>
-                        <td>Paolo R.</td>
-                        <td>14:00 - 15:00</td>
-                        <td>€35</td>
-                        <td><span class="status status-pending">In attesa</span></td>
-                        <td>
-                            <div class="appointment-actions-cell">
-                                <button class="action-btn">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="action-btn">
-                                    <i class="fas fa-comment"></i>
-                                </button>
-                                <button class="action-btn">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="client-name">Laura Neri</div>
-                            <div class="client-info">+39 339 1122334</div>
-                        </td>
-                        <td>Trattamento Viso</td>
-                        <td>Giulia T.</td>
-                        <td>15:30 - 16:30</td>
-                        <td>€70</td>
-                        <td><span class="status status-cancelled">Cancellato</span></td>
-                        <td>
-            </table>
-
-
+                        <tbody id="appointmentsTableBody">
+                            @foreach (var appuntamento in Model.AppuntamentiOggi)
+                            {
+                                <tr data-stato="@appuntamento.Stato.ToLower()">
+                                    <td>
+                                        <div class="client-name">@appuntamento.NomeCliente</div>
+                                        <div class="client-info">@appuntamento.TelefonoCliente</div>
+                                    </td>
+                                    <td>@appuntamento.NomeServizio</td>
+                                    <td>@appuntamento.NomeDipendente</td>
+                                    <td>@appuntamento.OrarioInizio - @appuntamento.OrarioFine</td>
+                                    <td>€@appuntamento.Prezzo</td>
+                                    <td><span class="status @appuntamento.ClasseStato">@appuntamento.Stato</span></td>
+                                    <td>
+                                        <div class="appointment-actions-cell">
+                                            <button class="action-btn" onclick="editAppointment('@appuntamento.AppuntamentoId')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="action-btn" onclick="sendMessage('@appuntamento.AppuntamentoId')">
+                                                <i class="fas fa-comment"></i>
+                                            </button>
+                                            <button class="action-btn" onclick="showAppointmentMenu('@appuntamento.AppuntamentoId')">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div class="no-data-message">
+                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                        <p>Nessun appuntamento programmato per oggi</p>
+                    </div>
+                }
         </div>
     </div>
 </div>
+}
 
 
     <!-- Modal - Visible only when TempData is not null -->
@@ -318,24 +284,24 @@
                     <h3 class="text-lg font-semibold mb-4 dark:text-neutral-50">Informazioni Generali</h3>
                         <div class="form-control mb-3">
                         <label class="label dark:text-neutral-50">Nome Salone *</label>
-                        <input asp-for="Nome" class="input input-bordered w-full"
+                        <input asp-for="NuovoSalone.Nome" class="input input-bordered w-full"
                                    placeholder="Es. Beauty Center Roma" required />
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                             <div class="form-control">
                             <label class="label dark:text-neutral-50">Telefono *</label>
-                                <input asp-for="Telefono" class="input input-bordered w-full"
+                                <input asp-for="NuovoSalone.Telefono" class="input input-bordered w-full"
                                        placeholder="Es. 3331234567" required />
                             </div>
                             <div class="form-control">
                             <label class="label dark:text-neutral-50">Email *</label>
-                                <input asp-for="Email" class="input input-bordered w-full"
+                                <input asp-for="NuovoSalone.Email" class="input input-bordered w-full"
                                        placeholder="Es. info@beautycenter.it" required />
                             </div>
                         </div>
                         <div class="form-control mb-3">
                         <label class="label dark:text-neutral-50">Sito Web</label>
-                            <input asp-for="SitoWeb" class="input input-bordered w-full"
+                            <input asp-for="NuovoSalone.SitoWeb" class="input input-bordered w-full"
                                    placeholder="Es. www.beautycenter.it" />
                         </div>
                         <div class="flex justify-end">
@@ -352,18 +318,18 @@
                     <h3 class="text-lg font-semibold mb-4 dark:text-neutral-50">Dati Fiscali</h3>
                         <div class="form-control mb-3">
                         <label class="label dark:text-neutral-50">Ragione Sociale *</label>
-                            <input asp-for="RagioneSociale" class="input input-bordered w-full"
+                            <input asp-for="NuovoSalone.RagioneSociale" class="input input-bordered w-full"
                                    placeholder="Es. Beauty Center Srl" required/>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                             <div class="form-control">
                             <label class="label dark:text-neutral-50">Partita IVA *</label>
-                                <input asp-for="PartitaIVA" class="input input-bordered w-full"
+                                <input asp-for="NuovoSalone.PartitaIVA" class="input input-bordered w-full"
                                        placeholder="Es. 12345678901" required/>
                             </div>
                             <div class="form-control">
                             <label class="label dark:text-neutral-50">Codice SDI *</label>
-                                <input asp-for="SDI" class="input input-bordered w-full"
+                                <input asp-for="NuovoSalone.SDI" class="input input-bordered w-full"
                                        placeholder="Es. ABCDEF1" required/>
                             </div>
                         </div>
@@ -386,29 +352,29 @@
                     <h3 class="text-lg font-semibold mb-4 dark:text-neutral-50">Indirizzo Salone</h3>
                         <div class="form-control mb-3">
                         <label class="label dark:text-neutral-50">Indirizzo *</label>
-                            <input asp-for="Indirizzo" class="input input-bordered w-full"
+                            <input asp-for="NuovoSalone.Indirizzo" class="input input-bordered w-full"
                                    placeholder="Es. Via Roma, 10" required />
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                             <div class="form-control">
                             <label class="label dark:text-neutral-50">Città *</label>
-                                <input asp-for="Citta" class="input input-bordered w-full"
+                                <input asp-for="NuovoSalone.Citta" class="input input-bordered w-full"
                                        placeholder="Es. Roma" required />
                             </div>
                             <div class="form-control">
                             <label class="label dark:text-neutral-50">CAP *</label>
-                                <input asp-for="CAP" class="input input-bordered w-full"
+                                <input asp-for="NuovoSalone.CAP" class="input input-bordered w-full"
                                        placeholder="Es. 00100" required />
                             </div>
                             <div class="form-control">
                             <label class="label dark:text-neutral-50">Provincia *</label>
-                                <input asp-for="Provincia" class="input input-bordered w-full"
+                                <input asp-for="NuovoSalone.Provincia" class="input input-bordered w-full"
                                        placeholder="Es. RM" required />
                             </div>
                         </div>
                         <div class="form-control mb-3">
                         <label class="label dark:text-neutral-50">Regione *</label>
-                        <select asp-for="Regione" class="select select-bordered w-full dark:text-neutral-50" required>
+                            <select asp-for="NuovoSalone.Regione" class="select select-bordered w-full dark:text-neutral-50" required>
                                 <option value="">Seleziona Regione</option>
                                 <option value="Abruzzo">Abruzzo</option>
                                 <option value="Basilicata">Basilicata</option>
@@ -450,6 +416,7 @@
         </div>
     }
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="//unpkg.com/alpinejs" defer></script>
 <script defer>
     function validateStep(stepNumber) {
@@ -513,4 +480,292 @@
             });
         }
     });
+</script>
+
+<script>
+    let revenueChart;
+    let currentSaloneId = '@Model.SelectedSaloneId';
+    let currentPeriodo = '@Model.PeriodoSelezionato';
+
+    // Inizializzazione
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inizializza il grafico
+        initializeChart();
+
+        // Event listener per il cambio sede
+        document.getElementById('sedeSelector')?.addEventListener('change', function() {
+            currentSaloneId = this.value;
+            loadDashboardData();
+        });
+
+        // Event listener per il cambio periodo
+        document.querySelectorAll('.duration-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentPeriodo = this.dataset.periodo;
+                loadDashboardData();
+            });
+        });
+
+        // Event listener per i filtri appuntamenti
+        document.querySelectorAll('.tab[data-filter]').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                filterAppointments(this.dataset.filter);
+            });
+        });
+
+        // Event listener per la ricerca
+        document.getElementById('searchAppointments')?.addEventListener('input', function() {
+            searchAppointments(this.value);
+        });
+
+        // Event listener per export
+        document.getElementById('exportBtn')?.addEventListener('click', function() {
+            exportDashboard();
+        });
+    });
+
+    function initializeChart() {
+        const ctx = document.getElementById('revenueChart');
+        if (!ctx) return;
+
+        const chartData = @Html.Raw(Json.Serialize(Model.ChartData));
+
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Incassi (€)',
+                    data: chartData.incassi,
+                    borderColor: 'rgb(99, 102, 241)',
+                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    yAxisID: 'y-incassi',
+                    tension: 0.4
+                }, {
+                    label: 'Prenotazioni',
+                    data: chartData.prenotazioni,
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    yAxisID: 'y-prenotazioni',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    'y-incassi': {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        ticks: {
+                            callback: function(value) {
+                                return '€' + value;
+                            }
+                        }
+                    },
+                    'y-prenotazioni': {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false,
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function loadDashboardData() {
+        // Mostra loading
+        showLoading();
+
+        fetch(`/Partner/GetDashboardData?saloneId=${currentSaloneId}&periodo=${currentPeriodo}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateStats(data.stats);
+                    updateChart(data.chartData);
+                    updateTopServizi(data.topServizi);
+                    updateAppointments(data.appuntamenti);
+                }
+                hideLoading();
+            })
+            .catch(error => {
+                console.error('Errore nel caricamento dei dati:', error);
+                hideLoading();
+            });
+    }
+
+    function updateStats(stats) {
+        // Aggiorna prenotazioni
+        document.getElementById('prenotazioniOggi').textContent = stats.prenotazioniOggi;
+        document.getElementById('percPrenotazioni').textContent = Math.abs(stats.percentualePrenotazioni) + '%';
+        updateStatChange('prenotazioni', stats.isPrenotazioniPositive);
+
+        // Aggiorna clienti
+        document.getElementById('nuoviClienti').textContent = stats.nuoviClienti;
+        document.getElementById('percClienti').textContent = Math.abs(stats.percentualeNuoviClienti) + '%';
+        updateStatChange('clienti', stats.isNuoviClientiPositive);
+
+        // Aggiorna incasso
+        document.getElementById('incassoGiornaliero').textContent = '€' + stats.incassoGiornaliero.toLocaleString('it-IT');
+        document.getElementById('percIncasso').textContent = Math.abs(stats.percentualeIncasso) + '%';
+        updateStatChange('incasso', stats.isIncassoPositive);
+
+        // Aggiorna servizi
+        document.getElementById('serviziCompletati').textContent = stats.serviziCompletati;
+        document.getElementById('percServizi').textContent = Math.abs(stats.percentualeServizi) + '%';
+        updateStatChange('servizi', stats.isServiziPositive);
+    }
+
+    function updateStatChange(type, isPositive) {
+        const elements = {
+            'prenotazioni': document.querySelector('#prenotazioniOggi').closest('.stat-card').querySelector('.stat-card-change'),
+            'clienti': document.querySelector('#nuoviClienti').closest('.stat-card').querySelector('.stat-card-change'),
+            'incasso': document.querySelector('#incassoGiornaliero').closest('.stat-card').querySelector('.stat-card-change'),
+            'servizi': document.querySelector('#serviziCompletati').closest('.stat-card').querySelector('.stat-card-change')
+        };
+
+        const element = elements[type];
+        if (element) {
+            element.classList.remove('change-positive', 'change-negative');
+            element.classList.add(isPositive ? 'change-positive' : 'change-negative');
+            const icon = element.querySelector('i');
+            icon.className = 'fas fa-arrow-' + (isPositive ? 'up' : 'down');
+        }
+    }
+
+    function updateChart(chartData) {
+        if (revenueChart) {
+            revenueChart.data.labels = chartData.labels;
+            revenueChart.data.datasets[0].data = chartData.incassi;
+            revenueChart.data.datasets[1].data = chartData.prenotazioni;
+            revenueChart.update();
+        }
+    }
+
+    function updateTopServizi(servizi) {
+        const container = document.getElementById('topServiziContainer');
+        container.innerHTML = '';
+
+        servizi.forEach(servizio => {
+            container.innerHTML += `
+                <div class="service-item">
+                    <div class="service-info">
+                        <div class="service-name">${servizio.nome}</div>
+                        <div class="service-bookings">${servizio.numeroPrenotazioni} prenotazioni</div>
+                    </div>
+                    <div class="service-revenue">€${servizio.incassoTotale.toLocaleString('it-IT')}</div>
+                </div>
+            `;
+        });
+    }
+
+    function updateAppointments(appuntamenti) {
+        const tbody = document.getElementById('appointmentsTableBody');
+        if (!tbody) return;
+
+        if (appuntamenti.length === 0) {
+            tbody.closest('.appointment-list').innerHTML = `
+                <div class="no-data-message">
+                    <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                    <p>Nessun appuntamento programmato per oggi</p>
+                </div>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = '';
+        appuntamenti.forEach(app => {
+            tbody.innerHTML += `
+                <tr data-stato="${app.stato.toLowerCase()}">
+                    <td>
+                        <div class="client-name">${app.nomeCliente}</div>
+                        <div class="client-info">${app.telefonoCliente}</div>
+                    </td>
+                    <td>${app.nomeServizio}</td>
+                    <td>${app.nomeDipendente}</td>
+                    <td>${app.orarioInizio} - ${app.orarioFine}</td>
+                    <td>€${app.prezzo}</td>
+                    <td><span class="status ${app.classeStato}">${app.stato}</span></td>
+                    <td>
+                        <div class="appointment-actions-cell">
+                            <button class="action-btn" onclick="editAppointment('${app.appuntamentoId}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn" onclick="sendMessage('${app.appuntamentoId}')">
+                                <i class="fas fa-comment"></i>
+                            </button>
+                            <button class="action-btn" onclick="showAppointmentMenu('${app.appuntamentoId}')">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function filterAppointments(filter) {
+        const rows = document.querySelectorAll('#appointmentsTableBody tr');
+        rows.forEach(row => {
+            if (filter === 'tutti') {
+                row.style.display = '';
+            } else {
+                const stato = row.dataset.stato;
+                row.style.display = stato === filter.toLowerCase() ? '' : 'none';
+            }
+        });
+    }
+
+    function searchAppointments(searchTerm) {
+        const rows = document.querySelectorAll('#appointmentsTableBody tr');
+        const term = searchTerm.toLowerCase();
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    }
+
+    function showLoading() {
+        document.querySelectorAll('.stat-card-value').forEach(el => {
+            el.classList.add('stats-loading');
+        });
+    }
+
+    function hideLoading() {
+        document.querySelectorAll('.stat-card-value').forEach(el => {
+            el.classList.remove('stats-loading');
+        });
+    }
+
+    function exportDashboard() {
+        window.location.href = `/Partner/ExportDashboard?saloneId=${currentSaloneId}&periodo=${currentPeriodo}`;
+    }
+
+    // Funzioni placeholder per le azioni degli appuntamenti
+    function editAppointment(id) {
+        window.location.href = `/Partner/EditAppuntamento/${id}`;
+    }
+
+    function sendMessage(id) {
+        // Implementare invio messaggio
+        console.log('Invia messaggio per appuntamento:', id);
+    }
+
+    function showAppointmentMenu(id) {
+        // Implementare menu contestuale
+        console.log('Mostra menu per appuntamento:', id);
+    }
 </script>
