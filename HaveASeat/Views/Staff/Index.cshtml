@@ -261,7 +261,7 @@ else
                 <div class="relative">
                     <form method="get" class="flex items-center">
                         <input type="hidden" name="saloneId" value="@salone.SaloneId" />
-                        <input type="text" name="search" value="@ViewContext.HttpContext.Request.Query["search"]" placeholder="Cerca staff..." class="input input-bordered input-sm w-64 pl-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        <input type="text" name="search" value="@ViewContext.HttpContext.Request.Query["search"]" placeholder="Cerca staff..." class="input input-bordered input-sm w-64 pl-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:text-white">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                     </form>
                 </div>
@@ -423,3 +423,44 @@ else
         </div>
     </div>
 }
+
+<script>
+    // Script per filtrare lo staff
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.querySelector('input[name="search"]');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const cards = document.querySelectorAll('.bg-white.dark\\:bg-gray-800.rounded-2xl');
+
+                cards.forEach(function(card) {
+                    // Prendi il nome e cognome dello staff
+                    const nomeStaff = card.querySelector('h3').textContent.toLowerCase();
+
+                    // Prendi l'email
+                    const emailElement = card.querySelector('.fa-envelope').parentElement;
+                    const email = emailElement ? emailElement.textContent.toLowerCase() : '';
+
+                    // Prendi il telefono se esiste
+                    const phoneElement = card.querySelector('.fa-phone');
+                    const phone = phoneElement ? phoneElement.parentElement.textContent.toLowerCase() : '';
+
+                    // Prendi i servizi assegnati
+                    const serviziElements = card.querySelectorAll('.bg-blue-100 .text-xs');
+                    const servizi = Array.from(serviziElements).map(el => el.textContent.toLowerCase()).join(' ');
+
+                    // Verifica se il termine di ricerca è presente in uno dei campi
+                    if (nomeStaff.includes(searchTerm) ||
+                        email.includes(searchTerm) ||
+                        phone.includes(searchTerm) ||
+                        servizi.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>

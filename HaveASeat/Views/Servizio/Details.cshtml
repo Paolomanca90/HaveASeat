@@ -189,8 +189,8 @@
                     <span class="font-medium text-gray-600 dark:text-gray-400">Nome</span>
                     <span class="font-semibold text-gray-900 dark:text-gray-100">@Model.Nome</span>
                 </div>
-                <div class="py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                    <span class="font-medium text-gray-600 dark:text-gray-400 block mb-2">Descrizione</span>
+                <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                    <span class="font-medium text-gray-600 dark:text-gray-400">Descrizione</span>
                     <span class="text-gray-900 dark:text-gray-100 text-sm leading-relaxed">
                         @if (!string.IsNullOrEmpty(Model.Descrizione))
                         {
@@ -202,12 +202,12 @@
                         }
                     </span>
                 </div>
-                
+
                 <!-- Sezione Prezzi Migliorata -->
-                <div class="py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                    <span class="font-medium text-gray-600 dark:text-gray-400 block mb-2">Prezzo</span>
-                    @if (isPromoAttiva)
-                    {
+                @if (isPromoAttiva)
+                {
+                    <div class="py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                        <span class="font-medium text-gray-600 dark:text-gray-400 block mb-2">Prezzo</span>
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-sm text-gray-500 dark:text-gray-400">Prezzo standard:</span>
@@ -215,20 +215,23 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-medium text-orange-600 dark:text-orange-400">Prezzo promozionale:</span>
-                                <span class="font-bold text-orange-600 dark:text-orange-400 text-lg">€@Model.PrezzoPromozione.ToString("F2")</span>
+                                <span class="font-semibold text-orange-600 dark:text-orange-400">€@Model.PrezzoPromozione.ToString("F2")</span>
                             </div>
                             <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-2 mt-2">
                                 <span class="text-xs text-orange-700 dark:text-orange-300 font-medium">
                                     🏷️ Risparmio: €@((Model.Prezzo - Model.PrezzoPromozione).ToString("F2")) (-@percentualeSconto.ToString("F0")%)
                                 </span>
                             </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <span class="font-semibold text-green-600 dark:text-green-400 text-lg">€@Model.Prezzo.ToString("F2")</span>
-                    }
-                </div>
+                        </div>               
+                    </div>
+                }
+                else
+                {
+                    <div class="flex justify-between items-center py-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                        <span class="font-medium text-gray-600 dark:text-gray-400">Prezzo</span>                
+                        <span class="font-semibold text-green-600 dark:text-green-400">€@Model.Prezzo.ToString("F2")</span>
+                    </div>
+                }
                 
                 <div class="flex justify-between items-center py-3">
                     <span class="font-medium text-gray-600 dark:text-gray-400">Durata</span>

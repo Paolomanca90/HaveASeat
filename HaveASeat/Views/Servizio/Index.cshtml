@@ -241,7 +241,7 @@ else
                     <form method="get" class="flex items-center">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="saloneId" value="@salone.SaloneId" />
-                        <input type="text" name="search" value="@ViewContext.HttpContext.Request.Query["search"]" placeholder="Cerca servizi..." class="input input-bordered input-sm w-64 pl-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200">
+                        <input type="text" name="search" value="@ViewContext.HttpContext.Request.Query["search"]" placeholder="Cerca servizi..." class="input input-bordered input-sm w-64 pl-10 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 dark:text-white">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
                     </form>
                 </div>
@@ -422,6 +422,32 @@ else
 
 <script src="~/js/promotion.js"></script>
 <script>
+    // Script per filtrare i servizi
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.querySelector('input[name="search"]');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const cards = document.querySelectorAll('.servizio-card');
+
+                cards.forEach(function(card) {
+                    const nomeServizio = card.querySelector('h3').textContent.toLowerCase();
+
+                    // Prendi la descrizione se esiste
+                    const descrizioneElement = card.querySelector('.line-clamp-2');
+                    const descrizione = descrizioneElement ? descrizioneElement.textContent.toLowerCase() : '';
+
+                    // Verifica se il termine di ricerca è presente nel nome o descrizione
+                    if (nomeServizio.includes(searchTerm) || descrizione.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
     // Funzioni di filtro
     function filterServizi(type) {
         const cards = document.querySelectorAll('.servizio-card');

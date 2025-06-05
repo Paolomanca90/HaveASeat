@@ -150,6 +150,7 @@ namespace HaveASeat.Controllers
 
 			var servizio = await _context.Servizio
 				.Include(s => s.Salone)
+				.Include(s => s.DipendenteServizi)
 				.FirstOrDefaultAsync(s => s.ServizioId == id && s.Salone.ApplicationUserId == userId);
 
 			if (servizio == null)
