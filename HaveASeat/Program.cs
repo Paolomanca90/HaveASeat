@@ -1,6 +1,7 @@
 using Google.Apis.Auth.AspNetCore3;
 using HaveASeat.Data;
 using HaveASeat.Models;
+using HaveASeat.Services;
 using HaveASeat.Utilities.Roles;
 using HaveASeat.Utilities.Subscriptions;
 using Microsoft.AspNetCore.Authentication;
@@ -85,7 +86,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 		}
 	};
 });
-
+builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddHttpClient();
 StripeConfiguration.ApiKey = builder.Configuration.GetValue<string>("Stripe:SecretKey");
 

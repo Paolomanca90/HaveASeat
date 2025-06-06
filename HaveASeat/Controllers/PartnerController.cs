@@ -9,6 +9,7 @@ using HaveASeat.Utilities.Enum;
 using Microsoft.EntityFrameworkCore;
 using HaveASeat.ViewModels;
 using System.Text;
+using HaveASeat.Services;
 
 namespace HaveASeat.Controllers
 {
@@ -16,10 +17,12 @@ namespace HaveASeat.Controllers
     public class PartnerController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IExportService _exportService;
 
-        public PartnerController(ApplicationDbContext context)
+        public PartnerController(ApplicationDbContext context, IExportService exportService)
         {
             _context = context;
+            _exportService = exportService;
         }
 
         public async Task<IActionResult> Index(Guid? saloneId = null, string periodo = "settimana")
@@ -175,8 +178,81 @@ namespace HaveASeat.Controllers
                 ? Math.Round(((decimal)(serviziCompletatiOggi - serviziCompletatiIeri) / serviziCompletatiIeri) * 100, 1)
                 : 0;
             viewModel.Stats.IsServiziPositive = viewModel.Stats.PercentualeServizi >= 0;
-        }
+            
+            viewModel.Stats.NumeroDipendenti = await _context.Dipendente
+               .Where(d => d.SaloneId == viewModel.SelectedSaloneId)
+               .CountAsync();
+            // Promozioni attive
+            var promozioniAttive = await _context.Servizio
+                .Where(s => s.SaloneId == viewModel.SelectedSaloneId &&
+                            s.IsPromotion &&
+                            s.DataFinePromozione > DateTime.Now)
+                .CountAsync();
 
+            // Promozioni attive ieri (per il confronto)
+            var promozioniIeri = await _context.Servizio
+                .Where(s => s.SaloneId == viewModel.SelectedSaloneId &&
+                            s.IsPromotion &&
+                            s.DataInizioPromozione <= ieri &&
+                            s.DataFinePromozione > ieri)
+                .CountAsync();
+
+            viewModel.Stats.PromozioniAttive = promozioniAttive;
+            viewModel.Stats.PercentualePromozioni = promozioniIeri > 0
+                ? Math.Round(((decimal)(promozioniAttive - promozioniIeri) / promozioniIeri) * 100, 1)
+                : (promozioniAttive > 0 ? 100 : 0);
+            viewModel.Stats.IsPromozioniPositive = viewModel.Stats.PercentualePromozioni >= 0;
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetPromozioniAttive(Guid saloneId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            // Verifica che il salone appartenga all'utente
+            var salone = await _context.Salone
+                .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+
+            if (salone == null)
+            {
+                return NotFound();
+            }
+
+            var oggi = DateTime.Now;
+            var traTriGiorni = oggi.AddDays(3);
+
+            var promozioni = await _context.Servizio
+                .Where(s => s.SaloneId == saloneId &&
+                            s.IsPromotion &&
+                            s.DataFinePromozione > oggi)
+                .OrderBy(s => s.DataFinePromozione)
+                .Select(s => new
+                {
+                    s.ServizioId,
+                    s.Nome,
+                    s.Descrizione,
+                    s.Prezzo,
+                    s.PrezzoPromozione,
+                    s.DataInizioPromozione,
+                    s.DataFinePromozione,
+                    Risparmio = s.Prezzo - s.PrezzoPromozione,
+                    PercentualeSconto = Math.Round(((s.Prezzo - s.PrezzoPromozione) / s.Prezzo) * 100, 0),
+                    GiorniRimanenti = (int)(s.DataFinePromozione - oggi).TotalDays,
+                    InScadenza = s.DataFinePromozione <= traTriGiorni
+                })
+                .ToListAsync();
+
+            return Json(new
+            {
+                success = true,
+                promozioni = promozioni,
+                totalePromozioni = promozioni.Count,
+                promozioniInScadenza = promozioni.Count(p => p.InScadenza)
+            });
+        }
         private async Task LoadChartData(DashboardViewModel viewModel)
         {
             var labels = new List<string>();
@@ -298,6 +374,7 @@ namespace HaveASeat.Controllers
         //    }).ToList();
         //}
 
+      
         [HttpGet]
         public async Task<IActionResult> GetDashboardData(Guid saloneId, string periodo)
         {
@@ -321,6 +398,7 @@ namespace HaveASeat.Controllers
                 SelectedSaloneId = saloneId,
                 PeriodoSelezionato = periodo
             };
+
             // Calcola le date del periodo
             var oggi = DateTime.Today;
             switch (periodo.ToLower())
@@ -343,27 +421,107 @@ namespace HaveASeat.Controllers
                     viewModel.DataFine = oggi.AddDays(1).AddSeconds(-1);
                     break;
             }
+
             // Carica le statistiche
             await LoadDashboardStats(viewModel);
             await LoadChartData(viewModel);
             await LoadTopServizi(viewModel);
-           // await LoadAppuntamentiOggi(viewModel);
+
             return Json(new
             {
                 success = true,
-                stats = viewModel.Stats,
+                stats = new
+                {
+                    viewModel.Stats.PrenotazioniOggi,
+                    viewModel.Stats.PercentualePrenotazioni,
+                    viewModel.Stats.IsPrenotazioniPositive,
+                    viewModel.Stats.NuoviClienti,
+                    viewModel.Stats.PercentualeNuoviClienti,
+                    viewModel.Stats.IsNuoviClientiPositive,
+                    viewModel.Stats.IncassoGiornaliero,
+                    viewModel.Stats.PercentualeIncasso,
+                    viewModel.Stats.IsIncassoPositive,
+                    viewModel.Stats.ServiziCompletati,
+                    viewModel.Stats.PercentualeServizi,
+                    viewModel.Stats.IsServiziPositive,
+                    viewModel.Stats.NumeroDipendenti,
+                    promozioniAttive = viewModel.Stats.PromozioniAttive,
+                    percentualePromozioni = viewModel.Stats.PercentualePromozioni,
+                    isPromozioniPositive = viewModel.Stats.IsPromozioniPositive
+                },
                 chartData = viewModel.ChartData,
                 topServizi = viewModel.TopServizi,
                 appuntamenti = viewModel.AppuntamentiOggi
             });
-            //         var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
-            //         if (checkPiano != null)
-            //             TempData["SelectedPianoId"] = checkPiano.ApplicationUserId;
-            //ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
-            //         return View();
         }
+
+
+        //[HttpGet]
+        //public async Task<IActionResult> GetDashboardData(Guid saloneId, string periodo)
+        //{
+        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    if (string.IsNullOrEmpty(userId))
+        //    {
+        //        return Unauthorized();
+        //    }
+
+        //    // Verifica che il salone appartenga all'utente
+        //    var salone = await _context.Salone
+        //        .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+
+        //    if (salone == null)
+        //    {
+        //        return NotFound();
+        //    }
+
+        //    var viewModel = new DashboardViewModel
+        //    {
+        //        SelectedSaloneId = saloneId,
+        //        PeriodoSelezionato = periodo
+        //    };
+        //    // Calcola le date del periodo
+        //    var oggi = DateTime.Today;
+        //    switch (periodo.ToLower())
+        //    {
+        //        case "giorno":
+        //            viewModel.DataInizio = oggi;
+        //            viewModel.DataFine = oggi.AddDays(1).AddSeconds(-1);
+        //            break;
+        //        case "settimana":
+        //            var inizioSettimana = oggi.AddDays(-(int)oggi.DayOfWeek + (int)DayOfWeek.Monday);
+        //            viewModel.DataInizio = inizioSettimana;
+        //            viewModel.DataFine = inizioSettimana.AddDays(7).AddSeconds(-1);
+        //            break;
+        //        case "mese":
+        //            viewModel.DataInizio = new DateTime(oggi.Year, oggi.Month, 1);
+        //            viewModel.DataFine = viewModel.DataInizio.AddMonths(1).AddSeconds(-1);
+        //            break;
+        //        default:
+        //            viewModel.DataInizio = oggi.AddDays(-7);
+        //            viewModel.DataFine = oggi.AddDays(1).AddSeconds(-1);
+        //            break;
+        //    }
+        //    // Carica le statistiche
+        //    await LoadDashboardStats(viewModel);
+        //    await LoadChartData(viewModel);
+        //    await LoadTopServizi(viewModel);
+        //   // await LoadAppuntamentiOggi(viewModel);
+        //    return Json(new
+        //    {
+        //        success = true,
+        //        stats = viewModel.Stats,
+        //        chartData = viewModel.ChartData,
+        //        topServizi = viewModel.TopServizi,
+        //        appuntamenti = viewModel.AppuntamentiOggi
+        //    });
+        //    //         var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
+        //    //         if (checkPiano != null)
+        //    //             TempData["SelectedPianoId"] = checkPiano.ApplicationUserId;
+        //    //ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
+        //    //         return View();
+        //}
         [HttpGet]
-        public async Task<IActionResult> ExportDashboard(Guid saloneId, string periodo)
+        public async Task<IActionResult> ExportDashboard(Guid saloneId, string periodo, string formato = "csv")
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
@@ -379,15 +537,38 @@ namespace HaveASeat.Controllers
             {
                 return NotFound();
             }
+            // Prepara i dati per l'export
+            var exportData = await PrepareExportData(saloneId, periodo, salone.Nome);
 
-            // Genera il report
-            var csv = new StringBuilder();
-            csv.AppendLine("Report Dashboard - " + salone.Nome);
-            csv.AppendLine("Periodo: " + periodo);
-            csv.AppendLine("Data export: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm"));
-            csv.AppendLine();
+            byte[] fileContent;
+            string contentType;
+            string fileName;
 
-            // Recupera i dati
+            switch (formato.ToLower())
+            {
+                case "excel":
+                    fileContent = _exportService.ExportToExcel(exportData);
+                    contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    fileName = $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.xlsx";
+                    break;
+                case "pdf":
+                    fileContent = _exportService.ExportToPdf(exportData);
+                    contentType = "application/pdf";
+                    fileName = $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.pdf";
+                    break;
+                case "csv":
+                default:
+                    fileContent = _exportService.ExportToCsv(exportData);
+                    contentType = "text/csv";
+                    fileName = $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.csv";
+                    break;
+            }
+
+            return File(fileContent, contentType, fileName);
+        }
+        // Nuovo metodo helper per preparare i dati di export
+        private async Task<DashboardExportData> PrepareExportData(Guid saloneId, string periodo, string nomeSalone)
+        {
             var viewModel = new DashboardViewModel
             {
                 SelectedSaloneId = saloneId,
@@ -416,25 +597,7 @@ namespace HaveASeat.Controllers
             await LoadDashboardStats(viewModel);
             await LoadTopServizi(viewModel);
 
-            // Statistiche generali
-            csv.AppendLine("STATISTICHE GENERALI");
-            csv.AppendLine("Metrica,Valore,Variazione %");
-            csv.AppendLine($"Prenotazioni Oggi,{viewModel.Stats.PrenotazioniOggi},{viewModel.Stats.PercentualePrenotazioni}%");
-            csv.AppendLine($"Nuovi Clienti,{viewModel.Stats.NuoviClienti},{viewModel.Stats.PercentualeNuoviClienti}%");
-            csv.AppendLine($"Incasso Giornaliero,€{viewModel.Stats.IncassoGiornaliero},{viewModel.Stats.PercentualeIncasso}%");
-            csv.AppendLine($"Servizi Completati,{viewModel.Stats.ServiziCompletati},{viewModel.Stats.PercentualeServizi}%");
-            csv.AppendLine();
-
-            // Top servizi
-            csv.AppendLine("TOP SERVIZI");
-            csv.AppendLine("Servizio,Prenotazioni,Incasso");
-            foreach (var servizio in viewModel.TopServizi)
-            {
-                csv.AppendLine($"{servizio.Nome},{servizio.NumeroPrenotazioni},€{servizio.IncassoTotale}");
-            }
-            csv.AppendLine();
-
-            // Dettaglio appuntamenti
+            // Recupera appuntamenti dettagliati
             var appuntamenti = await _context.Appuntamento
                 .Include(a => a.ApplicationUser)
                 .Include(a => a.Dipendente)
@@ -445,16 +608,28 @@ namespace HaveASeat.Controllers
                 .OrderBy(a => a.Data)
                 .ToListAsync();
 
-            csv.AppendLine("DETTAGLIO APPUNTAMENTI");
-            csv.AppendLine("Data,Ora,Cliente,Servizio,Dipendente,Stato,Prezzo");
-            foreach (var app in appuntamenti)
+            var exportData = new DashboardExportData
             {
-                csv.AppendLine($"{app.Data:dd/MM/yyyy},{app.OraInizio:HH:mm},{app.ApplicationUser.Nome} {app.ApplicationUser.Cognome},Servizio,{app.Dipendente?.ApplicationUser.Nome ?? "N/A"},{app.Stato},€50");
-            }
+                NomeSalone = nomeSalone,
+                Periodo = periodo,
+                DataExport = DateTime.Now,
+                Stats = viewModel.Stats,
+                TopServizi = viewModel.TopServizi,
+                NumeroDipendenti = viewModel.Stats.NumeroDipendenti,
+                Appuntamenti = appuntamenti.Select(a => new AppuntamentoExportViewModel
+                {
+                    Data = a.Data,
+                    OraInizio = a.OraInizio.ToString("HH:mm"),
+                    OraFine = a.OraFine.ToString("HH:mm"),
+                    NomeCliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
+                    Servizio = "Servizio", // Placeholder
+                    Dipendente = a.Dipendente?.ApplicationUser.Nome ?? "N/A",
+                    Stato = a.Stato.ToString(),
+                    Prezzo = 50 // Placeholder
+                }).ToList()
+            };
 
-            // Restituisci il file CSV
-            var bytes = Encoding.UTF8.GetBytes(csv.ToString());
-            return File(bytes, "text/csv", $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.csv");
+            return exportData;
         }
 
         public IActionResult CreateCheckoutSession(string id)

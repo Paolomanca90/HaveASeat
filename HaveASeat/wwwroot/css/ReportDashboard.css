@@ -39,3 +39,66 @@
         opacity: .5;
     }
 }
+/* Aggiungi questi stili al tuo CSS esistente */
+
+/* Stat card cliccabile */
+.stat-card.cursor-pointer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge animato per promozioni in scadenza */
+.badge-warning.animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .5;
+    }
+}
+
+/* Card promozione in scadenza */
+.card.border-warning {
+    border-width: 2px;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
+}
+
+/* Toast notification */
+.toast {
+    z-index: 9999;
+}
+
+/* Modal custom styles */
+#promozioniModal .modal-box {
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Icona nella stat card */
+.stat-card .text-xs i {
+    opacity: 0.7;
+}
+
+/* Badge countdown */
+.badge-warning i {
+    animation: shake 1s ease-in-out infinite;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-2px);
+    }
+
+    20%, 40%, 60%, 80% {
+        transform: translateX(2px);
+    }
+}
