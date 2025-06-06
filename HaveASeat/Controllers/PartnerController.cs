@@ -649,19 +649,6 @@ namespace HaveASeat.Controllers
 			return View("Index");
 		}
 
-		public IActionResult Calendario()
-        {
-            return View();
-        }
-        public IActionResult Servizi()
-        {
-            return View();
-        }
-        public IActionResult Clienti()
-        {
-            return View();
-        }
-
 		public IActionResult Sedi()
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

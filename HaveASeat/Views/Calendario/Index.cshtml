@@ -7,62 +7,168 @@
 }
 
 <!-- Header -->
-<div class="bg-white p-6 rounded-xl shadow-sm mb-6">
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div class="flex items-center gap-4">
-            <!-- Today Button -->
-            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" onclick="vaiOggi()">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Calendario Prenotazioni</h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">
+            <span>Gestisci le prenotazioni di <strong>@Model.SaloneCorrente?.Nome</strong></span>
+            <span class="ml-2 text-sm">
+                @Model.DataSelezionata.ToString("dddd, dd MMMM yyyy")
+            </span>
+        </p>
+        @if (Model.HasMultipleSedi)
+        {
+            <div class="mt-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Hai @Model.Saloni.Count sedi - Seleziona quella da visualizzare
+                </span>
+            </div>
+        }
+    </div>
+
+    <div class="flex items-center space-x-3">
+        <!-- Selettore Salone -->
+        @if (Model.HasMultipleSedi)
+        {
+            <div class="dropdown dropdown-bottom dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px]">
+                    <i class="fas fa-store mr-2"></i>
+                    <span class="truncate">@Model.SaloneCorrente?.Nome</span>
+                    <i class="fas fa-chevron-down ml-2"></i>
+                </div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 dark:bg-gray-800 rounded-box z-[1] w-64 p-2 shadow-xl border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto">
+                    @foreach (var salone in Model.Saloni)
+                    {
+                        <li>
+                            <a href="?saloneId=@salone.SaloneId&data=@Model.DataSelezionata.ToString("yyyy-MM-dd")"
+                               class="@(salone.SaloneId == Model.SaloneCorrente?.SaloneId ? "active bg-purple-50 dark:bg-purple-900/20" : "") hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                <i class="fas fa-store mr-2 @(salone.SaloneId == Model.SaloneCorrente?.SaloneId ? "text-purple-600" : "")"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium">@salone.Nome</div>
+                                    <div class="text-xs text-gray-500">@salone.Citta, @salone.Provincia</div>
+                                </div>
+                                @if (salone.SaloneId == Model.SaloneCorrente?.SaloneId)
+                                {
+                                    <i class="fas fa-check ml-auto text-green-500"></i>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <!-- Navigation Controls -->
+        <div class="flex items-center space-x-2">
+            <button class="inline-flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="cambiaGiorno(-1)">
+                <i class="fas fa-chevron-left text-gray-600 dark:text-gray-300"></i>
+            </button>
+            
+            <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="vaiOggi()">
                 Oggi
             </button>
             
-            <!-- Navigation -->
-            <div class="flex items-center gap-2">
-                <button class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors" onclick="cambiaGiorno(-1)">
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-                <span class="text-lg font-semibold px-4 text-gray-900">
-                    @Model.DataSelezionata.ToString("dddd, dd MMM yyyy")
-                </span>
-                <button class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition-colors" onclick="cambiaGiorno(1)">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <!-- Selettore Salone -->
-            @if (Model.HasMultipleSedi)
-            {
-                <select id="saloneSelector" class="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    @foreach (var salone in Model.Saloni)
-                    {
-                        <option value="@salone.SaloneId" selected="@(salone.SaloneId == Model.SaloneCorrente.SaloneId ? "selected" : "")">
-                            @salone.Nome
-                        </option>
-                    }
-                </select>
-            }
+            <button class="inline-flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="cambiaGiorno(1)">
+                <i class="fas fa-chevron-right text-gray-600 dark:text-gray-300"></i>
+            </button>
         </div>
     </div>
 </div>
 
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Appuntamenti Oggi</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    @Model.Appuntamenti.Count(a => a.Data.Date == Model.DataSelezionata.Date && a.Stato != StatoAppuntamento.Annullato)
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar-check text-purple-600 dark:text-purple-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-purple-600 dark:text-purple-400 mt-2">
+            @Model.Appuntamenti.Count(a => a.Data.Date == Model.DataSelezionata.Date && a.Stato == StatoAppuntamento.Prenotato) confermati
+        </p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Staff Disponibile</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">@Model.Dipendenti.Count</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Operatori attivi</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Slot Liberi</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    @{
+                        var slotTotali = Model.Dipendenti.Count * 9; // 9 ore (9-18)
+                        var slotOccupati = Model.Appuntamenti.Count(a => a.Data.Date == Model.DataSelezionata.Date && a.Stato != StatoAppuntamento.Annullato);
+                        var slotLiberi = slotTotali - slotOccupati;
+                    }
+                    @slotLiberi
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock text-green-600 dark:text-green-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-green-600 dark:text-green-400 mt-2">Disponibili per prenotazione</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Fatturato Previsto</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    €@{
+                        var fatturato = Model.Appuntamenti
+                            .Where(a => a.Data.Date == Model.DataSelezionata.Date && a.Stato == StatoAppuntamento.Prenotato)
+                            .Sum(a => a.Servizio?.Prezzo ?? 0);
+                    }@fatturato.ToString("F0")
+                </p>
+            </div>
+            <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-euro-sign text-orange-600 dark:text-orange-400"></i>
+            </div>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Per oggi</p>
+    </div>
+</div>
+
 <!-- Calendar Grid -->
-<div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-    <!-- Header con foto dipendenti -->
-    <div class="grid border-b border-gray-200" style="grid-template-columns: 80px repeat(@Model.Dipendenti.Count, 1fr);">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+    <!-- Header con dipendenti -->
+    <div class="grid border-b border-gray-200 dark:border-gray-700" style="grid-template-columns: 80px repeat(@Model.Dipendenti.Count, 1fr);">
         <!-- Colonna orario vuota -->
-        <div class="bg-gray-50 p-4"></div>
+        <div class="bg-gray-50 dark:bg-gray-700/50 p-4">
+            <div class="flex items-center justify-center h-20">
+                <i class="fas fa-clock text-gray-400 dark:text-gray-500"></i>
+            </div>
+        </div>
         
         <!-- Headers dipendenti -->
         @foreach (var dipendente in Model.Dipendenti)
         {
-            <div class="bg-gray-50 p-4 text-center border-r border-gray-200 last:border-r-0">
+            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 text-center border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                 <!-- Avatar con iniziali -->
-                <div class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-semibold mb-2 mx-auto">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center text-lg font-semibold mb-2 mx-auto shadow-lg">
                     @dipendente.ApplicationUser.Nome.Substring(0, 1)@dipendente.ApplicationUser.Cognome.Substring(0, 1)
                 </div>
-                <div class="font-semibold text-sm text-gray-900">@dipendente.ApplicationUser.Nome</div>
-                <div class="text-xs text-gray-500">@dipendente.ApplicationUser.Cognome</div>
+                <div class="font-semibold text-sm text-gray-900 dark:text-gray-100">@dipendente.ApplicationUser.Nome</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">@dipendente.ApplicationUser.Cognome</div>
             </div>
         }
     </div>
@@ -73,10 +179,10 @@
             <!-- Griglia base degli orari -->
             <div class="grid" style="grid-template-columns: 80px repeat(@Model.Dipendenti.Count, 1fr);">
                 <!-- Colonna orari -->
-                <div class="bg-gray-50">
+                <div class="bg-gray-50 dark:bg-gray-700/50">
                     @for (int h = 9; h < 18; h++)
                     {
-                        <div class="h-20 border-b border-gray-200 flex items-center justify-center pt-2 text-xs font-medium text-gray-600">
+                        <div class="h-20 border-b border-gray-200 dark:border-gray-700 flex items-center justify-center pt-2 text-xs font-medium text-gray-600 dark:text-gray-400">
                             <div class="text-center">
                                 <div class="font-medium">@String.Format("{0:D2}:00", h)</div>
                             </div>
@@ -87,10 +193,10 @@
                 <!-- Colonne dipendenti - solo griglia base -->
                 @foreach (var dipendente in Model.Dipendenti)
                 {
-                    <div class="border-r border-gray-200 last:border-r-0">
+                    <div class="border-r border-gray-200 dark:border-gray-700 last:border-r-0">
                         @for (int h = 9; h < 18; h++)
                         {
-                            <div class="h-20 border-b border-gray-100 hover:bg-gray-50 cursor-pointer relative group transition-colors"
+                            <div class="h-20 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer relative group transition-colors"
                                  data-dipendente="@dipendente.DipendenteId"
                                  data-ora="@String.Format("{0:D2}:00", h)">
                             </div>
@@ -135,25 +241,32 @@
                                     var durataMinuti = appuntamento.Servizio?.Durata ?? 60;
                                     var altezzaPixel = (durataMinuti / 60.0m) * 80; // 80px per ora
                                     
-                                    // Colori in base al tipo di servizio
-                                    var colorClass = "bg-blue-500 text-white";
+                                    // Colori moderni in base al tipo di servizio e stato
+                                    var colorClass = "bg-gradient-to-r from-purple-500 to-pink-500 text-white";
+                                    
                                     if (appuntamento.Servizio != null)
                                     {
                                         var nomeServizio = appuntamento.Servizio.Nome.ToLower();
-                                        if (nomeServizio.Contains("taglio")) colorClass = "bg-blue-500 text-white";
-                                        else if (nomeServizio.Contains("colore") || nomeServizio.Contains("tinta")) colorClass = "bg-orange-500 text-white";
-                                        else if (nomeServizio.Contains("piega")) colorClass = "bg-green-500 text-white";
-                                        else if (nomeServizio.Contains("barba")) colorClass = "bg-purple-500 text-white";
-                                        else if (nomeServizio.Contains("massaggio")) colorClass = "bg-teal-500 text-white";
-                                        else if (nomeServizio.Contains("manicure") || nomeServizio.Contains("unghie")) colorClass = "bg-pink-500 text-white";
+                                        if (nomeServizio.Contains("taglio")) 
+                                            colorClass = "bg-gradient-to-r from-blue-500 to-cyan-500 text-white";
+                                        else if (nomeServizio.Contains("colore") || nomeServizio.Contains("tinta")) 
+                                            colorClass = "bg-gradient-to-r from-orange-500 to-amber-500 text-white";
+                                        else if (nomeServizio.Contains("piega")) 
+                                            colorClass = "bg-gradient-to-r from-green-500 to-emerald-500 text-white";
+                                        else if (nomeServizio.Contains("barba")) 
+                                            colorClass = "bg-gradient-to-r from-purple-600 to-violet-600 text-white";
+                                        else if (nomeServizio.Contains("massaggio")) 
+                                            colorClass = "bg-gradient-to-r from-teal-500 to-cyan-500 text-white";
+                                        else if (nomeServizio.Contains("manicure") || nomeServizio.Contains("unghie")) 
+                                            colorClass = "bg-gradient-to-r from-pink-500 to-rose-500 text-white";
                                     }
                                     
                                     if (appuntamento.Stato != StatoAppuntamento.Prenotato)
                                     {
-                                        colorClass = "bg-red-500 text-white";
+                                        colorClass = "bg-gradient-to-r from-red-500 to-red-600 text-white";
                                     }
 
-                                <div class="absolute left-1 right-1 rounded-lg p-3 text-xs shadow-lg cursor-pointer pointer-events-auto @colorClass hover:shadow-xl transition-shadow"
+                                <div class="absolute left-1 right-1 rounded-xl p-3 text-xs shadow-lg cursor-pointer pointer-events-auto @colorClass hover:shadow-xl transition-all duration-200 transform hover:scale-105 border border-white/20"
                                      style="top: @(topPosition + 2)px; height: @(altezzaPixel - 4)px; min-height: 60px;"
                                      onclick="apriAppuntamento('@appuntamento.AppuntamentoId')">
                                     
@@ -168,14 +281,26 @@
                                         </div>
                                     }
                                     
-                                    <div class="text-xs opacity-75 mt-1">
+                                    <div class="text-xs opacity-75 mt-1 flex items-center">
+                                        <i class="fas fa-clock mr-1"></i>
                                         @(appuntamento.Slot?.OraInizio != null ? String.Format("{0:D2}:{1:D2}", appuntamento.Slot.OraInizio.Hours, appuntamento.Slot.OraInizio.Minutes) : "09:00") - @(appuntamento.Slot?.OraFine != null ? String.Format("{0:D2}:{1:D2}", appuntamento.Slot.OraFine.Hours, appuntamento.Slot.OraFine.Minutes) : "10:00")
                                     </div>
                                     
                                     @if (!string.IsNullOrEmpty(appuntamento.Note))
                                     {
-                                        <div class="text-xs opacity-75 truncate mt-1">
-                                            📝 @appuntamento.Note
+                                        <div class="text-xs opacity-75 truncate mt-1 flex items-center">
+                                            <i class="fas fa-sticky-note mr-1"></i>
+                                            @appuntamento.Note
+                                        </div>
+                                    }
+
+                                    <!-- Status Badge -->
+                                    @if (appuntamento.Stato != StatoAppuntamento.Prenotato)
+                                    {
+                                        <div class="absolute top-1 right-1">
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-white/20 text-white">
+                                                @appuntamento.Stato
+                                            </span>
                                         </div>
                                     }
                                 </div>
@@ -190,24 +315,32 @@
 
 <!-- Modal Dettagli Appuntamento -->
 <div id="modalDettagliAppuntamento" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-xl w-full max-w-lg mx-4">
-        <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900">👤 Dettagli Appuntamento</h3>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 border border-gray-200 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <i class="fas fa-calendar-alt mr-2 text-purple-600 dark:text-purple-400"></i>
+                    Dettagli Appuntamento
+                </h3>
+                <button onclick="chiudiModalDettagli()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
         </div>
         
         <div id="contenutoDettagli" class="p-6 space-y-4">
             <!-- Contenuto caricato dinamicamente -->
         </div>
 
-        <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
-            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" onclick="chiudiModalDettagli()">
+        <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+            <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="chiudiModalDettagli()">
                 Chiudi
             </button>
-            <button class="px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2" onclick="modificaAppuntamento()">
+            <button class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-orange-600 to-orange-700 rounded-lg hover:from-orange-700 hover:to-orange-800 transition-all duration-200 flex items-center gap-2" onclick="modificaAppuntamento()">
                 <i class="fas fa-edit"></i>
                 Modifica
             </button>
-            <button class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2" onclick="annullaAppuntamento()">
+            <button class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-red-700 rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 flex items-center gap-2" onclick="annullaAppuntamento()">
                 <i class="fas fa-times"></i>
                 Annulla
             </button>
@@ -234,92 +367,162 @@ function vaiOggi() {
 
 function ricaricaCalendario() {
     const dataStr = dataCorrente.toISOString().split('T')[0];
+    
+    // Show loading
+    Swal.fire({
+        title: 'Caricamento...',
+        text: 'Aggiornamento calendario in corso',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
     window.location.href = '@Url.Action("Index")?saloneId=' + saloneCorrente + '&data=' + dataStr;
 }
 
 // Gestione appuntamenti
 function nuovoAppuntamento() {
-    document.getElementById('modalNuovoAppuntamento').classList.remove('hidden');
+    // Implementa modal per nuovo appuntamento o redirect
+    Swal.fire({
+        title: '📅 Nuovo Appuntamento',
+        text: 'Vuoi creare un nuovo appuntamento?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Crea Appuntamento',
+        cancelButtonText: 'Annulla',
+        confirmButtonColor: '#7c3aed'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirect alla pagina di creazione appuntamento
+            window.location.href = '/Appuntamento/Create?saloneId=' + saloneCorrente + '&data=' + dataCorrente.toISOString().split('T')[0];
+        }
+    });
 }
 
 function nuovoAppuntamentoSlot(data, orario, dipendenteId) {
-    document.getElementById('dataAppuntamento').value = data;
-    document.getElementById('orarioAppuntamento').value = orario;
-    if (dipendenteId) {
-        document.getElementById('dipendenteAppuntamento').value = dipendenteId;
-    }
-    nuovoAppuntamento();
-}
-
-function chiudiModal() {
-    document.getElementById('modalNuovoAppuntamento').classList.add('hidden');
-}
-
-function salvaAppuntamento() {
-    const data = {
-        saloneId: saloneCorrente,
-        cliente: document.getElementById('cliente').value,
-        orario: document.getElementById('orarioAppuntamento').value,
-        dipendenteId: document.getElementById('dipendenteAppuntamento').value,
-        servizioId: document.getElementById('servizioAppuntamento').value,
-        data: document.getElementById('dataAppuntamento').value,
-        note: document.getElementById('noteAppuntamento').value
-    };
-
-    if (!data.clienteId || !data.orario || !data.data || !data.dipendenteId || !data.servizioId) {
-        alert('Compila tutti i campi obbligatori');
-        return;
-    }
-
-    fetch('@Url.Action("CreateAppuntamento")', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(result => {
-        if (result.success) {
-            chiudiModal();
-            ricaricaCalendario();
-        } else {
-            alert('Errore: ' + result.message);
+    Swal.fire({
+        title: '⏰ Nuovo Appuntamento',
+        html: `
+            <div class="text-left space-y-3">
+                <p class="text-gray-600 dark:text-gray-400">Stai per creare un appuntamento per:</p>
+                <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                    <p class="font-medium text-purple-800 dark:text-purple-200">📅 ${new Date(data).toLocaleDateString('it-IT')}</p>
+                    <p class="font-medium text-purple-800 dark:text-purple-200">🕐 ${orario}</p>
+                </div>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-plus mr-2"></i>Crea Appuntamento',
+        cancelButtonText: 'Annulla',
+        confirmButtonColor: '#7c3aed'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirect alla pagina di creazione con parametri
+            window.location.href = `/Appuntamento/Create?saloneId=${saloneCorrente}&data=${data}&orario=${orario}&dipendenteId=${dipendenteId}`;
         }
-    })
-    .catch(error => {
-        console.error('Errore:', error);
-        alert('Errore durante la creazione dell\'appuntamento');
     });
 }
 
 function apriAppuntamento(appuntamentoId) {
     appuntamentoCorrente = appuntamentoId;
     
+    // Show loading
+    Swal.fire({
+        title: 'Caricamento...',
+        text: 'Caricamento dettagli appuntamento',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
     fetch('@Url.Action("GetAppuntamentoDetails")?id=' + appuntamentoId)
         .then(response => response.json())
         .then(data => {
+            Swal.close();
+            
             if (data.success) {
                 const dettagli = data.appuntamento;
+                
+                // Determina l'icona del servizio
+                let serviceIcon = 'fas fa-cut';
+                if (dettagli.servizio) {
+                    const servizio = dettagli.servizio.toLowerCase();
+                    if (servizio.includes('colore') || servizio.includes('tinta')) serviceIcon = 'fas fa-palette';
+                    else if (servizio.includes('piega')) serviceIcon = 'fas fa-wind';
+                    else if (servizio.includes('barba')) serviceIcon = 'fas fa-user-tie';
+                    else if (servizio.includes('massaggio')) serviceIcon = 'fas fa-hand-paper';
+                    else if (servizio.includes('manicure') || servizio.includes('unghie')) serviceIcon = 'fas fa-hand-sparkles';
+                }
+                
                 document.getElementById('contenutoDettagli').innerHTML = 
-                    '<div class="grid grid-cols-2 gap-4">' +
-                        '<div><label class="font-semibold text-gray-700">Cliente:</label><p class="text-gray-900">' + dettagli.cliente + '</p></div>' +
-                        '<div><label class="font-semibold text-gray-700">Telefono:</label><p class="text-gray-900">' + (dettagli.telefono || 'Non specificato') + '</p></div>' +
-                        '<div><label class="font-semibold text-gray-700">Data e ora:</label><p class="text-gray-900">' + dettagli.data + ' ' + dettagli.oraInizio + ' - ' + dettagli.oraFine + '</p></div>' +
-                        '<div><label class="font-semibold text-gray-700">Dipendente:</label><p class="text-gray-900">' + (dettagli.dipendente || 'Non assegnato') + '</p></div>' +
-                        '<div><label class="font-semibold text-gray-700">Servizio:</label><p class="text-gray-900">' + (dettagli.servizio || 'Non specificato') + '</p></div>' +
-                        '<div><label class="font-semibold text-gray-700">Stato:</label><span class="inline-flex px-2 py-1 text-xs font-medium rounded-full ' + (dettagli.stato === 'Prenotato' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800') + '">' + dettagli.stato + '</span></div>' +
-                    '</div>' +
-                    (dettagli.note ? '<div class="mt-4"><label class="font-semibold text-gray-700">Note:</label><p class="text-gray-900 mt-1">' + dettagli.note + '</p></div>' : '');
+                    `<div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <label class="flex items-center font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                    <i class="fas fa-user mr-2 text-purple-600 dark:text-purple-400"></i>
+                                    Cliente
+                                </label>
+                                <p class="text-gray-900 dark:text-gray-100 font-medium">${dettagli.cliente}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <label class="flex items-center font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                    <i class="fas fa-phone mr-2 text-green-600 dark:text-green-400"></i>
+                                    Telefono
+                                </label>
+                                <p class="text-gray-900 dark:text-gray-100">${dettagli.telefono || 'Non specificato'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <label class="flex items-center font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                    <i class="fas fa-calendar mr-2 text-blue-600 dark:text-blue-400"></i>
+                                    Data e Ora
+                                </label>
+                                <p class="text-gray-900 dark:text-gray-100">${dettagli.data}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">${dettagli.oraInizio} - ${dettagli.oraFine}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <label class="flex items-center font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                    <i class="fas fa-user-tie mr-2 text-indigo-600 dark:text-indigo-400"></i>
+                                    Operatore
+                                </label>
+                                <p class="text-gray-900 dark:text-gray-100">${dettagli.dipendente || 'Non assegnato'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <label class="flex items-center font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                    <i class="${serviceIcon} mr-2 text-orange-600 dark:text-orange-400"></i>
+                                    Servizio
+                                </label>
+                                <p class="text-gray-900 dark:text-gray-100">${dettagli.servizio || 'Non specificato'}</p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                <label class="flex items-center font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2">
+                                    <i class="fas fa-info-circle mr-2 text-gray-600 dark:text-gray-400"></i>
+                                    Stato
+                                </label>
+                                <span class="inline-flex px-3 py-1 text-xs font-medium rounded-full ${dettagli.stato === 'Prenotato' ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'}">${dettagli.stato}</span>
+                            </div>
+                        </div>
+                        ${dettagli.note ? `<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                            <label class="flex items-center font-semibold text-blue-800 dark:text-blue-200 text-sm mb-2">
+                                <i class="fas fa-sticky-note mr-2"></i>
+                                Note
+                            </label>
+                            <p class="text-blue-900 dark:text-blue-100">${dettagli.note}</p>
+                        </div>` : ''}
+                    </div>`;
+                
                 document.getElementById('modalDettagliAppuntamento').classList.remove('hidden');
             } else {
-                alert('Impossibile caricare i dettagli');
+                Swal.fire('Errore', 'Impossibile caricare i dettagli dell\'appuntamento', 'error');
             }
         })
         .catch(error => {
             console.error('Errore:', error);
-            alert('Errore durante il caricamento');
+            Swal.fire('Errore', 'Errore durante il caricamento dei dettagli', 'error');
         });
 }
 
@@ -330,102 +533,238 @@ function chiudiModalDettagli() {
 
 function modificaAppuntamento() {
     if (!appuntamentoCorrente) return;
-    alert('Funzione di modifica da implementare');
+    
+    chiudiModalDettagli();
+    
+    Swal.fire({
+        title: '✏️ Modifica Appuntamento',
+        text: 'Verrai reindirizzato alla pagina di modifica',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Continua',
+        cancelButtonText: 'Annulla',
+        confirmButtonColor: '#f59e0b'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.location.href = '/Appuntamento/Edit/' + appuntamentoCorrente;
+        }
+    });
 }
 
 function annullaAppuntamento() {
     if (!appuntamentoCorrente) return;
     
-    if (confirm('Annullare l\'appuntamento?')) {
-        fetch('@Url.Action("DeleteAppuntamento")/' + appuntamentoCorrente, {
-            method: 'DELETE',
-            headers: {
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Appuntamento annullato');
-                chiudiModalDettagli();
-                ricaricaCalendario();
-            } else {
-                alert('Errore: ' + data.message);
-            }
-        });
-    }
-}
-
-// Ricerca clienti
-function setupRicercaClienti() {
-    const ricercaInput = document.getElementById('ricercaCliente');
-    if (!ricercaInput) return;
-    
-    ricercaInput.addEventListener('input', function() {
-        const termine = this.value;
-        if (termine.length < 2) {
-            document.getElementById('suggerimentiClienti').classList.add('hidden');
-            return;
-        }
-
-        // Chiamata AJAX per cercare i clienti
-            fetch('@Url.Action("SearchClienti")?termine=' + encodeURIComponent(termine))
+    Swal.fire({
+        title: '🗑️ Annullare l\'appuntamento?',
+        html: `
+            <div class="text-left space-y-3">
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                    <p class="text-red-800 dark:text-red-200 font-medium">⚠️ Questa azione non può essere annullata</p>
+                </div>
+                <p class="text-gray-600 dark:text-gray-400">L'appuntamento verrà contrassegnato come annullato e:</p>
+                <ul class="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                    <li>• Lo slot tornerà disponibile</li>
+                    <li>• Il cliente riceverà una notifica (se configurata)</li>
+                    <li>• L'appuntamento rimarrà visibile nella cronologia</li>
+                </ul>
+            </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-times mr-2"></i>Annulla Appuntamento',
+        cancelButtonText: 'Mantieni',
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#6b7280',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'Annullamento in corso...',
+                text: 'Attendere prego',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('@Url.Action("DeleteAppuntamento")/' + appuntamentoCorrente, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
             .then(response => response.json())
-            .then(clienti => {
-                const suggerimenti = document.getElementById('suggerimentiClienti');
-                if (clienti.length > 0) {
-                    suggerimenti.innerHTML = clienti.map(cliente => 
-                        '<div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" onclick="selezionaCliente(\'' + cliente.id + '\', \'' + cliente.nome + '\')">' +
-                        '<div class="font-medium text-gray-900">' + cliente.nome + '</div>' +
-                        '<div class="text-sm text-gray-500">' + cliente.email + ' • ' + cliente.telefono + '</div>' +
-                        '</div>'
-                    ).join('');
-                    suggerimenti.classList.remove('hidden');
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '✅ Appuntamento Annullato',
+                        text: 'L\'appuntamento è stato annullato con successo',
+                        confirmButtonColor: '#10b981',
+                        timer: 3000,
+                        timerProgressBar: true
+                    }).then(() => {
+                        chiudiModalDettagli();
+                        ricaricaCalendario();
+                    });
                 } else {
-                    suggerimenti.classList.add('hidden');
+                    Swal.fire('Errore', data.message || 'Errore durante l\'annullamento', 'error');
                 }
             })
             .catch(error => {
-                console.error('Errore ricerca clienti:', error);
+                console.error('Errore:', error);
+                Swal.fire('Errore', 'Errore di rete durante l\'annullamento', 'error');
             });
+        }
     });
 }
 
-function selezionaCliente(id, nome) {
-    document.getElementById('clienteSelezionato').value = id;
-    document.getElementById('ricercaCliente').value = nome;
-    document.getElementById('suggerimentiClienti').classList.add('hidden');
+// Utility functions per il calendario
+function getServiceColor(serviceName) {
+    if (!serviceName) return "bg-gradient-to-r from-purple-500 to-pink-500";
+    
+    const service = serviceName.toLowerCase();
+    if (service.includes("taglio")) return "bg-gradient-to-r from-blue-500 to-cyan-500";
+    if (service.includes("colore") || service.includes("tinta")) return "bg-gradient-to-r from-orange-500 to-amber-500";
+    if (service.includes("piega")) return "bg-gradient-to-r from-green-500 to-emerald-500";
+    if (service.includes("barba")) return "bg-gradient-to-r from-purple-600 to-violet-600";
+    if (service.includes("massaggio")) return "bg-gradient-to-r from-teal-500 to-cyan-500";
+    if (service.includes("manicure") || service.includes("unghie")) return "bg-gradient-to-r from-pink-500 to-rose-500";
+    
+    return "bg-gradient-to-r from-purple-500 to-pink-500";
+}
+
+function getServiceIcon(serviceName) {
+    if (!serviceName) return "fas fa-cut";
+    
+    const service = serviceName.toLowerCase();
+    if (service.includes("colore") || service.includes("tinta")) return "fas fa-palette";
+    if (service.includes("piega")) return "fas fa-wind";
+    if (service.includes("barba")) return "fas fa-user-tie";
+    if (service.includes("massaggio")) return "fas fa-hand-paper";
+    if (service.includes("manicure") || service.includes("unghie")) return "fas fa-hand-sparkles";
+    
+    return "fas fa-cut";
+}
+
+// Gestione stato appuntamenti
+function getStatusBadgeClass(status) {
+    switch (status) {
+        case 'Prenotato':
+            return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+        case 'Completato':
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+        case 'Annullato':
+            return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+        case 'InCorso':
+            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
+        default:
+            return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+    }
 }
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    //setupRicercaClienti();
-    
-    // Cambio salone
-    const saloneSelector = document.getElementById('saloneSelector');
-    if (saloneSelector) {
-        saloneSelector.addEventListener('change', function() {
-            saloneCorrente = this.value;
-            ricaricaCalendario();
-        });
-    }
-    
-    // Chiudi modal cliccando fuori
+    // Gestione click fuori dal modal per chiuderlo
     document.addEventListener('click', function(e) {
-        if (e.target.id === 'modalNuovoAppuntamento') {
-            chiudiModal();
-        }
-        if (e.target.id === 'modalDettagliAppuntamento') {
+        const modal = document.getElementById('modalDettagliAppuntamento');
+        if (e.target === modal) {
             chiudiModalDettagli();
         }
-        
-        // Chiudi suggerimenti clienti
-        if (!e.target.closest('#ricercaCliente') && !e.target.closest('#suggerimentiClienti')) {
-            const suggerimenti = document.getElementById('suggerimentiClienti');
-            if (suggerimenti) {
-                suggerimenti.classList.add('hidden');
+    });
+    
+    // Chiudi modal con tasto ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('modalDettagliAppuntamento');
+            if (!modal.classList.contains('hidden')) {
+                chiudiModalDettagli();
             }
         }
     });
+    
+    // Auto-dismiss delle notifiche dopo 5 secondi
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(alert => {
+            alert.classList.add('opacity-0', '-translate-y-4');
+            setTimeout(() => alert.remove(), 300);
+        });
+    }, 5000);
+    
+    // Aggiungi tooltip nativi per gli appuntamenti
+    document.querySelectorAll('[data-dipendente]').forEach(slot => {
+        slot.title = 'Clicca per creare un nuovo appuntamento';
+    });
+    
+    // Smooth scroll per navigazione calendario
+    document.querySelectorAll('.calendar-nav').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('.calendar-grid').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        });
+    });
 });
+
+// Utility functions
+function formatDate(date) {
+    return new Intl.DateTimeFormat('it-IT', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    }).format(date);
+}
+
+function formatTime(timeString) {
+    return new Intl.DateTimeFormat('it-IT', {
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date(`1970-01-01T${timeString}`));
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + Left Arrow = giorno precedente
+    if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        cambiaGiorno(-1);
+    }
+    
+    // Ctrl/Cmd + Right Arrow = giorno successivo
+    if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowRight') {
+        e.preventDefault();
+        cambiaGiorno(1);
+    }
+    
+    // Ctrl/Cmd + Home = vai a oggi
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Home') {
+        e.preventDefault();
+        vaiOggi();
+    }
+    
+    // Ctrl/Cmd + N = nuovo appuntamento
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        nuovoAppuntamento();
+    }
+});
+
+// Refresh automatico ogni 5 minuti (opzionale)
+setInterval(() => {
+    const lastUpdate = localStorage.getItem('calendario_last_update');
+    const now = Date.now();
+    
+    // Se sono passati più di 5 minuti dall'ultimo aggiornamento
+    if (!lastUpdate || (now - parseInt(lastUpdate)) > 300000) {
+        localStorage.setItem('calendario_last_update', now.toString());
+        // Uncommenta per abilitare refresh automatico
+        // ricaricaCalendario();
+    }
+}, 300000); // 5 minuti
 </script>
