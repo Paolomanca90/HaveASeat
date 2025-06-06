@@ -1,5 +1,6 @@
 ﻿using HaveASeat.Data;
 using HaveASeat.Models;
+using HaveASeat.Utilities.Constants;
 using HaveASeat.Utilities.Dto;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,7 @@ namespace HaveASeat.Controllers
 
 			// Ottieni tutti i saloni dell'utente
 			var saloni = await _context.Salone
+				.Include(x => x.SaloneAbbonamenti)
 				.Where(s => s.ApplicationUserId == userId)
 				.OrderBy(s => s.Nome)
 				.ToListAsync();
@@ -64,6 +66,10 @@ namespace HaveASeat.Controllers
 				TempData["ErrorMessage"] = "Salone non trovato o non autorizzato.";
 				return RedirectToAction("Index", "Partner");
 			}
+
+			var abbonamentoStandard = salone.SaloneAbbonamenti.Any(x => x.AbbonamentoId == SubscriptionsConstants.Basic);
+			if (abbonamentoStandard)
+				ViewBag.Basic = true;
 
 			ViewBag.Saloni = saloni;
 			ViewBag.SaloneCorrente = salone;
