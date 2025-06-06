@@ -2,6 +2,7 @@
  @model HaveASeat.ViewModels.DashboardViewModel
 @{
     Layout = "_DashboardLayout";
+    var promozioniAttive = ViewBag.PromozioniAttive as List<HaveASeat.Models.Servizio> ?? new List<HaveASeat.Models.Servizio>();
 }
 @section Styles{
 <link href="/css/ReportDashboard.css" rel="stylesheet" />
@@ -35,10 +36,20 @@
                 }
             </select>
         }
-
+        <div class="dropdown dropdown-end mr-2">
+            <label tabindex="0" class="btn btn-outline">
+                <i class="fas fa-download"></i> Esporta
+            </label>
+            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+                <li><a onclick="exportDashboard('csv')"><i class="fas fa-file-csv"></i> Esporta CSV</a></li>
+                <li><a onclick="exportDashboard('excel')"><i class="fas fa-file-excel"></i> Esporta Excel</a></li>
+                <li><a onclick="exportDashboard('pdf')"><i class="fas fa-file-pdf"></i> Esporta PDF</a></li>
+            </ul>
+        </div>
+@* 
         <button class="btn btn-outline" id="exportBtn">
             <i class="fas fa-download"></i> Esporta
-        </button>
+        </button> *@
         <button class="btn btn-primary" onclick="window.location.href='@Url.Action("Dipendenti", "Partner")'">
             <i class="fas fa-plus"></i> Aggiungi staff
         </button>
@@ -112,6 +123,35 @@ else
                 <span id="percServizi">@Math.Abs(Model.Stats.PercentualeServizi)%</span> rispetto a ieri
             </div>
     </div>
+        <div class="stat-card">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Dipendenti</div>
+                <div class="stat-card-icon icon-employees">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+            </div>
+            <div class="stat-card-value" id="numeroDipendenti">@Model.Stats.NumeroDipendenti</div>
+            <div class="stat-card-change change-neutral">
+                <i class="fas fa-users"></i>
+                <span>Staff totale</span>
+            </div>
+        </div>
+        <div class="stat-card cursor-pointer hover:shadow-lg transition-shadow" onclick="showPromozioniModal()">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Promozioni Attive</div>
+                <div class="stat-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);">
+                    <i class="fas fa-tags"></i>
+                </div>
+            </div>
+            <div class="stat-card-value" id="promozioniAttive">@Model.Stats.PromozioniAttive</div>
+            <div class="stat-card-change @(Model.Stats.IsPromozioniPositive ? "change-positive" : "change-negative")">
+                <i class="fas fa-arrow-@(Model.Stats.IsPromozioniPositive ? "up" : "down")"></i>
+                <span id="percPromozioni">@Math.Abs(Model.Stats.PercentualePromozioni)%</span> rispetto a ieri
+            </div>
+            <div class="text-xs text-gray-500 mt-2">
+                <i class="fas fa-hand-pointer"></i> Clicca per dettagli
+            </div>
+        </div>
 </div>
 
 <!-- Charts Section -->
@@ -415,7 +455,70 @@ else
         </div>
         </div>
     }
+<!-- Modal Promozioni -->
+<div id="promozioniModal" class="modal">
+    <div class="modal-box w-11/12 max-w-3xl">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-xl flex items-center">
+                <i class="fas fa-tags text-orange-500 mr-2"></i>
+                Promozioni Attive
+            </h3>
+            <button class="btn btn-sm btn-circle btn-ghost" onclick="closePromozioniModal()">✕</button>
+        </div>
 
+        <div id="promozioniContent" class="space-y-3">
+            <!-- Il contenuto verrà caricato dinamicamente -->
+            <div class="flex justify-center items-center h-32">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        </div>
+
+        <div class="modal-action">
+            <button class="btn btn-outline" onclick="closePromozioniModal()">Chiudi</button>
+            <button class="btn btn-primary" onclick="window.location.href='@Url.Action("Index", "Promotions")'">
+                <i class="fas fa-plus mr-2"></i>Gestisci Promozioni
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button onclick="closePromozioniModal()">close</button>
+    </form>
+</div>
+
+<!-- Template per le card delle promozioni -->
+<template id="promozioneCardTemplate">
+    <div class="card bg-base-100 shadow-lg border border-base-200">
+        <div class="card-body">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <h4 class="card-title text-lg"></h4>
+                    <p class="text-sm text-gray-600 mt-1"></p>
+                    <div class="flex gap-4 mt-3">
+                        <div class="text-sm">
+                            <span class="text-gray-500">Prezzo originale:</span>
+                            <span class="line-through text-gray-400"></span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="text-gray-500">Prezzo promo:</span>
+                            <span class="font-bold text-success"></span>
+                        </div>
+                        <div class="text-sm">
+                            <span class="text-gray-500">Risparmio:</span>
+                            <span class="font-bold text-primary"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="badge badge-lg"></div>
+                    <div class="text-xs mt-2 text-gray-500">
+                        <i class="far fa-clock mr-1"></i>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="//unpkg.com/alpinejs" defer></script>
 <script defer>
@@ -491,6 +594,9 @@ else
     document.addEventListener('DOMContentLoaded', function () {
         // Inizializza il grafico
         initializeChart();
+         if (currentSaloneId) {
+        checkPromozioniInScadenza();
+    }
 
         // Event listener per il cambio sede
         document.getElementById('sedeSelector')?.addEventListener('change', function() {
@@ -532,7 +638,7 @@ else
         const ctx = document.getElementById('revenueChart');
         if (!ctx) return;
 
-        const chartData = @Html.Raw(Json.Serialize(Model.ChartData));
+        const chartData = @Html.Raw(Json.Serialize(Model.ChartData))
 
         revenueChart = new Chart(ctx, {
             type: 'line',
@@ -606,7 +712,7 @@ else
             });
     }
 
-    function updateStats(stats) {
+     function updateStats(stats) {
         // Aggiorna prenotazioni
         document.getElementById('prenotazioniOggi').textContent = stats.prenotazioniOggi;
         document.getElementById('percPrenotazioni').textContent = Math.abs(stats.percentualePrenotazioni) + '%';
@@ -626,14 +732,22 @@ else
         document.getElementById('serviziCompletati').textContent = stats.serviziCompletati;
         document.getElementById('percServizi').textContent = Math.abs(stats.percentualeServizi) + '%';
         updateStatChange('servizi', stats.isServiziPositive);
-    }
 
+        document.getElementById('numeroDipendenti').textContent = stats.numeroDipendenti;
+        // // Aggiorna promozioni
+         document.getElementById('promozioniAttive').textContent = stats.promozioniAttive;
+         document.getElementById('percPromozioni').textContent = Math.abs(stats.percentualePromozioni) + '%';
+         updateStatChange('promozioni', stats.isPromozioniPositive);
+
+    }
+    
     function updateStatChange(type, isPositive) {
         const elements = {
             'prenotazioni': document.querySelector('#prenotazioniOggi').closest('.stat-card').querySelector('.stat-card-change'),
             'clienti': document.querySelector('#nuoviClienti').closest('.stat-card').querySelector('.stat-card-change'),
             'incasso': document.querySelector('#incassoGiornaliero').closest('.stat-card').querySelector('.stat-card-change'),
-            'servizi': document.querySelector('#serviziCompletati').closest('.stat-card').querySelector('.stat-card-change')
+            'servizi': document.querySelector('#serviziCompletati').closest('.stat-card').querySelector('.stat-card-change'),
+            'promozioni': document.querySelector('#promozioniAttive').closest('.stat-card').querySelector('.stat-card-change')
         };
 
         const element = elements[type];
@@ -750,8 +864,8 @@ else
         });
     }
 
-    function exportDashboard() {
-        window.location.href = `/Partner/ExportDashboard?saloneId=${currentSaloneId}&periodo=${currentPeriodo}`;
+     function exportDashboard(formato) {
+        window.location.href = `/Partner/ExportDashboard?saloneId=${currentSaloneId}&periodo=${currentPeriodo}&formato=${formato}`;
     }
 
     // Funzioni placeholder per le azioni degli appuntamenti
@@ -767,5 +881,164 @@ else
     function showAppointmentMenu(id) {
         // Implementare menu contestuale
         console.log('Mostra menu per appuntamento:', id);
+    }
+</script>
+<script>
+    function showPromozioniModal() {
+        const modal = document.getElementById('promozioniModal');
+        modal.classList.add('modal-open');
+
+        // Carica le promozioni
+        loadPromozioniAttive();
+    }
+
+    function closePromozioniModal() {
+        const modal = document.getElementById('promozioniModal');
+        modal.classList.remove('modal-open');
+    }
+
+    function loadPromozioniAttive() {
+        const content = document.getElementById('promozioniContent');
+
+        // Mostra loading
+        content.innerHTML = `
+            <div class="flex justify-center items-center h-32">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        `;
+
+        fetch(`/Partner/GetPromozioniAttive?saloneId=${currentSaloneId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayPromozioni(data);
+                } else {
+                    content.innerHTML = '<div class="alert alert-error">Errore nel caricamento delle promozioni</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                content.innerHTML = '<div class="alert alert-error">Errore di connessione</div>';
+            });
+    }
+
+    function displayPromozioni(data) {
+        const content = document.getElementById('promozioniContent');
+
+        if (data.promozioni.length === 0) {
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-tags text-gray-300 text-5xl mb-4"></i>
+                    <p class="text-gray-500">Nessuna promozione attiva al momento</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Header con riepilogo
+        let html = `
+            <div class="alert ${data.promozioniInScadenza > 0 ? 'alert-warning' : 'alert-info'} mb-4">
+                <i class="fas ${data.promozioniInScadenza > 0 ? 'fa-exclamation-triangle' : 'fa-info-circle'}"></i>
+                <div>
+                    <h3>${data.totalePromozioni} promozioni attive</h3>
+                    ${data.promozioniInScadenza > 0 ?
+                        `<p class="text-sm">${data.promozioniInScadenza} in scadenza nei prossimi 3 giorni!</p>` :
+                        ''}
+                </div>
+            </div>
+        `;
+
+        // Lista promozioni
+        html += '<div class="space-y-3">';
+
+        data.promozioni.forEach(promo => {
+            const badgeClass = promo.inScadenza ? 'badge-warning' :
+                              promo.giorniRimanenti <= 7 ? 'badge-info' : 'badge-success';
+            const badgeIcon = promo.inScadenza ? 'fa-exclamation-triangle' : 'fa-clock';
+
+            html += `
+                <div class="card bg-base-100 shadow-lg border ${promo.inScadenza ? 'border-warning' : 'border-base-200'}">
+                    <div class="card-body">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <h4 class="card-title text-lg">${promo.nome}</h4>
+                                <p class="text-sm text-gray-600 mt-1">${promo.descrizione || 'Nessuna descrizione'}</p>
+                                <div class="flex gap-4 mt-3">
+                                    <div class="text-sm">
+                                        <span class="text-gray-500">Prezzo originale:</span>
+                                        <span class="line-through text-gray-400">€${promo.prezzo.toFixed(2)}</span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="text-gray-500">Prezzo promo:</span>
+                                        <span class="font-bold text-success">€${promo.prezzoPromozione.toFixed(2)}</span>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="text-gray-500">Risparmio:</span>
+                                        <span class="font-bold text-primary">€${promo.risparmio.toFixed(2)} (-${promo.percentualeSconto}%)</span>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-2">
+                                    <i class="far fa-calendar mr-1"></i>
+                                    Valida dal ${formatDate(promo.dataInizioPromozione)} al ${formatDate(promo.dataFinePromozione)}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="badge ${badgeClass} badge-lg">
+                                    <i class="fas ${badgeIcon} mr-1"></i>
+                                    ${promo.giorniRimanenti} giorni
+                                </div>
+                                ${promo.inScadenza ?
+                                    '<div class="text-xs mt-2 text-warning font-semibold animate-pulse">In scadenza!</div>' :
+                                    ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        content.innerHTML = html;
+    }
+
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // Funzione per verificare promozioni in scadenza all'avvio
+    function checkPromozioniInScadenza() {
+        fetch(`/Partner/GetPromozioniAttive?saloneId=${currentSaloneId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.promozioniInScadenza > 0) {
+                    // Mostra una notifica toast
+                    showNotificaScadenza(data.promozioniInScadenza);
+                }
+            });
+    }
+
+    function showNotificaScadenza(numero) {
+        // Crea un toast notification
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-top toast-end';
+        toast.innerHTML = `
+            <div class="alert alert-warning shadow-lg">
+                <div>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>${numero} promozioni in scadenza!</span>
+                </div>
+                <button class="btn btn-sm btn-ghost" onclick="showPromozioniModal(); this.parentElement.parentElement.remove();">
+                    Visualizza
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Rimuovi dopo 5 secondi
+        setTimeout(() => {
+            toast.remove();
+        }, 5000);
     }
 </script>
