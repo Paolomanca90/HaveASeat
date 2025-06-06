@@ -1,5 +1,6 @@
 ﻿using HaveASeat.Data;
 using HaveASeat.Models;
+using HaveASeat.Utilities.Constants;
 using HaveASeat.Utilities.Dto;
 using HaveASeat.Utilities.Enum;
 using HaveASeat.ViewModels;
@@ -29,6 +30,7 @@ namespace HaveASeat.Controllers
 
 				// Ottieni tutti i saloni dell'utente
 				var saloni = await _context.Salone
+					.Include(x => x.SaloneAbbonamenti)
 					.Where(s => s.ApplicationUserId == userId)
 					.ToListAsync();
 
@@ -47,6 +49,10 @@ namespace HaveASeat.Controllers
 				{
 					saloneCorrente = saloni.First();
 				}
+
+				var abbonamentoStandard = saloneCorrente.SaloneAbbonamenti.Any(x => x.AbbonamentoId == SubscriptionsConstants.Basic);
+				if (abbonamentoStandard)
+					ViewBag.Basic = true;
 
 				// Data selezionata (default oggi)
 				var dataSelezionata = data ?? DateTime.Today;
