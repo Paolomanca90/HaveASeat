@@ -32,7 +32,7 @@
         @if (Model.HasMultipleSedi)
         {
             <div class="dropdown dropdown-bottom dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px]">
+                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px] dark:text-gray-200 hover:text-black dark:hover:text-gray-700">
                     <i class="fas fa-store mr-2"></i>
                     <span class="truncate">@Model.SaloneCorrente?.Nome</span>
                     <i class="fas fa-chevron-down ml-2"></i>
@@ -43,10 +43,10 @@
                         <li>
                             <a href="?saloneId=@salone.SaloneId&data=@Model.DataSelezionata.ToString("yyyy-MM-dd")"
                                class="@(salone.SaloneId == Model.SaloneCorrente?.SaloneId ? "active bg-purple-50 dark:bg-purple-900/20" : "") hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <i class="fas fa-store mr-2 @(salone.SaloneId == Model.SaloneCorrente?.SaloneId ? "text-purple-600" : "")"></i>
+                                <i class="fas fa-store mr-2 dark:text-gray-200 @(salone.SaloneId == Model.SaloneCorrente?.SaloneId ? "text-purple-600 dark:text-purple-600" : "")"></i>
                                 <div class="flex-1">
-                                    <div class="font-medium">@salone.Nome</div>
-                                    <div class="text-xs text-gray-500">@salone.Citta, @salone.Provincia</div>
+                                    <div class="font-medium dark:text-gray-200">@salone.Nome</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-100">@salone.Citta, @salone.Provincia</div>
                                 </div>
                                 @if (salone.SaloneId == Model.SaloneCorrente?.SaloneId)
                                 {
@@ -58,7 +58,7 @@
                 </ul>
             </div>
         }
-
+        
         <!-- Navigation Controls -->
         <div class="flex items-center space-x-2">
             <button class="inline-flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="cambiaGiorno(-1)">

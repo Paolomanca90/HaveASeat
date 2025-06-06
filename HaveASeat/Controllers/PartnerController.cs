@@ -8,9 +8,9 @@ using System.Security.Claims;
 using HaveASeat.Utilities.Enum;
 using Microsoft.EntityFrameworkCore;
 using HaveASeat.ViewModels;
-using System.Text;
 using HaveASeat.Utilities.Constants;
 using HaveASeat.Services;
+using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace HaveASeat.Controllers
 {
@@ -88,15 +88,17 @@ namespace HaveASeat.Controllers
                     viewModel.DataFine = oggi.AddDays(1).AddSeconds(-1);
                     break;
             }
-			  // Carica le statistiche
-    await LoadDashboardStats(viewModel);
-    await LoadChartData(viewModel);
-    await LoadTopServizi(viewModel);
-    //await LoadAppuntamentiOggi(viewModel);
 
-    ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
-    return View(viewModel);
-}
+			// Carica le statistiche
+            await LoadDashboardStats(viewModel);
+            await LoadChartData(viewModel);
+            await LoadTopServizi(viewModel);
+            //await LoadAppuntamentiOggi(viewModel);
+
+            ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
+            return View(viewModel);
+        }
+
         private async Task LoadDashboardStats(DashboardViewModel viewModel)
         {
             var oggi = DateTime.Today;
@@ -653,10 +655,25 @@ namespace HaveASeat.Controllers
 			}
 
 			var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
-			if (checkPiano == null)
-			{
-				return BadRequest("Nessun piano selezionato.");
-			}
+            if (checkPiano == null)
+            {
+                if (TempData["SelectedPianoId"] != null)
+                {
+					var newPiano = new PianoSelezionato
+					{
+						PianoSelezionatoId = Guid.NewGuid(),
+						AbbonamentoId = TempData["SelectedPianoId"] as Guid? ?? Guid.Empty,
+						ApplicationUserId = userId,
+						Confermato = false,
+					};
+					_context.Add(newPiano);
+					_context.SaveChanges();
+                    checkPiano = new PianoSelezionato();
+                    checkPiano.AbbonamentoId = newPiano.AbbonamentoId;
+				}
+                else
+                    return BadRequest("Nessun piano selezionato.");
+            }
 
 			var piano = _context.Abbonamento.FirstOrDefault(x => x.AbbonamentoId == checkPiano.AbbonamentoId);
 			if (piano == null)
@@ -791,12 +808,16 @@ namespace HaveASeat.Controllers
 					
 					pianoSelezionato.Confermato = true;
 					_context.PianoSelezionato.Update(pianoSelezionato);
+
+                    var abbonamento = _context.Abbonamento.Find(pianoSelezionato.AbbonamentoId);
 					
 					var saloneAbbonamento = new SaloneAbbonamento
 					{
 						SaloneAbbonamentoId = Guid.NewGuid(),
 						SaloneId = salone.SaloneId,
 						AbbonamentoId = pianoSelezionato.AbbonamentoId,
+                        Abbonamento = abbonamento,
+                        Salone = salone,
 						DataInizio = DateTime.Now,
 						DataFine = DateTime.Now.AddMonths(1),
 						Stato = Stato.Attivo,
@@ -819,13 +840,13 @@ namespace HaveASeat.Controllers
 				ViewBag.Errore = "Errore: Il pagamento non è stato completato.";
 			}
 
-			return View("Index");
+			return RedirectToAction("Index");
 		}
 
 		public IActionResult PaymentCancel()
 		{
 			ViewBag.Errore = "Pagamento annullato.";
-			return View("Index");
+			return RedirectToAction("Index");
 		}
 
 		public IActionResult Sedi()

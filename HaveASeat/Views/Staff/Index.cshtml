@@ -38,7 +38,7 @@
         @if (hasMultipleSedi && saloni != null && saloni.Count > 1)
         {
             <div class="dropdown dropdown-bottom dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px]">
+                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px] dark:text-gray-200 hover:text-black dark:hover:text-gray-700">
                     <i class="fas fa-store mr-2"></i>
                     <span class="truncate">@salone?.Nome</span>
                     <i class="fas fa-chevron-down ml-2"></i>
@@ -48,11 +48,11 @@
                     {
                         <li>
                             <a href="@Url.Action("Index", new { saloneId = s.SaloneId })"
-                            class="@(s.SaloneId == salone?.SaloneId ? "active bg-purple-50 dark:bg-purple-900/20" : "") hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                <i class="fas fa-store mr-2 @(s.SaloneId == salone?.SaloneId ? "text-purple-600" : "")"></i>
+                            class="@(s.SaloneId == salone?.SaloneId ? "active bg-purple-50 dark:bg-purple-900/20" : "") transition-colors">
+                                <i class="fas fa-store mr-2 dark:text-gray-200 @(s.SaloneId == salone?.SaloneId ? "text-purple-600 dark:text-purple-600" : "")"></i>
                                 <div class="flex-1">
-                                    <div class="font-medium">@s.Nome</div>
-                                    <div class="text-xs text-gray-500">@s.Citta, @s.Provincia</div>
+                                    <div class="font-medium dark:text-gray-200">@s.Nome</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-100">@s.Citta, @s.Provincia</div>
                                 </div>
                                 @if (s.SaloneId == salone?.SaloneId)
                                 {
@@ -134,7 +134,7 @@ else if (!hasStaff)
             <!-- Verifica se ci sono servizi disponibili -->
             @if (salone.Servizi != null && salone.Servizi.Any())
             {
-                <a href="@Url.Action("Create", new { saloneId = salone.SaloneId })" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                <a href="@Url.Action("Create", new { id = salone.SaloneId })" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
                     <i class="fas fa-user-plus mr-2"></i>
                     Aggiungi Primo Membro
                 </a>
@@ -153,7 +153,7 @@ else if (!hasStaff)
                     </div>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                    <a href="@Url.Action("ManageSede", "Partner", new { id = salone.SaloneId })" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-lg hover:from-orange-700 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <a href="@Url.Action("Create", "Servizio", new { id = salone.SaloneId })" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-lg hover:from-orange-700 hover:to-red-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
                         <i class="fas fa-cog mr-2"></i>
                         Configura Servizi
                     </a>

@@ -79,12 +79,12 @@ namespace HaveASeat.Controllers
 		}
 
 		// GET: Servizio/Create
-		public async Task<IActionResult> Create(Guid saloneId)
+		public async Task<IActionResult> Create(Guid id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 			var salone = await _context.Salone
-				.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+				.FirstOrDefaultAsync(s => s.SaloneId == id && s.ApplicationUserId == userId);
 
 			if (salone == null)
 			{
@@ -93,7 +93,7 @@ namespace HaveASeat.Controllers
 			}
 
 			ViewBag.Salone = salone;
-			return View(new Servizio { SaloneId = saloneId });
+			return View(new Servizio { SaloneId = id });
 		}
 
 		// POST: Servizio/Create

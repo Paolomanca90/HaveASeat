@@ -1,4 +1,5 @@
 ﻿@model HaveASeat.Models.Salone
+@using HaveASeat.Utilities.Constants
 
 @{
     Layout = "_DashboardLayout";
@@ -12,37 +13,188 @@
         </a>
         <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Nuova Sede</h1>
-            <p class="text-gray-600 dark:text-gray-400 mt-1">Inserisci le seguenti informazioni</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Scegli il piano e inserisci le informazioni della sede</p>
         </div>
     </div>
 </div>
 
 <!-- Form di Aggiunta -->
 <div class="max-w-4xl mx-auto">
-    <form method="post" id="createSedeForm" class="space-y-8">
+    <form method="post" id="saloneForm" class="space-y-8">
+        @Html.AntiForgeryToken()
+
+        <!-- Hidden field per il piano selezionato -->
+        <input type="hidden" id="selectedPlan" name="PianoSelezionato" value="" />
 
         <!-- Progress Steps -->
         <div class="flex items-center justify-center mb-8">
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-2 md:space-x-4">
                 <div class="flex items-center">
-                    <div class="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="1">1</div>
-                    <span class="ml-2 text-sm font-medium text-purple-600">Dati Generali</span>
+                    <div class="w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="1">1</div>
+                    <span class="ml-2 text-sm font-medium text-orange-600">Piano</span>
                 </div>
-                <div class="w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                 <div class="flex items-center">
                     <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="2">2</div>
-                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Dati Fiscali</span>
+                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Dati Generali</span>
                 </div>
-                <div class="w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
                 <div class="flex items-center">
                     <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="3">3</div>
+                    <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Dati Fiscali</span>
+                </div>
+                <div class="w-8 md:w-16 h-0.5 bg-gray-300 dark:bg-gray-600"></div>
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full flex items-center justify-center text-sm font-medium step-indicator" data-step="4">4</div>
                     <span class="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">Indirizzo</span>
                 </div>
             </div>
         </div>
 
-        <!-- Step 1: Dati Generali -->
+        <!-- Step 1: Selezione Piano -->
         <div id="step-1" class="form-step">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-700 to-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-crown text-white text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Scegli il tuo Piano</h2>
+                    <p class="text-gray-600 dark:text-gray-400">Seleziona il piano più adatto alle tue esigenze</p>
+                </div>
+
+                <!-- Piano Cards -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- Piano Standard -->
+                    <div class="plan-card border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 cursor-pointer transition-all duration-200 hover:border-blue-500 hover:shadow-lg" onclick="scegli('@SubscriptionsConstants.Basic.ToString()')">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-user text-blue-600 dark:text-blue-400 text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Standard</h3>
+                            <div class="flex items-center justify-center space-x-2 mb-3">
+                                <div class="text-3xl font-bold text-blue-600 dark:text-blue-400">€9.99</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">/mese</div>
+                            </div>
+
+                            <div class="space-y-3 text-left">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Prenotazione online base</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Notifiche email</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Fino a 2 operatori</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Profilo base sulla piattaforma</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Piano Pro -->
+                    <div class="plan-card border-2 border-purple-500 rounded-xl p-6 cursor-pointer transition-all duration-200 hover:border-purple-600 hover:shadow-xl bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 relative" onclick="scegli('@SubscriptionsConstants.Pro.ToString()')">
+                        <!-- Badge Più Popolare -->
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-1 rounded-full text-xs font-bold">
+                                PIÙ POPOLARE
+                            </span>
+                        </div>
+
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-star text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Pro</h3>
+                            <div class="flex items-center justify-center space-x-2 mb-3">
+                                <span class="text-3xl font-bold text-purple-600 dark:text-purple-400">€29.99</span>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">/mese</div>
+                            </div>
+
+                            <div class="space-y-3 text-left">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Prenotazioni online con scelta operatore</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Reminder automatici clienti (30 per operatore al mese)</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Fino a 5 operatori</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Statistiche (clienti, appuntamenti, servizi)</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Personalizzazione branding</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Piano Business -->
+                    <div class="plan-card border-2 border-gray-200 dark:border-gray-700 rounded-xl p-6 cursor-pointer transition-all duration-200 hover:border-amber-500 hover:shadow-lg" onclick="scegli('@SubscriptionsConstants.Business.ToString()')">
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-building text-white text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Business</h3>
+                            <div class="flex items-center justify-center space-x-2 mb-3">
+                                <span class="text-3xl font-bold text-orange-400 dark:text-purple-400">€59.99</span>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">/mese</div>  
+                            </div>
+
+                            <div class="space-y-3 text-left">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Tutto del piano Pro</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Possibilità di iscrizione newsletter</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Reminder automatici clienti (50 per operatore al mese)</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Pagamento online</span>
+                                </div>
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Supporto prioritario</span>
+                                </div> 
+                                <div class="flex items-center">
+                                    <i class="fas fa-check text-green-500 mr-3"></i>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Fino a 10 operatori</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-8">
+                    <button type="button" id="continueBtn" onclick="nextStep(2)" class="inline-flex items-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-medium rounded-lg transition-colors opacity-50 cursor-not-allowed" disabled>
+                        Continua
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Dati Generali -->
+        <div id="step-2" class="form-step hidden">
             <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center mr-3">
@@ -107,8 +259,12 @@
                     </div>
                 </div>
 
-                <div class="flex justify-end mt-8">
-                    <button type="button" onclick="nextStep(2)" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
+                <div class="flex justify-between mt-8">
+                    <button type="button" onclick="previousStep(1)" class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Indietro
+                    </button>
+                    <button type="button" onclick="nextStep(3)" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
                         Avanti
                         <i class="fas fa-arrow-right ml-2"></i>
                     </button>
@@ -116,8 +272,8 @@
             </div>
         </div>
 
-        <!-- Step 2: Dati Fiscali -->
-        <div id="step-2" class="form-step hidden">
+        <!-- Step 3: Dati Fiscali -->
+        <div id="step-3" class="form-step hidden">
             <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center mr-3">
@@ -171,11 +327,11 @@
                 </div>
 
                 <div class="flex justify-between mt-8">
-                    <button type="button" onclick="previousStep(1)" class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <button type="button" onclick="previousStep(2)" class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Indietro
                     </button>
-                    <button type="button" onclick="nextStep(3)" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
+                    <button type="button" onclick="nextStep(4)" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors">
                         Avanti
                         <i class="fas fa-arrow-right ml-2"></i>
                     </button>
@@ -183,8 +339,8 @@
             </div>
         </div>
 
-        <!-- Step 3: Indirizzo -->
-        <div id="step-3" class="form-step hidden">
+        <!-- Step 4: Indirizzo -->
+        <div id="step-4" class="form-step hidden">
             <div class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-sm border border-gray-200 dark:border-gray-700">
                 <div class="flex items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
                     <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center mr-3">
@@ -282,14 +438,28 @@
                     </div>
                 </div>
 
+                <!-- Riepilogo Piano Selezionato -->
+                <div id="planSummary" class="mt-8 bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">Piano Selezionato</h3>
+                            <p id="selectedPlanName" class="text-orange-600 dark:text-orange-400 font-medium"></p>
+                        </div>
+                        <div class="text-right">
+                            <p id="selectedPlanPrice" class="text-2xl font-bold text-orange-600 dark:text-orange-400"></p>
+                            <p class="text-sm text-gray-500">/mese</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-between mt-8">
-                    <button type="button" onclick="previousStep(2)" class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <button type="button" onclick="previousStep(3)" class="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <i class="fas fa-arrow-left mr-2"></i>
                         Indietro
                     </button>
-                    <button type="submit" onclick="submitForm()" class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                    <button type="submit" class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-medium rounded-lg transition-all transform hover:scale-105 shadow-lg">
                         <i class="fas fa-save mr-2"></i>
-                        Salva Modifiche
+                        Crea Sede e Sottoscrivi
                     </button>
                 </div>
             </div>
@@ -299,6 +469,41 @@
 
 <script>
     let currentStep = 1;
+    let selectedPlan = null;
+
+    function scegli(id) {
+        $.ajax({
+            url: '@Url.Action("SelectPlan", "Home")',
+            type: 'POST',
+            data: { id: id },
+            success: function (response) {
+               selectedPlan = id;
+               const continua = document.getElementById('continueBtn');
+               continua.removeAttribute('disabled');
+               continua.classList.remove('opacity-50', 'cursor-not-allowed');
+            },
+            error: function (xhr, status, error) {
+                Swal.fire({
+                    title: 'Errore!',
+                    text: 'Si è verificato un errore durante la selezione del piano.',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        });
+    }
+
+    function updatePlanSummary(planType) {
+        const plan = plans[planType];
+        document.getElementById('selectedPlanName').textContent = plan.name;
+
+        if (plan.originalPrice) {
+            document.getElementById('selectedPlanPrice').innerHTML =
+                `<span class="text-lg line-through text-gray-500">${plan.originalPrice}</span> ${plan.price}`;
+        } else {
+            document.getElementById('selectedPlanPrice').textContent = plan.price;
+        }
+    }
 
     function updateStepIndicators(step) {
         // Reset all indicators
@@ -313,9 +518,14 @@
                 stepSpan.className = 'ml-2 text-sm font-medium text-green-600';
             } else if (stepNumber === step) {
                 // Current step
-                indicator.className = 'w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator';
+                if (stepNumber === 1) {
+                    indicator.className = 'w-8 h-8 bg-orange-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator';
+                    stepSpan.className = 'ml-2 text-sm font-medium text-orange-600';
+                } else {
+                    indicator.className = 'w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium step-indicator';
+                    stepSpan.className = 'ml-2 text-sm font-medium text-purple-600';
+                }
                 indicator.textContent = stepNumber;
-                stepSpan.className = 'ml-2 text-sm font-medium text-purple-600';
             } else {
                 // Future steps
                 indicator.className = 'w-8 h-8 bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full flex items-center justify-center text-sm font-medium step-indicator';
@@ -326,6 +536,22 @@
     }
 
     function validateStep(step) {
+        if (step === 1) {
+            // Valida selezione piano
+            if (!selectedPlan) {
+                Swal.fire({
+                    title: '⚠️ Seleziona un Piano',
+                    text: 'Devi selezionare un piano prima di continuare.',
+                    icon: 'warning',
+                    confirmButtonColor: '#ea580c',
+                    timer: 3000,
+                    timerProgressBar: true
+                });
+                return false;
+            }
+            return true;
+        }
+
         const stepElement = document.getElementById(`step-${step}`);
         const requiredFields = stepElement.querySelectorAll('input[required], select[required]');
         let isValid = true;
@@ -390,36 +616,25 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function submitForm() {
-        if (validateStep(currentStep)) {
-            Swal.fire({
-                title: '💾 Salvare le modifiche?',
-                html: `
-                    <div class="text-left space-y-3">
-                        <p class="text-gray-600">Stai per aggiornare:</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>• 📝 Informazioni generali</li>
-                            <li>• 🏢 Dati fiscali</li>
-                            <li>• 📍 Indirizzo sede</li>
-                        </ul>
-                    </div>
-                `,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: '<i class="fas fa-save mr-2"></i>Salva',
-                cancelButtonText: 'Annulla',
-                confirmButtonColor: '#7c3aed',
-                showLoaderOnConfirm: true,
-                preConfirm: () => {
-                    return new Promise((resolve) => {
-                        // Submit the form
-                        document.getElementById('createSedeForm').submit();
-                        resolve();
-                    });
+    function validateForm() {
+        // Usa la validazione nativa del form
+        const form = document.getElementById('saloneForm');
+        return form.checkValidity();
+    }
+
+    // Inizializzazione
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aggiungi validazione al form submit
+        const form = document.getElementById('saloneForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                    return false;
                 }
             });
         }
-    }
+    });
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -440,7 +655,38 @@
                 }
             });
         });
+
+        // Animazione delle card piano
+        document.querySelectorAll('.plan-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                if (!this.classList.contains('border-blue-500') &&
+                    !this.classList.contains('border-purple-500') &&
+                    !this.classList.contains('border-amber-500')) {
+                    this.style.transform = 'translateY(-4px)';
+                }
+            });
+
+            card.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('border-blue-500') &&
+                    !this.classList.contains('border-purple-500') &&
+                    !this.classList.contains('border-amber-500')) {
+                    this.style.transform = 'translateY(0)';
+                }
+            });
+        });
     });
+
+    // Funzione per tracciare analytics
+    function trackPlanSelection(plan) {
+        // Invio dati analytics
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'plan_selected', {
+                'plan_type': plan,
+                'event_category': 'subscription',
+                'event_label': plan
+            });
+        }
+    }
 </script>
 
 @section Scripts {
