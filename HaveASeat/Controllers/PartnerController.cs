@@ -35,7 +35,12 @@ namespace HaveASeat.Controllers
             }
             var viewModel = new DashboardViewModel
             {
-                PeriodoSelezionato = periodo
+                PeriodoSelezionato = periodo,
+                SaloniUtente = new List<Salone>(),
+                Stats = new DashboardStats(),
+                ChartData = new ChartData(),
+                TopServizi = new List<TopServizioViewModel>(),
+                AppuntamentiOggi = new List<AppuntamentoViewModel>()
             };
             // Recupera tutti i saloni dell'utente
             viewModel.SaloniUtente = await _context.Salone
@@ -655,141 +660,310 @@ namespace HaveASeat.Controllers
 		[HttpPost]
 		public IActionResult CreateCheckoutSession()
 		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			if (string.IsNullOrEmpty(userId))
-			{
-				return BadRequest("L'utente non esiste.");
-			}
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return BadRequest("L'utente non esiste.");
+            }
 
-			var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
+            var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
             if (checkPiano == null)
             {
                 if (TempData["SelectedPianoId"] != null)
                 {
-					var newPiano = new PianoSelezionato
-					{
-						PianoSelezionatoId = Guid.NewGuid(),
-						AbbonamentoId = TempData["SelectedPianoId"] as Guid? ?? Guid.Empty,
-						ApplicationUserId = userId,
-						Confermato = false,
-					};
-					_context.Add(newPiano);
-					_context.SaveChanges();
+                    var newPiano = new PianoSelezionato
+                    {
+                        PianoSelezionatoId = Guid.NewGuid(),
+                        AbbonamentoId = TempData["SelectedPianoId"] as Guid? ?? Guid.Empty,
+                        ApplicationUserId = userId,
+                        Confermato = false,
+                    };
+                    _context.Add(newPiano);
+                    _context.SaveChanges();
                     checkPiano = new PianoSelezionato();
                     checkPiano.AbbonamentoId = newPiano.AbbonamentoId;
-				}
+                }
                 else
                     return BadRequest("Nessun piano selezionato.");
             }
 
-			var piano = _context.Abbonamento.FirstOrDefault(x => x.AbbonamentoId == checkPiano.AbbonamentoId);
-			if (piano == null)
-			{
-				return BadRequest("Piano non trovato.");
-			}
+            var piano = _context.Abbonamento.FirstOrDefault(x => x.AbbonamentoId == checkPiano.AbbonamentoId);
+            if (piano == null)
+            {
+                return BadRequest("Piano non trovato.");
+            }
 
-			var total = piano.Prezzo;
-			var saloneId = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione)?.SaloneId;
-			if (saloneId == null)
-			{
-				return BadRequest("Salone non trovato.");
-			}
+            var total = piano.Prezzo;
+            var saloneId = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione)?.SaloneId;
+            if (saloneId == null)
+            {
+                return BadRequest("Salone non trovato.");
+            }
 
-			var customerId = CreateOrGetStripeCustomer();
+            var customerId = CreateOrGetStripeCustomer();
 
-			var options = new SessionCreateOptions
-			{
-				Customer = customerId,
-				PaymentMethodTypes = new List<string> { "card", "klarna", "paypal", "samsung_pay", "sepa_debit" },
-				LineItems = new List<SessionLineItemOptions>
-				{
-					new SessionLineItemOptions
-					{
-						PriceData = new SessionLineItemPriceDataOptions
-						{
-							UnitAmount = Convert.ToInt64(total * 100),
-							Currency = "eur",
-							ProductData = new SessionLineItemPriceDataProductDataOptions
-							{
-								Name = "Registrazione Have A Seat",
-								Metadata = new Dictionary<string, string>
-								{
-									{"P_IVA", GetCustomerMetadata("P_IVA")},
-									{"SaloneId", saloneId.ToString()}
-								}
-							},
-						},
-						Quantity = 1,
-					},
-				},
-				Mode = "payment",
-				SuccessUrl = $"{Request.Scheme}://{Request.Host}/Partner/PaymentSuccess?sessionId={{CHECKOUT_SESSION_ID}}",
-				CancelUrl = Url.Action("PaymentCancel", "Partner", null, Request.Scheme),
-				PaymentIntentData = new SessionPaymentIntentDataOptions
-				{
-					Metadata = new Dictionary<string, string>
-					{
-						{"P_IVA", GetCustomerMetadata("P_IVA")},
-						{"SaloneId", saloneId.ToString()}
-					}
-				}
-			};
+                var productMetadata = new Dictionary<string, string>
+                    {
+                        {"SaloneId", saloneId.ToString()}
+                    };
 
-			var service = new SessionService();
-			var session = service.Create(options);
+            var pIva = GetCustomerMetadata("P_IVA");
+            if (!string.IsNullOrWhiteSpace(pIva))
+            {
+                productMetadata.Add("P_IVA", pIva);
+            }
 
-			return Json(new { url = session.Url });
-		}
+            var options = new SessionCreateOptions
+            {
+                Customer = customerId,
+                PaymentMethodTypes = new List<string> { "card", "klarna", "paypal", "samsung_pay", "sepa_debit" },
+                LineItems = new List<SessionLineItemOptions>
+        {
+            new SessionLineItemOptions
+            {
+                PriceData = new SessionLineItemPriceDataOptions
+                {
+                    UnitAmount = Convert.ToInt64(total * 100),
+                    Currency = "eur",
+                    ProductData = new SessionLineItemPriceDataProductDataOptions
+                    {
+                        Name = "Registrazione Have A Seat",
+                        Metadata = productMetadata
+                    },
+                },
+                Quantity = 1,
+            },
+        },
+                Mode = "payment",
+                SuccessUrl = $"{Request.Scheme}://{Request.Host}/Partner/PaymentSuccess?sessionId={{CHECKOUT_SESSION_ID}}",
+                CancelUrl = Url.Action("PaymentCancel", "Partner", null, Request.Scheme),
+                PaymentIntentData = new SessionPaymentIntentDataOptions
+                {
+                    Metadata = productMetadata
+                }
+            };
+
+            var service = new SessionService();
+            var session = service.Create(options);
+
+            return Json(new { url = session.Url });
+            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //if (string.IsNullOrEmpty(userId))
+            //{
+            //	return BadRequest("L'utente non esiste.");
+            //}
+
+            //var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
+            //         if (checkPiano == null)
+            //         {
+            //             if (TempData["SelectedPianoId"] != null)
+            //             {
+            //		var newPiano = new PianoSelezionato
+            //		{
+            //			PianoSelezionatoId = Guid.NewGuid(),
+            //			AbbonamentoId = TempData["SelectedPianoId"] as Guid? ?? Guid.Empty,
+            //			ApplicationUserId = userId,
+            //			Confermato = false,
+            //		};
+            //		_context.Add(newPiano);
+            //		_context.SaveChanges();
+            //                 checkPiano = new PianoSelezionato();
+            //                 checkPiano.AbbonamentoId = newPiano.AbbonamentoId;
+            //	}
+            //             else
+            //                 return BadRequest("Nessun piano selezionato.");
+            //         }
+
+            //var piano = _context.Abbonamento.FirstOrDefault(x => x.AbbonamentoId == checkPiano.AbbonamentoId);
+            //if (piano == null)
+            //{
+            //	return BadRequest("Piano non trovato.");
+            //}
+
+            //var total = piano.Prezzo;
+            //var saloneId = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione)?.SaloneId;
+            //if (saloneId == null)
+            //{
+            //	return BadRequest("Salone non trovato.");
+            //}
+
+            //var customerId = CreateOrGetStripeCustomer();
+
+            //var options = new SessionCreateOptions
+            //{
+            //	Customer = customerId,
+            //	PaymentMethodTypes = new List<string> { "card", "klarna", "paypal", "samsung_pay", "sepa_debit" },
+            //	LineItems = new List<SessionLineItemOptions>
+            //	{
+            //		new SessionLineItemOptions
+            //		{
+            //			PriceData = new SessionLineItemPriceDataOptions
+            //			{
+            //				UnitAmount = Convert.ToInt64(total * 100),
+            //				Currency = "eur",
+            //				ProductData = new SessionLineItemPriceDataProductDataOptions
+            //				{
+            //					Name = "Registrazione Have A Seat",
+            //					Metadata = new Dictionary<string, string>
+            //					{
+            //						{"P_IVA", GetCustomerMetadata("P_IVA")},
+            //						{"SaloneId", saloneId.ToString()}
+            //					}
+            //				},
+            //			},
+            //			Quantity = 1,
+            //		},
+            //	},
+            //	Mode = "payment",
+            //	SuccessUrl = $"{Request.Scheme}://{Request.Host}/Partner/PaymentSuccess?sessionId={{CHECKOUT_SESSION_ID}}",
+            //	CancelUrl = Url.Action("PaymentCancel", "Partner", null, Request.Scheme),
+            //	PaymentIntentData = new SessionPaymentIntentDataOptions
+            //	{
+            //		Metadata = new Dictionary<string, string>
+            //		{
+            //			{"P_IVA", GetCustomerMetadata("P_IVA")},
+            //			{"SaloneId", saloneId.ToString()}
+            //		}
+            //	}
+            //};
+
+            //var service = new SessionService();
+            //var session = service.Create(options);
+
+            //return Json(new { url = session.Url });
+        }
 
 		private string CreateOrGetStripeCustomer()
 		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var salone = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var salone = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
 
-			var customerService = new CustomerService();
+            if (salone == null)
+            {
+                throw new InvalidOperationException("Salone non trovato");
+            }
 
-			var searchOptions = new CustomerSearchOptions
-			{
-				Query = $"email:'{salone?.Email}' AND metadata['P_IVA']:'{salone?.PartitaIVA}'"
-			};
+            var customerService = new CustomerService();
 
-			var existingCustomers = customerService.Search(searchOptions);
-			if (existingCustomers.Any())
-				return existingCustomers.First().Id;
+            // Costruisci la query di ricerca solo con valori non vuoti
+            var queryParts = new List<string>();
 
-			var customerOptions = new CustomerCreateOptions
-			{
-				Email = salone?.Email,
-				Name = salone?.Nome,
-				Address = new AddressOptions
-				{
-					City = salone?.Citta,
-					Country = "IT",
-					Line1 = salone?.Indirizzo,
-					PostalCode = salone?.CAP,
-					State = salone?.Provincia
-				},
-				Phone = salone?.Telefono,
-				Metadata = new Dictionary<string, string>
-				{
-					{"P_IVA", salone?.PartitaIVA}
-				}
-			};
+            if (!string.IsNullOrWhiteSpace(salone.Email))
+            {
+                queryParts.Add($"email:'{salone.Email}'");
+            }
 
-			var newCustomer = customerService.Create(customerOptions);
-			return newCustomer.Id;
-		}
+            if (!string.IsNullOrWhiteSpace(salone.PartitaIVA))
+            {
+                queryParts.Add($"metadata['P_IVA']:'{salone.PartitaIVA}'");
+            }
+
+            // Se abbiamo criteri di ricerca, cerca il cliente
+            if (queryParts.Any())
+            {
+                var searchOptions = new CustomerSearchOptions
+                {
+                    Query = string.Join(" AND ", queryParts)
+                };
+
+                try
+                {
+                    var existingCustomers = customerService.Search(searchOptions);
+                    if (existingCustomers.Any())
+                        return existingCustomers.First().Id;
+                }
+                catch (StripeException ex)
+                {
+                    // Log dell'errore ma continua con la creazione di un nuovo cliente
+                    // Potresti voler loggare questo errore per debugging
+                }
+            }
+
+            // Crea un nuovo cliente
+            var customerOptions = new CustomerCreateOptions
+            {
+                Email = salone.Email,
+                Name = salone.Nome,
+                Address = new AddressOptions
+                {
+                    City = salone.Citta,
+                    Country = "IT",
+                    Line1 = salone.Indirizzo,
+                    PostalCode = salone.CAP,
+                    State = salone.Provincia
+                },
+                Phone = salone.Telefono
+            };
+
+            // Aggiungi metadata solo se non sono vuoti
+            customerOptions.Metadata = new Dictionary<string, string>();
+
+            if (!string.IsNullOrWhiteSpace(salone.PartitaIVA))
+            {
+                customerOptions.Metadata.Add("P_IVA", salone.PartitaIVA);
+            }
+
+            var newCustomer = customerService.Create(customerOptions);
+            return newCustomer.Id;
+            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //var salone = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
+
+            //var customerService = new CustomerService();
+
+            //var searchOptions = new CustomerSearchOptions
+            //{
+            //	Query = $"email:'{salone?.Email}' AND metadata['P_IVA']:'{salone?.PartitaIVA}'"
+            //};
+
+            //var existingCustomers = customerService.Search(searchOptions);
+            //if (existingCustomers.Any())
+            //	return existingCustomers.First().Id;
+
+            //var customerOptions = new CustomerCreateOptions
+            //{
+            //	Email = salone?.Email,
+            //	Name = salone?.Nome,
+            //	Address = new AddressOptions
+            //	{
+            //		City = salone?.Citta,
+            //		Country = "IT",
+            //		Line1 = salone?.Indirizzo,
+            //		PostalCode = salone?.CAP,
+            //		State = salone?.Provincia
+            //	},
+            //	Phone = salone?.Telefono,
+            //	Metadata = new Dictionary<string, string>
+            //	{
+            //		{"P_IVA", salone?.PartitaIVA}
+            //	}
+            //};
+
+            //var newCustomer = customerService.Create(customerOptions);
+            //return newCustomer.Id;
+        }
 
 		private string GetCustomerMetadata(string key)
 		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var salone = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
-			return key switch
-			{
-				"P_IVA" => salone?.PartitaIVA,
-				_ => string.Empty
-			};
-		}
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var salone = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
+
+            if (salone == null)
+                return string.Empty;
+
+            return key switch
+            {
+                "P_IVA" => salone.PartitaIVA ?? string.Empty,
+                _ => string.Empty
+            };
+
+            //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            //var salone = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
+            //return key switch
+            //{
+            //	"P_IVA" => salone?.PartitaIVA,
+            //	_ => string.Empty
+            //};
+        }
 
 		public IActionResult PaymentSuccess(string sessionId)
 		{
@@ -835,8 +1009,9 @@ namespace HaveASeat.Controllers
 					_context.SaloneAbbonamento.Add(saloneAbbonamento);
 					_context.SaveChanges();
 					ViewBag.Messaggio = "Registrazione effettuata con successo!";
-					return View("Index");
-				}
+                    return RedirectToAction("Index", new { saloneId = salone.SaloneId });
+                    //return View("Index");
+                }
 				else
 				{
 					ViewBag.Errore = "Errore: Salone non trovato.";
