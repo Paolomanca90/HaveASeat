@@ -632,7 +632,7 @@ namespace HaveASeat.Controllers
 					_context.SaloneAbbonamento.Add(saloneAbbonamento);
 					_context.SaveChanges();
 					ViewBag.Messaggio = "Registrazione effettuata con successo!";
-					return View("Index");
+					return RedirectToAction("Index");
 				}
 				else
 				{
@@ -713,7 +713,7 @@ namespace HaveASeat.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult CreateSede(Salone model)
+		public IActionResult CreateSede([Bind(Prefix = "NuovoSalone")] Salone model)
 		{
 			if (!ModelState.IsValid)
 				return View(model);
@@ -957,5 +957,55 @@ namespace HaveASeat.Controllers
             }
                 return View(user);
         }
-    }
+
+		public async Task<IActionResult> Personalizza(Guid? id)
+		{
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+			{
+				return RedirectToAction("Login", "Auth");
+			}
+
+			// Recupera tutti i saloni dell'utente
+			var saloniUtente = await _context.Salone
+				.Include(x => x.SaloneAbbonamenti)
+				.Where(s => s.ApplicationUserId == userId && s.Stato == Stato.Attivo)
+				.OrderBy(s => s.Nome)
+				.ToListAsync();
+
+			// Se non ci sono saloni attivi, reindirizza alle sedi
+			if (!saloniUtente.Any())
+			{
+				return RedirectToAction("Sedi");
+			}
+
+			// Determina quale salone personalizzare
+			Salone selectedSalone;
+			if (id.HasValue && saloniUtente.Any(s => s.SaloneId == id.Value))
+			{
+				selectedSalone = saloniUtente.FirstOrDefault(s => s.SaloneId == id.Value);
+			}
+			else
+			{
+				selectedSalone = saloniUtente.First();
+				// Se ha più saloni e non è specificato l'ID, reindirizza con il primo salone
+				if (saloniUtente.Count > 1)
+				{
+					return RedirectToAction("Personalizza", new { id = selectedSalone.SaloneId });
+				}
+			}
+
+			// Verifica se ha abbonamento Standard
+			var abbonamentoStandard = selectedSalone.SaloneAbbonamenti.Any(x => x.AbbonamentoId == SubscriptionsConstants.Basic);
+			if (abbonamentoStandard)
+				ViewBag.Basic = true;
+
+			// Passa i dati alla view
+			ViewBag.Saloni = saloniUtente;
+			ViewBag.SaloneCorrente = selectedSalone;
+			ViewBag.HasMultipleSedi = saloniUtente.Count > 1;
+
+			return View(selectedSalone);
+		}
+	}
 }

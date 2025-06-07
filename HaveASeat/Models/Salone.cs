@@ -13,7 +13,7 @@ namespace HaveASeat.Models
 		public string Regione { get; set; } = string.Empty;
 		public string Telefono { get; set; } = string.Empty;
 		public string Email { get; set; } = string.Empty;
-		public string SitoWeb { get; set; } = string.Empty;
+		public string? SitoWeb { get; set; }
 		public string? PartitaIVA { get; set; }
 		public string? RagioneSociale { get; set; }
 		public string? SDI { get; set; }
