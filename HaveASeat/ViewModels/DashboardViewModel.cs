@@ -47,6 +47,7 @@ namespace HaveASeat.ViewModels
         public decimal PercentualeServizi { get; set; }
         public bool IsServiziPositive { get; set; }
         public int NumeroDipendenti { get; set; }
+        public int NumeroServizi { get; set; }
         public int PromozioniAttive { get; set; }
         public decimal PercentualePromozioni { get; set; }
         public bool IsPromozioniPositive { get; set; }

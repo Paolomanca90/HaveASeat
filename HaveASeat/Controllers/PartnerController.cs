@@ -94,7 +94,9 @@ namespace HaveASeat.Controllers
             await LoadChartData(viewModel);
             await LoadTopServizi(viewModel);
             //await LoadAppuntamentiOggi(viewModel);
-
+            ViewBag.Saloni = viewModel.SaloniUtente;
+            ViewBag.Salone = viewModel.SaloneCorrente;
+            ViewBag.HasMultipleSedi = viewModel.SaloniUtente.Count > 1;
             ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
             return View(viewModel);
         }
@@ -188,6 +190,9 @@ namespace HaveASeat.Controllers
             viewModel.Stats.NumeroDipendenti = await _context.Dipendente
                .Where(d => d.SaloneId == viewModel.SelectedSaloneId)
                .CountAsync();
+            viewModel.Stats.NumeroServizi = await _context.Servizio
+              .Where(d => d.SaloneId == viewModel.SelectedSaloneId)
+              .CountAsync();
             // Promozioni attive
             var promozioniAttive = await _context.Servizio
                 .Where(s => s.SaloneId == viewModel.SelectedSaloneId &&
@@ -380,7 +385,7 @@ namespace HaveASeat.Controllers
         //    }).ToList();
         //}
 
-      
+
         [HttpGet]
         public async Task<IActionResult> GetDashboardData(Guid saloneId, string periodo)
         {
@@ -451,6 +456,7 @@ namespace HaveASeat.Controllers
                     viewModel.Stats.PercentualeServizi,
                     viewModel.Stats.IsServiziPositive,
                     viewModel.Stats.NumeroDipendenti,
+                    viewModel.Stats.NumeroServizi,
                     promozioniAttive = viewModel.Stats.PromozioniAttive,
                     percentualePromozioni = viewModel.Stats.PercentualePromozioni,
                     isPromozioniPositive = viewModel.Stats.IsPromozioniPositive
@@ -622,6 +628,7 @@ namespace HaveASeat.Controllers
                 Stats = viewModel.Stats,
                 TopServizi = viewModel.TopServizi,
                 NumeroDipendenti = viewModel.Stats.NumeroDipendenti,
+                NumeroServizi = viewModel.Stats.NumeroServizi,
                 Appuntamenti = appuntamenti.Select(a => new AppuntamentoExportViewModel
                 {
                     Data = a.Data,

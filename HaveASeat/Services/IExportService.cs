@@ -17,6 +17,7 @@ namespace HaveASeat.Services
         public List<TopServizioViewModel>? TopServizi { get; set; }
         public List<AppuntamentoExportViewModel>? Appuntamenti { get; set; }
         public int NumeroDipendenti { get; set; }
+        public int NumeroServizi { get; set; }
         public int PromozioniAttive { get; set; }
     }
 

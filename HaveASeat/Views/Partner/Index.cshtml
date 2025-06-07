@@ -3,6 +3,7 @@
 @{
     Layout = "_DashboardLayout";
     var promozioniAttive = ViewBag.PromozioniAttive as List<HaveASeat.Models.Servizio> ?? new List<HaveASeat.Models.Servizio>();
+    var saloni = ViewBag.Saloni as List<HaveASeat.Models.Salone>;
 }
 @section Styles{
 <link href="/css/ReportDashboard.css" rel="stylesheet" />
@@ -11,25 +12,35 @@
 <div class="header">
     <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-        <p class="text-2xl text-gray-600 dark:text-gray-400 mt-1">Bentornato <span> <strong>@ViewBag.NomeUtente</strong></span></p>
+        <p class="text-2xl text-gray-600 dark:text-gray-400 mt-1">Bentornato <span class="dark:text-gray-300"> <strong>@ViewBag.NomeUtente</strong></span></p>
+        @if (ViewBag.HasMultipleSedi)
+        {
+            <div class="mt-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Hai @saloni?.Count sedi - Seleziona quella cui vuoi visionare i report
+                </span>
+            </div>
+        }
     </div>
+   
 
     <div class="header-actions">
         @if (Model.SaloniUtente.Any())
         {
             <!-- Selettore Sedi -->
-            <select id="sedeSelector" class="select select-bordered sede-selector mr-4">
+            <select id="sedeSelector" class="select select-bordered sede-selector mr-4 dark:text-gray-300 bg-gray-800">
                 @foreach (var salone in Model.SaloniUtente)
                 {
                     @if (salone.SaloneId == Model.SelectedSaloneId)
                     {
-                        <option value="@salone.SaloneId" selected>
+                        <option value="@salone.SaloneId" data-nome="@salone.Nome" data-citta="@salone.Citta" selected>
                             @salone.Nome - @salone.Citta
                         </option>
                     }
                     else
                     {
-                        <option value="@salone.SaloneId">
+                        <option value="@salone.SaloneId" data-nome="@salone.Nome" data-citta="@salone.Citta">
                             @salone.Nome - @salone.Citta
                         </option>
                     }
@@ -37,10 +48,10 @@
             </select>
         }
         <div class="dropdown dropdown-end mr-2">
-            <label tabindex="0" class="btn btn-outline">
-                <i class="fas fa-download"></i> Esporta
+            <label tabindex="0" class="btn btn-outline dark:text-gray-400">
+                <i class="fas fa-download"></i> Esporta Report
             </label>
-            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 dark:bg-neutral-50">
                 <li><a onclick="exportDashboard('csv')"><i class="fas fa-file-csv"></i> Esporta CSV</a></li>
                 <li><a onclick="exportDashboard('excel')"><i class="fas fa-file-excel"></i> Esporta Excel</a></li>
                 <li><a onclick="exportDashboard('pdf')"><i class="fas fa-file-pdf"></i> Esporta PDF</a></li>
@@ -49,10 +60,10 @@
 @* 
         <button class="btn btn-outline" id="exportBtn">
             <i class="fas fa-download"></i> Esporta
-        </button> *@
+        </button> 
         <button class="btn btn-primary" onclick="window.location.href='@Url.Action("Dipendenti", "Partner")'">
             <i class="fas fa-plus"></i> Aggiungi staff
-        </button>
+        </button> *@
     </div>
 </div>
 @if (!Model.SaloniUtente.Any())
@@ -68,101 +79,114 @@ else
     
 <!-- Stats Cards -->
     <div class="dashboard-stats" id="statsContainer">
-    <div class="stat-card">
+        <div class="stat-card dark:bg-gray-800">
         <div class="stat-card-header">
-            <div class="stat-card-title">Prenotazioni Oggi</div>
-            <div class="stat-card-icon icon-appointments">
-                <i class="fas fa-calendar-check"></i>
-            </div>
+            <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Prenotazioni Oggi</div>
+                <div class="w-12 h-12 bg-sky-100 dark:bg-sky-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-check text-sky-600 dark:text-sky-400"></i>
+                </div>
         </div>
-            <div class="stat-card-value" id="prenotazioniOggi">@Model.Stats.PrenotazioniOggi</div>
-            <div class="stat-card-change @(Model.Stats.IsPrenotazioniPositive ? "change-positive" : "change-negative")">
+            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="prenotazioniOggi">@Model.Stats.PrenotazioniOggi</div>
+            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsPrenotazioniPositive ? "change-positive" : "change-negative")">
                 <i class="fas fa-arrow-@(Model.Stats.IsPrenotazioniPositive ? "up" : "down")"></i>
                 <span id="percPrenotazioni">@Math.Abs(Model.Stats.PercentualePrenotazioni)%</span> rispetto a ieri
         </div>
     </div>
 
-    <div class="stat-card">
+        <div class="stat-card dark:bg-gray-800">
         <div class="stat-card-header">
-            <div class="stat-card-title">Nuovi Clienti</div>
-            <div class="stat-card-icon icon-clients">
-                <i class="fas fa-users"></i>
-            </div>
+                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Nuovi Clienti</div>
+                <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-plus text-yellow-600 dark:text-yellow-400"></i>
+                </div>
         </div>
-            <div class="stat-card-value" id="nuoviClienti">@Model.Stats.NuoviClienti</div>
-            <div class="stat-card-change @(Model.Stats.IsNuoviClientiPositive ? "change-positive" : "change-negative")">
+            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="nuoviClienti">@Model.Stats.NuoviClienti</div>
+            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsNuoviClientiPositive ? "change-positive" : "change-negative")">
                 <i class="fas fa-arrow-@(Model.Stats.IsNuoviClientiPositive ? "up" : "down")"></i>
                 <span id="percClienti">@Math.Abs(Model.Stats.PercentualeNuoviClienti)%</span> questa settimana
             </div>
     </div>
 
-    <div class="stat-card">
+        <div class="stat-card dark:bg-gray-800">
         <div class="stat-card-header">
-            <div class="stat-card-title">Incasso Giornaliero</div>
-            <div class="stat-card-icon icon-revenue">
-                <i class="fas fa-euro-sign"></i>
-            </div>
+                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Incasso Giornaliero</div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-euro-sign text-green-600 dark:text-green-400"></i>
+                </div>
         </div>
-            <div class="stat-card-value" id="incassoGiornaliero">€@Model.Stats.IncassoGiornaliero.ToString("N0")</div>
-            <div class="stat-card-change @(Model.Stats.IsIncassoPositive ? "change-positive" : "change-negative")">
+            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="incassoGiornaliero">€@Model.Stats.IncassoGiornaliero.ToString("N0")</div>
+            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsIncassoPositive ? "change-positive" : "change-negative")">
                 <i class="fas fa-arrow-@(Model.Stats.IsIncassoPositive ? "up" : "down")"></i>
                 <span id="percIncasso">@Math.Abs(Model.Stats.PercentualeIncasso)%</span> rispetto a ieri
             </div>
     </div>
 
-    <div class="stat-card">
+        <div class="stat-card dark:bg-gray-800">
         <div class="stat-card-header">
-            <div class="stat-card-title">Servizi Completati</div>
-            <div class="stat-card-icon icon-services">
-                <i class="fas fa-clipboard-check"></i>
-            </div>
+                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Completati</div>
+                <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clipboard-check text-teal-600 dark:text-teal-400"></i>
+                </div>
         </div>
-            <div class="stat-card-value" id="serviziCompletati">@Model.Stats.ServiziCompletati</div>
-            <div class="stat-card-change @(Model.Stats.IsServiziPositive ? "change-positive" : "change-negative")">
+            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="serviziCompletati">@Model.Stats.ServiziCompletati</div>
+            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsServiziPositive ? "change-positive" : "change-negative")">
                 <i class="fas fa-arrow-@(Model.Stats.IsServiziPositive ? "up" : "down")"></i>
                 <span id="percServizi">@Math.Abs(Model.Stats.PercentualeServizi)%</span> rispetto a ieri
             </div>
     </div>
-        <div class="stat-card">
+        <div class="stat-card dark:bg-gray-800">
             <div class="stat-card-header">
-                <div class="stat-card-title">Dipendenti</div>
-                <div class="stat-card-icon icon-employees">
-                    <i class="fas fa-user-tie"></i>
+                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Dipendenti</div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
                 </div>
+              
             </div>
-            <div class="stat-card-value" id="numeroDipendenti">@Model.Stats.NumeroDipendenti</div>
+            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="numeroDipendenti">@Model.Stats.NumeroDipendenti</div>
             <div class="stat-card-change change-neutral">
-                <i class="fas fa-users"></i>
-                <span>Staff totale</span>
+
+                <span class="text-sm text-gray-500 dark:text-gray-400 mt-2">Staff totale</span>
             </div>
         </div>
-        <div class="stat-card cursor-pointer hover:shadow-lg transition-shadow" onclick="showPromozioniModal()">
+        <div class="stat-card dark:bg-gray-800">
             <div class="stat-card-header">
-                <div class="stat-card-title">Promozioni Attive</div>
-                <div class="stat-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);">
-                    <i class="fas fa-tags"></i>
+                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Servizi</div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cut text-purple-600 dark:text-purple-400"></i>
                 </div>
             </div>
-            <div class="stat-card-value" id="promozioniAttive">@Model.Stats.PromozioniAttive</div>
-            <div class="stat-card-change @(Model.Stats.IsPromozioniPositive ? "change-positive" : "change-negative")">
+            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="numeroServizi">@Model.Stats.NumeroServizi</div>
+            <div class="stat-card-change change-neutral">
+                <span class="text-sm text-gray-500 dark:text-gray-400 mt-2">Servizi totali attivi</span>
+            </div>
+        </div>
+        <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showPromozioniModal()">
+            <div class="stat-card-header">
+                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Promozioni Attive</div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tags text-orange-600 dark:text-orange-400"></i>
+                </div>
+            </div>
+            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="promozioniAttive">@Model.Stats.PromozioniAttive</div>
+            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsPromozioniPositive ? "change-positive" : "change-negative")">
                 <i class="fas fa-arrow-@(Model.Stats.IsPromozioniPositive ? "up" : "down")"></i>
                 <span id="percPromozioni">@Math.Abs(Model.Stats.PercentualePromozioni)%</span> rispetto a ieri
             </div>
-            <div class="text-xs text-gray-500 mt-2">
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 <i class="fas fa-hand-pointer"></i> Clicca per dettagli
             </div>
         </div>
 </div>
 
 <!-- Charts Section -->
-<div class="charts-section">
-    <div class="chart-container">
-        <div class="chart-header">
-                <div class="chart-title">Prenotazioni e Incassi - @Model.SaloneCorrente?.Nome</div>
+    <div class="charts-section">
+        <div class="chart-container dark:bg-gray-800">
+        <div class="chart-header grafico">
+                <div class="chart-title dark:text-neutral-50 datiGrafico">Prenotazioni e Incassi</div>
             <div class="chart-duration">
-                    <button class="duration-btn @(Model.PeriodoSelezionato == "giorno" ? "active" : "")" data-periodo="giorno">Giorno</button>
-                    <button class="duration-btn @(Model.PeriodoSelezionato == "settimana" ? "active" : "")" data-periodo="settimana">Settimana</button>
-                    <button class="duration-btn @(Model.PeriodoSelezionato == "mese" ? "active" : "")" data-periodo="mese">Mese</button>
+                    <button class="duration-btn dark:text-neutral-50 @(Model.PeriodoSelezionato == "giorno" ? "active" : "")" data-periodo="giorno">Giorno</button>
+                    <button class="duration-btn dark:text-neutral-50 @(Model.PeriodoSelezionato == "settimana" ? "active" : "")" data-periodo="settimana">Settimana</button>
+                    <button class="duration-btn dark:text-neutral-50 @(Model.PeriodoSelezionato == "mese" ? "active" : "")" data-periodo="mese">Mese</button>
             </div>
         </div>
         <div class="canvas-container">
@@ -170,9 +194,9 @@ else
         </div>
     </div>
 
-    <div class="chart-container top-services">
+        <div class="chart-container top-services dark:bg-gray-800">
         <div class="chart-header">
-            <div class="chart-title">Servizi Più Richiesti</div>
+            <div class="chart-title dark:text-neutral-50">Servizi Più Richiesti</div>
         </div>
 
             <div id="topServiziContainer">
@@ -180,10 +204,10 @@ else
                 {
                     <div class="service-item">
                         <div class="service-info">
-                            <div class="service-name">@servizio.Nome</div>
-                            <div class="service-bookings">@servizio.NumeroPrenotazioni prenotazioni</div>
+                            <div class="service-name dark:text-gray-300">@servizio.Nome</div>
+                            <div class="service-bookings dark:text-gray-400">@servizio.NumeroPrenotazioni prenotazioni</div>
                         </div>
-                        <div class="service-revenue">€@servizio.IncassoTotale.ToString("N0")</div>
+                        <div class="service-revenue dark:text-gray-300">€@servizio.IncassoTotale.ToString("N0")</div>
                     </div>
                 }
             </div>
@@ -191,10 +215,10 @@ else
     </div>
 
 <!-- Appointments Section -->
-<div class="section">
+    <div class="section dark:bg-gray-800">
     <div class="section-title">
-        <h2>Prenotazioni di Oggi</h2>
-            <a href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
+        <h2 class="dark:text-neutral-50">Prenotazioni di Oggi</h2>
+            <a class="dark:text-neutral-50" href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
     </div>
 
     <div class="tabs">
@@ -204,21 +228,21 @@ else
             <div class="tab" data-filter="cancellati">Cancellati</div>
     </div>
 
-    <div class="card">
+    <div class="card dark:bg-gray-800">
         <div class="appointment-header">
             <div class="appointment-date-filter">
-                <button class="btn btn-outline">
+                    <button class="btn btn-outline dark:text-gray-500">
                     <i class="fas fa-calendar"></i> Oggi
                 </button>
             </div>
 
-            <div class="appointment-search">
+                <div class="appointment-search dark:text-gray-200">
                 <i class="fas fa-search"></i>
                     <input type="text" placeholder="Cerca cliente o servizio..." id="searchAppointments">
             </div>
 
             <div class="appointment-actions">
-                <button class="btn btn-outline">
+                    <button class="btn btn-outline dark:text-gray-500">
                     <i class="fas fa-filter"></i> Filtro
                 </button>
             </div>
@@ -459,11 +483,11 @@ else
 <div id="promozioniModal" class="modal">
     <div class="modal-box w-11/12 max-w-3xl">
         <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-xl flex items-center">
+            <h3 class="font-bold text-xl flex items-center dark:text-neutral-50">
                 <i class="fas fa-tags text-orange-500 mr-2"></i>
                 Promozioni Attive
             </h3>
-            <button class="btn btn-sm btn-circle btn-ghost" onclick="closePromozioniModal()">✕</button>
+            <button class="btn btn-sm btn-circle btn-ghost dark:text-neutral-50" onclick="closePromozioniModal()">✕</button>
         </div>
 
         <div id="promozioniContent" class="space-y-3">
@@ -474,8 +498,8 @@ else
         </div>
 
         <div class="modal-action">
-            <button class="btn btn-outline" onclick="closePromozioniModal()">Chiudi</button>
-            <button class="btn btn-primary" onclick="window.location.href='@Url.Action("Index", "Promotions")'">
+            <button class="btn btn-outline dark:text-gray-400" onclick="closePromozioniModal()">Chiudi</button>
+            <button class="btn btn-primary bg-orange-500 dark:bg-orange-500" onclick="window.location.href='@Url.Action("Index", "Promotions")'">
                 <i class="fas fa-plus mr-2"></i>Gestisci Promozioni
             </button>
         </div>
@@ -601,6 +625,7 @@ else
         // Event listener per il cambio sede
         document.getElementById('sedeSelector')?.addEventListener('change', function() {
             currentSaloneId = this.value;
+            updateSaloneBadgeAndTitle();
             loadDashboardData();
         });
 
@@ -633,6 +658,41 @@ else
             exportDashboard();
         });
     });
+
+      function updateSaloneBadgeAndTitle() {
+        const selector = document.getElementById('sedeSelector');
+        if (!selector) return;
+
+        const selectedOption = selector.options[selector.selectedIndex];
+        const nomeSalone = selectedOption.getAttribute('data-nome');
+        const cittaSalone = selectedOption.getAttribute('data-citta');
+
+        // Aggiorna il badge sotto il messaggio di benvenuto
+        const badgeContainer = document.querySelector('.header > div > div.mt-2');
+        const badgeCharter = document.querySelector('.grafico > .datiGrafico');
+         if (badgeCharter) {
+            badgeCharter.innerHTML = `
+                <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-sm font-medium text-purple-700 ring-1 ring-purple-700/10 ring-inset">
+                    <i class="fas fa-store mr-2"></i>
+                    Prenotazioni e Incassi di - ${nomeSalone} - ${cittaSalone}
+                </span>
+            `;
+        }
+        if (badgeContainer) {
+            badgeContainer.innerHTML = `
+                <span class="inline-flex items-center rounded-md bg-sky-100 dark:bg-sky-900/30 px-2 py-1 text-sm font-medium text-sky-600 dark:text-sky-400 ring-1 ring-blue-700/10 ring-inset">
+                    <i class="fas fa-store mr-2"></i>
+                    Stai visionando i report di: ${nomeSalone} - ${cittaSalone}
+                </span>
+            `;
+        }
+
+        // Aggiorna il titolo del grafico
+        const chartTitle = document.getElementById('chartTitle');
+        if (chartTitle) {
+            chartTitle.textContent = `Prenotazioni e Incassi - ${nomeSalone}`;
+        }
+    }
 
     function initializeChart() {
         const ctx = document.getElementById('revenueChart');
@@ -734,6 +794,7 @@ else
         updateStatChange('servizi', stats.isServiziPositive);
 
         document.getElementById('numeroDipendenti').textContent = stats.numeroDipendenti;
+        document.getElementById('numeroServizi').textContent = stats.numeroServizi;
         // // Aggiorna promozioni
          document.getElementById('promozioniAttive').textContent = stats.promozioniAttive;
          document.getElementById('percPromozioni').textContent = Math.abs(stats.percentualePromozioni) + '%';
@@ -928,8 +989,8 @@ else
         if (data.promozioni.length === 0) {
             content.innerHTML = `
                 <div class="text-center py-8">
-                    <i class="fas fa-tags text-gray-300 text-5xl mb-4"></i>
-                    <p class="text-gray-500">Nessuna promozione attiva al momento</p>
+                    <i class="fas fa-tags text-orange-500 text-5xl mb-4"></i>
+                    <p class="text-gray-500 text-lg">Nessuna promozione attiva al momento</p>
                 </div>
             `;
             return;
