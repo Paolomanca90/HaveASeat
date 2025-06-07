@@ -202,13 +202,13 @@
                 <div class="nav-category dark:text-purple-400">Impostazioni</div>
 
                 <li class="nav-item">
-                    <a href="/Partner/ProfiloPartner" class="nav-link dark:text-neutral-50">
+                    <a href="/Partner/ProfiloPartner" class="nav-link @(path == "/Partner/ProfiloPartner" ? "active" : "") dark:text-neutral-50">
                         <i class="fas fa-store"></i>
                         <span>Profilo</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link dark:text-neutral-50">
+                    <a href="/Partner/Personalizza" class="nav-link @(path == "/Profilo/Personalizza" ? "active" : "") dark:text-neutral-50">
                         <i class="fas fa-cog"></i>
                         <span>Personalizza salone</span>
                         @if(ViewBag.Basic != null)

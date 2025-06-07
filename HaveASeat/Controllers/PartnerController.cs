@@ -959,9 +959,9 @@ namespace HaveASeat.Controllers
 					return NotFound();
 				}
 
-			}
-			return View(user);
-		}
+            }
+                return View(user);
+        }
 
 		public async Task<IActionResult> Personalizza(Guid? id)
 		{
