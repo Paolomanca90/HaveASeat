@@ -11,6 +11,7 @@ using HaveASeat.ViewModels;
 using HaveASeat.Utilities.Constants;
 using HaveASeat.Services;
 using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Drawing.Charts;
 
 namespace HaveASeat.Controllers
 {
@@ -1334,6 +1335,42 @@ namespace HaveASeat.Controllers
 
             }
                 return View(user);
+        }
+
+        public async Task<IActionResult> Personalizza(Guid? id)
+        {
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			if (string.IsNullOrEmpty(userId))
+			{
+				return RedirectToAction("Login", "Auth");
+			}
+			
+			// Recupera tutti i saloni dell'utente
+			var saloniUtente = await _context.Salone
+                .Include(x => x.SaloneAbbonamenti)
+				.Where(s => s.ApplicationUserId == userId && s.Stato == Stato.Attivo)
+				.OrderBy(s => s.Nome)
+				.ToListAsync();
+
+			// Se non ci sono saloni attivi, mostra la view per creare il primo salone
+			if (!saloniUtente.Any())
+			{
+				return RedirectToAction("Sedi");
+			}
+
+            var selectedSalone = new Salone();
+
+			// Determina quale salone visualizzare
+			if (id.HasValue && saloniUtente.Any(s => s.SaloneId == id.Value))
+			{
+				selectedSalone = saloniUtente.FirstOrDefault(s => s.SaloneId == id.Value);
+			}
+			else
+			{
+				selectedSalone = saloniUtente.First();
+			}
+            
+			return View(selectedSalone);
         }
     }
 }
