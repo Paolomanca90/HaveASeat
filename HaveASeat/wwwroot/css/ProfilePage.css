@@ -1,340 +1,147 @@
-﻿.profile-header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 30px;
-    margin-bottom: 30px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+﻿
+/* Stili aggiuntivi per migliorare l'aspetto */
+.group:hover .group-hover\:opacity-100 {
+    opacity: 1;
+}
+
+/* Animazione per il toast */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Stili per il dark mode */
+@media (prefers-color-scheme: dark) {
+    .dark\:bg-gray-800 {
+        background-color: rgba(31, 41, 55, 0.95);
+    }
+}
+
+/* Effetto hover sulle card */
+.bg-white:hover, .dark\:bg-gray-800:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
+}
+
+/* Stile per il placeholder dell'avatar */
+#profilePlaceholder {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+/* ProfilePage.css - Stili moderni per la pagina profilo */
+
+/* Reset e stili base */
+* {
+    box-sizing: border-box;
+}
+
+/* Container principale */
+.containers {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Card principali */
+.bg-white {
+    background-color: #ffffff;
     transition: all 0.3s ease;
 }
 
-    .profile-header:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
-    }
-
-.profile-avatar {
-    display: flex;
-    align-items: center;
-    gap: 25px;
-    margin-bottom: 25px;
+.dark .dark\:bg-gray-800 {
+    background-color: #1f2937;
 }
 
-.avatar-container {
+/* Avatar e immagine profilo */
+.group {
     position: relative;
-    width: 120px;
-    height: 120px;
+    display: inline-block;
 }
 
-.avatar {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid #fff;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-}
-
-    .avatar:hover {
-        transform: scale(1.05);
+    .group:hover .group-hover\:opacity-100 {
+        opacity: 1;
     }
 
-.avatar-edit {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 35px;
-    height: 35px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-    .avatar-edit:hover {
-        background: #5a67d8;
-        transform: scale(1.1);
+    /* Overlay per l'avatar */
+    .group .absolute {
+        transition: opacity 0.3s ease;
     }
 
-.profile-info h1 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 10px;
-}
-
-.profile-info p {
-    color: #666;
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-}
-
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    padding: 5px 15px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-top: 10px;
-}
-
-.profile-sections {
-    display: grid;
-    gap: 25px;
-}
-
-.section {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(15px);
-    border-radius: 16px;
-    padding: 25px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-    .section:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+    /* Bottoni nell'overlay */
+    .group button {
+        transition: all 0.2s ease;
     }
 
-.section-header {
-    display: flex;
-    justify-content: between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #f0f0f0;
-}
-
-.section-title {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #333;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.edit-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-    .edit-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-
-.form-group {
-    margin-bottom: 20px;
-}
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #555;
-    }
-
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-        width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e2e8f0;
-        border-radius: 10px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        background: rgba(255, 255, 255, 0.8);
-    }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-            background: white;
+        .group button:hover {
+            transform: scale(1.1);
         }
 
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
+/* Badge abbonamento */
+.inline-flex {
+    animation: fadeIn 0.5s ease;
 }
 
-.save-btn {
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-top: 20px;
+/* Sezioni informazioni */
+.space-y-4 > div {
+    animation: slideIn 0.3s ease;
+    animation-fill-mode: both;
 }
 
-    .save-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    .space-y-4 > div:nth-child(1) {
+        animation-delay: 0.1s;
     }
 
-.cancel-btn {
-    background: #6b7280;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    margin-left: 10px;
+    .space-y-4 > div:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .space-y-4 > div:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .space-y-4 > div:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    .space-y-4 > div:nth-child(5) {
+        animation-delay: 0.5s;
+    }
+
+/* Modal */
+#deleteModal {
+    backdrop-filter: blur(5px);
 }
 
-    .cancel-btn:hover {
-        background: #4b5563;
-        transform: translateY(-2px);
+    #deleteModal > div {
+        animation: modalSlideIn 0.3s ease;
     }
 
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
+/* Toast notifiche */
+#toast {
+    transition: transform 0.3s ease;
 }
 
-    .info-item:last-child {
-        border-bottom: none;
-    }
-
-.info-label {
-    font-weight: 600;
-    color: #555;
+.translate-x-full {
+    transform: translateX(100%);
 }
 
-.info-value {
-    color: #333;
-    font-weight: 500;
+.translate-x-0 {
+    transform: translateX(0);
 }
 
-.preferences-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-}
-
-.preference-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-}
-
-.toggle-switch {
-    position: relative;
-    width: 50px;
-    height: 25px;
-    background: #cbd5e0;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-    .toggle-switch.active {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-    }
-
-    .toggle-switch::after {
-        content: '';
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 21px;
-        height: 21px;
-        background: white;
-        border-radius: 50%;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    }
-
-    .toggle-switch.active::after {
-        transform: translateX(25px);
-    }
-
-.hidden {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
-
-    .profile-avatar {
-        flex-direction: column;
-        text-align: center;
-        gap: 15px;
-    }
-
-    .profile-info h1 {
-        font-size: 2rem;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-
-    .preferences-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-}
-
-@keyframes slideIn {
+/* Animazioni */
+@keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(-10px);
     }
 
     to {
@@ -343,24 +150,140 @@
     }
 }
 
-.section {
-    animation: slideIn 0.6s ease-out;
-}
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
 
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    transform: translateX(400px);
-    transition: all 0.3s ease;
-}
-
-    .notification.show {
+    to {
+        opacity: 1;
         transform: translateX(0);
     }
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem 0.5rem;
+    }
+
+    .grid {
+        gap: 1rem;
+    }
+
+    .p-8 {
+        padding: 1.5rem;
+    }
+
+    .p-6 {
+        padding: 1.5rem;
+    }
+}
+
+/* Hover effects */
+.bg-white:hover,
+.dark\:bg-gray-800:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus states */
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.5);
+}
+
+/* Scrollbar personalizzata */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track {
+    background: #374151;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #6b7280;
+}
+
+    .dark ::-webkit-scrollbar-thumb:hover {
+        background: #9ca3af;
+    }
+
+/* Placeholder avatar gradient */
+.bg-gradient-to-br {
+    background-image: linear-gradient(to bottom right, #a855f7, #ec4899);
+}
+
+/* Stati interattivi per i badge */
+.bg-purple-100:hover {
+    background-color: #e9d5ff;
+    cursor: default;
+}
+
+.dark .dark\:bg-purple-900:hover {
+    background-color: #581c87;
+}
+
+/* Transizioni smooth per tutti gli elementi interattivi */
+button, a, .transition-all {
+    transition: all 0.2s ease;
+}
+
+/* Print styles */
+@media print {
+    .group .absolute,
+    #deleteModal,
+    #toast,
+    button {
+        display: none !important;
+    }
+
+    .bg-white,
+    .dark\:bg-gray-800 {
+        box-shadow: none !important;
+        border: 1px solid #e5e7eb !important;
+    }
+}

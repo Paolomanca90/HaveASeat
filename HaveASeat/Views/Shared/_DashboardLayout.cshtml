@@ -99,6 +99,7 @@
 <body>
     @{
         var path = ViewContext.HttpContext.Request.Path;
+        var imgAvatar = Model as HaveASeat.Models.ApplicationUser;
     }
 
     <div class="container">
@@ -208,7 +209,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/Partner/Personalizza" class="nav-link @(path == "/Profilo/Personalizza" ? "active" : "") dark:text-neutral-50">
+                    <a href="/Partner/Personalizza" class="nav-link @(path == "/Partner/Personalizza" ? "active" : "") dark:text-neutral-50">
                         <i class="fas fa-cog"></i>
                         <span>Personalizza salone</span>
                         @if(ViewBag.Basic != null)
@@ -224,7 +225,7 @@
                             <span>Logout</span>
                         </button>
                     </form>
-                </li> 
+                </li>
             </ul>
         </div>
         </div>

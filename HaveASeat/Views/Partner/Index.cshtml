@@ -22,7 +22,7 @@
             </div>
         }
     </div>
-   
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <div class="header-actions">
         @if (Model.SaloniUtente.Any())
@@ -46,15 +46,11 @@
                 }
             </select>
         }
-        <div class="dropdown dropdown-end mr-2">
-            <label tabindex="0" class="btn btn-outline dark:text-gray-400">
-                <i class="fas fa-download"></i> Esporta Report
-            </label>
-            <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 dark:bg-neutral-50">
-                <li><a onclick="exportDashboard('csv')"><i class="fas fa-file-csv"></i> Esporta CSV</a></li>
-                <li><a onclick="exportDashboard('excel')"><i class="fas fa-file-excel"></i> Esporta Excel</a></li>
-                <li><a onclick="exportDashboard('pdf')"><i class="fas fa-file-pdf"></i> Esporta PDF</a></li>
-            </ul>
+        <div class="flex items-center space-x-3">
+            <button onclick="exportData()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <i class="fas fa-download mr-2"></i>
+                Esporta Dati
+            </button>
         </div>
 @* 
         <button class="btn btn-outline" id="exportBtn">
@@ -652,11 +648,10 @@ else
             searchAppointments(this.value);
         });
 
-        // Event listener per export
-        document.getElementById('exportBtn')?.addEventListener('click', function() {
-            exportDashboard();
-        });
+    
     });
+
+       
 
       function updateSaloneBadgeAndTitle() {
         const selector = document.getElementById('sedeSelector');
@@ -924,8 +919,103 @@ else
         });
     }
 
-     function exportDashboard(formato) {
-        window.location.href = `/Partner/ExportDashboard?saloneId=${currentSaloneId}&periodo=${currentPeriodo}&formato=${formato}`;
+   
+        function exportDashboard(formato) {
+        const saloneId = currentSaloneId || '@Model.SelectedSaloneId';
+        const periodo = currentPeriodo || '@Model.PeriodoSelezionato';
+
+        // Crea un link temporaneo per il download
+        const link = document.createElement('a');
+        link.href = `/Partner/ExportDashboard?saloneId=${saloneId}&periodo=${periodo}&formato=${formato}`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+       function exportData() {
+        Swal.fire({
+            title: '📊 Esporta Dati Dashboard',
+            html: `
+                <div class="text-left space-y-4">
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Seleziona il formato di esportazione:</p>
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                            <input type="radio" name="exportFormat" value="excel" class="text-purple-600 focus:ring-purple-500" checked>
+                            <span class="text-sm font-medium">📊 Excel (.xlsx)</span>
+                            <span class="text-xs text-gray-500 ml-auto">Consigliato per analisi</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                            <input type="radio" name="exportFormat" value="pdf" class="text-purple-600 focus:ring-purple-500">
+                            <span class="text-sm font-medium">📑 PDF (.pdf)</span>
+                            <span class="text-xs text-gray-500 ml-auto">Per stampa e condivisione</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors">
+                            <input type="radio" name="exportFormat" value="csv" class="text-purple-600 focus:ring-purple-500">
+                            <span class="text-sm font-medium">📄 CSV (.csv)</span>
+                            <span class="text-xs text-gray-500 ml-auto">Per importazione dati</span>
+                        </label>
+                    </div>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-download mr-2"></i>Esporta',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#7c3aed',
+            cancelButtonColor: '#6b7280',
+            customClass: {
+                popup: 'rounded-2xl',
+                confirmButton: 'rounded-lg',
+                cancelButton: 'rounded-lg'
+            },
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                const selectedFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+                return selectedFormat;
+            },
+            allowOutsideClick: () => !Swal.isLoading()
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const format = result.value;
+
+                // Mostra loading
+                Swal.fire({
+                    title: 'Generazione in corso...',
+                    html: 'Il file è in preparazione',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Chiama la funzione di export esistente
+                exportDashboard(format);
+
+                // Simula il completamento dopo un breve delay
+                setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '✅ Export Completato!',
+                        text: 'Il file è stato scaricato con successo',
+                        confirmButtonColor: '#7c3aed',
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                }, 1500);
+            }
+        });
+    }
+
+        function exportDashboard(formato) {
+        const saloneId = currentSaloneId || '@Model.SelectedSaloneId';
+        const periodo = currentPeriodo || '@Model.PeriodoSelezionato';
+
+        // Crea un link temporaneo per il download
+        const link = document.createElement('a');
+        link.href = `/Partner/ExportDashboard?saloneId=${saloneId}&periodo=${periodo}&formato=${formato}`;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     // Funzioni placeholder per le azioni degli appuntamenti

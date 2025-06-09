@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using HaveASeat.ViewModels;
 using System.Text;
 using HaveASeat.Utilities.Constants;
+using HaveASeat.Services;
 
 namespace HaveASeat.Controllers
 {
@@ -371,102 +372,171 @@ namespace HaveASeat.Controllers
 			//ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
 			//         return View();
 		}
-		[HttpGet]
-		public async Task<IActionResult> ExportDashboard(Guid saloneId, string periodo)
-		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			if (string.IsNullOrEmpty(userId))
-			{
-				return Unauthorized();
-			}
+        [HttpGet]
+        public async Task<IActionResult> ExportDashboard(Guid saloneId, string periodo, string formato = "csv")
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
 
-			// Verifica che il salone appartenga all'utente
-			var salone = await _context.Salone
-				.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+            // Verifica che il salone appartenga all'utente
+            var salone = await _context.Salone
+                .Include(s => s.Dipendenti)
+                .Include(s => s.Servizi)
+                .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
 
-			if (salone == null)
-			{
-				return NotFound();
-			}
+            if (salone == null)
+            {
+                return NotFound();
+            }
 
-			// Genera il report
-			var csv = new StringBuilder();
-			csv.AppendLine("Report Dashboard - " + salone.Nome);
-			csv.AppendLine("Periodo: " + periodo);
-			csv.AppendLine("Data export: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm"));
-			csv.AppendLine();
+            // Prepara i dati per l'export
+            var viewModel = new DashboardViewModel
+            {
+                SelectedSaloneId = saloneId,
+                PeriodoSelezionato = periodo
+            };
 
-			// Recupera i dati
-			var viewModel = new DashboardViewModel
-			{
-				SelectedSaloneId = saloneId,
-				PeriodoSelezionato = periodo
-			};
+            // Calcola date base sul periodo
+            var oggi = DateTime.Today;
+            switch (periodo.ToLower())
+            {
+                case "giorno":
+                    viewModel.DataInizio = oggi;
+                    viewModel.DataFine = oggi.AddDays(1).AddSeconds(-1);
+                    break;
+                case "settimana":
+                    var inizioSettimana = oggi.AddDays(-(int)oggi.DayOfWeek + (int)DayOfWeek.Monday);
+                    viewModel.DataInizio = inizioSettimana;
+                    viewModel.DataFine = inizioSettimana.AddDays(7).AddSeconds(-1);
+                    break;
+                case "mese":
+                    viewModel.DataInizio = new DateTime(oggi.Year, oggi.Month, 1);
+                    viewModel.DataFine = viewModel.DataInizio.AddMonths(1).AddSeconds(-1);
+                    break;
+            }
 
-			// Calcola date base sul periodo
-			var oggi = DateTime.Today;
-			switch (periodo.ToLower())
-			{
-				case "giorno":
-					viewModel.DataInizio = oggi;
-					viewModel.DataFine = oggi.AddDays(1).AddSeconds(-1);
-					break;
-				case "settimana":
-					var inizioSettimana = oggi.AddDays(-(int)oggi.DayOfWeek + (int)DayOfWeek.Monday);
-					viewModel.DataInizio = inizioSettimana;
-					viewModel.DataFine = inizioSettimana.AddDays(7).AddSeconds(-1);
-					break;
-				case "mese":
-					viewModel.DataInizio = new DateTime(oggi.Year, oggi.Month, 1);
-					viewModel.DataFine = viewModel.DataInizio.AddMonths(1).AddSeconds(-1);
-					break;
-			}
+            await LoadDashboardStats(viewModel);
+            await LoadTopServizi(viewModel);
 
-			await LoadDashboardStats(viewModel);
-			await LoadTopServizi(viewModel);
+            // Recupera gli appuntamenti per l'export
+            var appuntamenti = await _context.Appuntamento
+                .Include(a => a.ApplicationUser)
+                .Include(a => a.Dipendente)
+                    .ThenInclude(d => d.ApplicationUser)
+                .Include(a => a.Servizio)
+                .Where(a => a.SaloneId == saloneId &&
+                           a.Data >= viewModel.DataInizio &&
+                           a.Data <= viewModel.DataFine)
+                .OrderBy(a => a.Data)
+                .ToListAsync();
 
-			// Statistiche generali
-			csv.AppendLine("STATISTICHE GENERALI");
-			csv.AppendLine("Metrica,Valore,Variazione %");
-			csv.AppendLine($"Prenotazioni Oggi,{viewModel.Stats.PrenotazioniOggi},{viewModel.Stats.PercentualePrenotazioni}%");
-			csv.AppendLine($"Nuovi Clienti,{viewModel.Stats.NuoviClienti},{viewModel.Stats.PercentualeNuoviClienti}%");
-			csv.AppendLine($"Incasso Giornaliero,€{viewModel.Stats.IncassoGiornaliero},{viewModel.Stats.PercentualeIncasso}%");
-			csv.AppendLine($"Servizi Completati,{viewModel.Stats.ServiziCompletati},{viewModel.Stats.PercentualeServizi}%");
-			csv.AppendLine();
+            // Prepara i dati per l'export service
+            var exportData = new DashboardExportData
+            {
+                NomeSalone = salone.Nome,
+                Periodo = periodo,
+                DataExport = DateTime.Now,
+                Stats = viewModel.Stats,
+                TopServizi = viewModel.TopServizi,
+                NumeroDipendenti = salone.Dipendenti.Count,
+                NumeroServizi = salone.Servizi.Count,
+                PromozioniAttive = salone.Servizi.Count(s => s.IsPromotion && s.DataFinePromozione > DateTime.Now),
+                Appuntamenti = appuntamenti.Select(a => new AppuntamentoExportViewModel
+                {
+                    Data = a.Data,
+                    OraInizio = a.OraInizio.ToString("HH:mm"),
+                    OraFine = a.OraFine.ToString("HH:mm"),
+                    NomeCliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
+                    Servizio = a.Servizio?.Nome ?? "N/A",
+                    Dipendente = a.Dipendente != null ?
+                        $"{a.Dipendente.ApplicationUser.Nome} {a.Dipendente.ApplicationUser.Cognome}" : "N/A",
+                    Stato = a.Stato.ToString(),
+                    Prezzo = a.Servizio?.PrezzoEffettivo ?? 0
+                }).ToList()
+            };
 
-			// Top servizi
-			csv.AppendLine("TOP SERVIZI");
-			csv.AppendLine("Servizio,Prenotazioni,Incasso");
-			foreach (var servizio in viewModel.TopServizi)
-			{
-				csv.AppendLine($"{servizio.Nome},{servizio.NumeroPrenotazioni},€{servizio.IncassoTotale}");
-			}
-			csv.AppendLine();
+            // Usa il servizio di export per generare il file nel formato richiesto
+            var exportService = new ExportService();
+            byte[] fileBytes;
+            string fileName;
+            string contentType;
 
-			// Dettaglio appuntamenti
-			var appuntamenti = await _context.Appuntamento
-				.Include(a => a.ApplicationUser)
-				.Include(a => a.Dipendente)
-					.ThenInclude(d => d.ApplicationUser)
-				.Where(a => a.SaloneId == saloneId &&
-						   a.Data >= viewModel.DataInizio &&
-						   a.Data <= viewModel.DataFine)
-				.OrderBy(a => a.Data)
-				.ToListAsync();
+            switch (formato.ToLower())
+            {
+                case "excel":
+                    fileBytes = exportService.ExportToExcel(exportData);
+                    fileName = $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.xlsx";
+                    contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    break;
+                case "pdf":
+                    fileBytes = exportService.ExportToPdf(exportData);
+                    fileName = $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.pdf";
+                    contentType = "application/pdf";
+                    break;
+                case "csv":
+                default:
+                    fileBytes = exportService.ExportToCsv(exportData);
+                    fileName = $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.csv";
+                    contentType = "text/csv";
+                    break;
+            }
 
-			csv.AppendLine("DETTAGLIO APPUNTAMENTI");
-			csv.AppendLine("Data,Ora,Cliente,Servizio,Dipendente,Stato,Prezzo");
-			foreach (var app in appuntamenti)
-			{
-				csv.AppendLine($"{app.Data:dd/MM/yyyy},{app.OraInizio:HH:mm},{app.ApplicationUser.Nome} {app.ApplicationUser.Cognome},Servizio,{app.Dipendente?.ApplicationUser.Nome ?? "N/A"},{app.Stato},€50");
-			}
+            return File(fileBytes, contentType, fileName);
+        }
 
-			// Restituisci il file CSV
-			var bytes = Encoding.UTF8.GetBytes(csv.ToString());
-			return File(bytes, "text/csv", $"report_{salone.Nome.Replace(" ", "_")}_{periodo}_{DateTime.Now:yyyyMMdd}.csv");
-		}
+        // Aggiungi anche questo metodo helper per ottenere le promozioni attive (se non esiste già)
+        [HttpGet]
+        public async Task<IActionResult> GetPromozioniAttive(Guid saloneId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Non autorizzato" });
+            }
 
-		public IActionResult CreateCheckoutSession(string id)
+            var salone = await _context.Salone
+                .Include(s => s.Servizi)
+                .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+
+            if (salone == null)
+            {
+                return Json(new { success = false, message = "Salone non trovato" });
+            }
+
+            var promozioniAttive = salone.Servizi
+                .Where(s => s.IsPromotion && s.DataFinePromozione > DateTime.Now)
+                .OrderBy(s => s.DataFinePromozione)
+                .Select(s => new
+                {
+                    servizioId = s.ServizioId,
+                    nome = s.Nome,
+                    descrizione = s.Descrizione,
+                    prezzo = s.Prezzo,
+                    prezzoPromozione = s.PrezzoPromozione,
+                    risparmio = s.Prezzo - s.PrezzoPromozione,
+                    percentualeSconto = Math.Round(((s.Prezzo - s.PrezzoPromozione) / s.Prezzo) * 100, 0),
+                    dataInizioPromozione = s.DataInizioPromozione,
+                    dataFinePromozione = s.DataFinePromozione,
+                    giorniRimanenti = (s.DataFinePromozione - DateTime.Now).Days,
+                    inScadenza = (s.DataFinePromozione - DateTime.Now).Days <= 3
+                })
+                .ToList();
+
+            var totalePromozioni = promozioniAttive.Count;
+            var promozioniInScadenza = promozioniAttive.Count(p => p.inScadenza);
+
+            return Json(new
+            {
+                success = true,
+                totalePromozioni,
+                promozioniInScadenza,
+                promozioni = promozioniAttive
+            });
+        }
+        public IActionResult CreateCheckoutSession(string id)
 		{
 			if (id == null)
 				return BadRequest("Utente non loggato");
@@ -941,29 +1011,162 @@ namespace HaveASeat.Controllers
 
 		public IActionResult ProfiloPartner()
 		{
-			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var user = _context.Users.FirstOrDefault(u => u.Id == userId);
-			var pianoSelected = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId);
-			if (pianoSelected != null)
-			{
-				var abbonamento = _context.Abbonamento
-					.FirstOrDefault(a => a.AbbonamentoId == pianoSelected.AbbonamentoId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = _context.Users.FirstOrDefault(u => u.Id == userId);
 
-				if (abbonamento != null)
-				{
-					TempData["AbbonamentoNome"] = abbonamento.Nome;
-				}
-
-				if (user == null)
-				{
-					return NotFound();
-				}
-
+            if (user == null)
+            {
+                return NotFound();
             }
-                return View(user);
+
+            var pianoSelected = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId);
+            if (pianoSelected != null)
+            {
+                var abbonamento = _context.Abbonamento
+                    .FirstOrDefault(a => a.AbbonamentoId == pianoSelected.AbbonamentoId);
+
+                if (abbonamento != null)
+                {
+                    ViewBag.AbbonamentoNome = abbonamento.Nome;
+                }
+            }
+
+            // Genera le iniziali per il placeholder
+            ViewBag.UserInitials = GetUserInitials(user.Nome, user.Cognome);
+
+            return View(user);
+        }
+        private string GetUserInitials(string nome, string cognome)
+        {
+            var initials = "";
+            if (!string.IsNullOrEmpty(nome))
+                initials += nome[0];
+            if (!string.IsNullOrEmpty(cognome))
+                initials += cognome[0];
+
+            return initials.ToUpper();
+        }
+        [HttpPost]
+        public async Task<IActionResult> UploadProfileImage(IFormFile profileImage)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Utente non autorizzato" });
+            }
+
+            if (profileImage == null || profileImage.Length == 0)
+            {
+                return Json(new { success = false, message = "Nessun file selezionato" });
+            }
+
+            // Verifica il tipo di file
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            var extension = Path.GetExtension(profileImage.FileName).ToLower();
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                return Json(new { success = false, message = "Formato file non supportato. Usa JPG, JPEG, PNG o GIF." });
+            }
+
+            // Verifica la dimensione del file (max 5MB)
+            if (profileImage.Length > 5 * 1024 * 1024)
+            {
+                return Json(new { success = false, message = "Il file è troppo grande. Dimensione massima: 5MB" });
+            }
+
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "Utente non trovato" });
+                }
+
+                // Elimina l'immagine precedente se esiste
+                if (!string.IsNullOrEmpty(user.ImmagineUser))
+                {
+                    var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.ImmagineUser.TrimStart('/'));
+                    if (System.IO.File.Exists(oldPath))
+                    {
+                        System.IO.File.Delete(oldPath);
+                    }
+                }
+
+                // Crea la directory se non esiste
+                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
+                Directory.CreateDirectory(uploadsFolder);
+
+                // Genera un nome univoco per il file
+                var uniqueFileName = $"{userId}_{Guid.NewGuid()}{extension}";
+                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                // Salva il file
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await profileImage.CopyToAsync(stream);
+                }
+
+                // Aggiorna il database con il percorso dell'immagine
+                user.ImmagineUser = $"/uploads/profiles/{uniqueFileName}";
+                await _context.SaveChangesAsync();
+                return Json(new
+                {
+                    success = true,
+                    message = "Immagine caricata con successo",
+                    imagePath = user.ImmagineUser
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Errore durante il caricamento: " + ex.Message });
+            }
         }
 
-		public async Task<IActionResult> Personalizza(Guid? id)
+        [HttpPost]
+        public async Task<IActionResult> DeleteProfileImage()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Utente non autorizzato" });
+            }
+
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "Utente non trovato" });
+                }
+
+                // Elimina il file fisico se esiste
+                if (!string.IsNullOrEmpty(user.ImmagineUser))
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.ImmagineUser.TrimStart('/'));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+
+                // Rimuovi il percorso dal database
+                user.ImmagineUser = null;
+                await _context.SaveChangesAsync();
+
+                return Json(new
+                {
+                    success = true,
+                    message = "Immagine del profilo eliminata con successo"
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Errore durante l'eliminazione: " + ex.Message });
+            }
+        }
+
+        public async Task<IActionResult> Personalizza(Guid? id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (string.IsNullOrEmpty(userId))

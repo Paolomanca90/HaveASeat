@@ -11,6 +11,7 @@ namespace HaveASeat.Models
 		public string? Città { get; set; }
 		public string? Provincia { get; set; }
 		public string? CodiceFiscale { get; set; }
+		public string? ImmagineUser { get; set; }
 		public DateTime DataRegistrazione { get; set; } = DateTime.Now;
 		public bool AcceptNewsletter { get; set; } = false;
 		public ICollection<Salone> Saloni { get; set; } = new List<Salone>();
