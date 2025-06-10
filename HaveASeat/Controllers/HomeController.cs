@@ -30,7 +30,8 @@ namespace HaveASeat.Controllers
 		public IActionResult SelectPlan(string id)
 		{
 			TempData["SelectedPianoId"] = id;
-			return Json(new { success = true, redirectUrl = "/Auth/NewPartner" }); 
+            var piano = _context.Abbonamento.Find(Guid.Parse(id));
+			return Json(new { success = true, redirectUrl = "/Auth/NewPartner", selectedPlan = piano }); 
 		}
 
 		public IActionResult Privacy()

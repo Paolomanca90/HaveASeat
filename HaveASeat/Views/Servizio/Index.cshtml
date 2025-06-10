@@ -67,7 +67,7 @@
 
         @if (salone != null)
         {
-            <a href="@Url.Action("Create", new { saloneId = salone.SaloneId })" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+            <a href="@Url.Action("Create", new { id = salone.SaloneId })" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                 <i class="fas fa-plus mr-2"></i>
                 Aggiungi Servizio
             </a>
@@ -151,7 +151,7 @@ else if (!hasServizi)
             <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
                 Non hai ancora configurato nessun servizio per <strong>@salone.Nome</strong>. Inizia aggiungendo il primo servizio per permettere ai clienti di prenotare.
             </p>
-            <a href="@Url.Action("Create", new { saloneId = salone.SaloneId })" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
+            <a href="@Url.Action("Create", new { id = salone.SaloneId })" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl">
                 <i class="fas fa-plus mr-2"></i>
                 Aggiungi Primo Servizio
             </a>

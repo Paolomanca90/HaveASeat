@@ -477,10 +477,12 @@
             type: 'POST',
             data: { id: id },
             success: function (response) {
-               selectedPlan = id;
+               selectedPlan = response.selectedPlan;
                const continua = document.getElementById('continueBtn');
                continua.removeAttribute('disabled');
                continua.classList.remove('opacity-50', 'cursor-not-allowed');
+               if(selectedPlan != null)
+                updatePlanSummary(selectedPlan);
             },
             error: function (xhr, status, error) {
                 Swal.fire({
@@ -493,16 +495,10 @@
         });
     }
 
-    function updatePlanSummary(planType) {
-        const plan = plans[planType];
-        document.getElementById('selectedPlanName').textContent = plan.name;
-
-        if (plan.originalPrice) {
-            document.getElementById('selectedPlanPrice').innerHTML =
-                `<span class="text-lg line-through text-gray-500">${plan.originalPrice}</span> ${plan.price}`;
-        } else {
-            document.getElementById('selectedPlanPrice').textContent = plan.price;
-        }
+    function updatePlanSummary(piano) {
+        const plan = piano;
+        document.getElementById('selectedPlanName').textContent = plan.nome;
+        document.getElementById('selectedPlanPrice').textContent = plan.prezzo;
     }
 
     function updateStepIndicators(step) {

@@ -98,14 +98,14 @@ namespace HaveASeat.Controllers
 		}
 
 		// GET: Staff/Create
-		public async Task<IActionResult> Create(Guid saloneId)
+		public async Task<IActionResult> Create(Guid id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
 			// Verifica che il salone esista e appartenga all'utente
 			var salone = await _context.Salone
 				.Include(s => s.Servizi)
-				.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+				.FirstOrDefaultAsync(s => s.SaloneId == id && s.ApplicationUserId == userId);
 
 			if (salone == null)
 			{

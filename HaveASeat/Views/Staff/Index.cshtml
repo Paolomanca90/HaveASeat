@@ -69,7 +69,7 @@
         {
             @if (salone.Servizi.Any())
             {            
-                <a href="@Url.Action("Create", new { saloneId = salone.SaloneId })" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                <a href="@Url.Action("Create", new { id = salone.SaloneId })" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
                     <i class="fas fa-user-plus mr-2"></i>
                     Aggiungi Staff
                 </a>
