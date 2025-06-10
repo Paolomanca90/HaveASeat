@@ -422,7 +422,7 @@ else
         }).then((result) => {
             if (result.isConfirmed) {
                 fetch(`/Partner/DeleteSede/${saloneId}`, {
-                    method: 'DELETE',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value

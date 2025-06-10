@@ -555,7 +555,16 @@ namespace HaveASeat.Controllers
 			var checkPiano = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
 			if (checkPiano == null)
 			{
-				return BadRequest("Nessun piano selezionato.");
+				if (TempData["SelectedPianoId"] != null)
+				{
+					var selectedPianoId = TempData["SelectedPianoId"].ToString();
+					checkPiano = new PianoSelezionato
+					{
+						AbbonamentoId = Guid.Parse(selectedPianoId)
+					};
+				}
+				else
+					return BadRequest("Nessun piano selezionato.");
 			}
 
 			var piano = _context.Abbonamento.FirstOrDefault(x => x.AbbonamentoId == checkPiano.AbbonamentoId);
@@ -686,7 +695,7 @@ namespace HaveASeat.Controllers
 					if (pianoSelezionato == null)
 					{
 						ViewBag.Errore = "Errore: Piano selezionato non trovato.";
-						return View("Index");
+						return RedirectToAction("Index");
 					}
 
 					pianoSelezionato.Confermato = true;
@@ -788,21 +797,29 @@ namespace HaveASeat.Controllers
 		}
 
 		[HttpPost]
-		public IActionResult CreateSede([Bind(Prefix = "NuovoSalone")] Salone model)
+		public IActionResult CreateSedePrefix([Bind(Prefix = "NuovoSalone")] Salone model)
+		{
+			return CreateSedeInternal(model);
+		}
+
+		[HttpPost]
+		public IActionResult CreateSede(Salone model)
+		{
+			return CreateSedeInternal(model);
+		}
+
+		private IActionResult CreateSedeInternal(Salone model)
 		{
 			if (!ModelState.IsValid)
 				return View(model);
 
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (userId == null)
-			{
 				return RedirectToAction("Error", "Home");
-			}
+
 			var user = _context.Users.Find(userId);
 			if (user == null)
-			{
 				return RedirectToAction("Error", "Home");
-			}
 
 			var salone = new Salone
 			{
@@ -824,7 +841,6 @@ namespace HaveASeat.Controllers
 
 			_context.Salone.Add(salone);
 			_context.SaveChanges();
-
 			return RedirectToAction("CreateCheckoutSession", "Partner", new { id = userId });
 		}
 
