@@ -95,7 +95,7 @@ namespace HaveASeat.Controllers
 			await LoadDashboardStats(viewModel);
 			await LoadChartData(viewModel);
 			await LoadTopServizi(viewModel);
-			//await LoadAppuntamentiOggi(viewModel);
+			await LoadAppuntamentiOggi(viewModel);
 
 			ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
 			return View(viewModel);
@@ -185,7 +185,27 @@ namespace HaveASeat.Controllers
 				? Math.Round(((decimal)(serviziCompletatiOggi - serviziCompletatiIeri) / serviziCompletatiIeri) * 100, 1)
 				: 0;
 			viewModel.Stats.IsServiziPositive = viewModel.Stats.PercentualeServizi >= 0;
-		}
+            
+			var promozioniAttive = await _context.Servizio
+				.Where(s => s.SaloneId == viewModel.SelectedSaloneId &&
+                s.IsPromotion &&
+                s.DataFinePromozione > DateTime.Now)
+				.CountAsync();
+
+            // Promozioni attive ieri (per il confronto)
+            var promozioniIeri = await _context.Servizio
+                .Where(s => s.SaloneId == viewModel.SelectedSaloneId &&
+                            s.IsPromotion &&
+                            s.DataInizioPromozione <= ieri &&
+                            s.DataFinePromozione > ieri)
+                .CountAsync();
+
+            viewModel.Stats.PromozioniAttive = promozioniAttive;
+            viewModel.Stats.PercentualePromozioni = promozioniIeri > 0
+                ? Math.Round(((decimal)(promozioniAttive - promozioniIeri) / promozioniIeri) * 100, 1)
+                : (promozioniAttive > 0 ? 100 : 0);
+            viewModel.Stats.IsPromozioniPositive = viewModel.Stats.PercentualePromozioni >= 0;
+        }
 
 		private async Task LoadChartData(DashboardViewModel viewModel)
 		{
@@ -273,40 +293,41 @@ namespace HaveASeat.Controllers
 	};
 		}
 
-		//private async Task LoadAppuntamentiOggi(DashboardViewModel viewModel)
-		//{
-		//    var oggi = DateTime.Today;
+		private async Task LoadAppuntamentiOggi(DashboardViewModel viewModel)
+		{
+			var oggi = DateTime.Today;
 
-		//    var appuntamenti = await _context.Appuntamento
-		//        .Include(a => a.ApplicationUser)
-		//        .Include(a => a.Dipendente)
-		//            .ThenInclude(d => d.ApplicationUser)
-		//        .Include(a => a.Slot)
-		//        .Where(a => a.SaloneId == viewModel.SelectedSaloneId && a.Data.Date == oggi)
-		//        .OrderBy(a => a.OraInizio)
-		//        .ToListAsync();
+			var appuntamenti = await _context.Appuntamento
+				.Include(a => a.ApplicationUser)
+				.Include(a => a.Dipendente)
+					.ThenInclude(d => d.ApplicationUser)
+				.Include(a => a.Slot)
+				.Include(a => a.Servizio)
+				.Where(a => a.SaloneId == viewModel.SelectedSaloneId && a.Data.Date == oggi)
+                .OrderBy(a => a.Slot.OraInizio)
+                .ToListAsync();
 
-		//    viewModel.AppuntamentiOggi = appuntamenti.Select(a => new AppuntamentoViewModel
-		//    {
-		//        AppuntamentoId = a.AppuntamentoId,
-		//        NomeCliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
-		//        TelefonoCliente = a.ApplicationUser.PhoneNumber ?? "",
-		//        NomeServizio = "Servizio", // Placeholder - dovrebbe venire dalla relazione con Servizio
-		//        NomeDipendente = a.Dipendente != null ? $"{a.Dipendente.ApplicationUser.Nome} {a.Dipendente.ApplicationUser.Cognome?.FirstOrDefault()}." : "Non assegnato",
-		//        OrarioInizio = a.OraInizio.ToString("HH:mm"),
-		//        OrarioFine = a.OraFine.ToString("HH:mm"),
-		//        Prezzo = 50, // Placeholder
-		//        Stato = a.Stato.ToString(),
-		//        ClasseStato = a.Stato switch
-		//        {
-		//            //StatoAppuntamento.Prenotato => "status-confirmed",
-		//            //StatoAppuntamento.InAttesa => "status-pending",
-		//            StatoAppuntamento.Prenotato => "status-completed",
-		//            StatoAppuntamento.Annullato => "status-cancelled",
-		//            _ => "status-pending"
-		//        }
-		//    }).ToList();
-		//}
+			viewModel.AppuntamentiOggi = appuntamenti.Select(a => new AppuntamentoViewModel
+			{
+                AppuntamentoId = a.AppuntamentoId,
+                NomeCliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
+                TelefonoCliente = a.ApplicationUser.PhoneNumber ?? "",
+                NomeServizio = a.Servizio?.Nome ?? "Servizio non specificato",
+                NomeDipendente = a.Dipendente != null
+            ? $"{a.Dipendente.ApplicationUser.Nome} {a.Dipendente.ApplicationUser.Cognome}"
+            : "Non assegnato",
+                OrarioInizio = a.OraInizio.ToString("HH:mm"),
+                OrarioFine = a.OraFine.ToString("HH:mm"),
+                Prezzo = a.Servizio?.PrezzoEffettivo ?? 0,
+                Stato = a.Stato.ToString(),
+                ClasseStato = a.Stato switch
+                {
+                    StatoAppuntamento.Prenotato => "status-completed",
+                    StatoAppuntamento.Annullato => "status-cancelled",
+                    _ => "status-pending"
+                }
+            }).ToList();
+        }
 
 		[HttpGet]
 		public async Task<IActionResult> GetDashboardData(Guid saloneId, string periodo)
@@ -357,7 +378,7 @@ namespace HaveASeat.Controllers
 			await LoadDashboardStats(viewModel);
 			await LoadChartData(viewModel);
 			await LoadTopServizi(viewModel);
-			// await LoadAppuntamentiOggi(viewModel);
+			await LoadAppuntamentiOggi(viewModel);
 			return Json(new
 			{
 				success = true,
