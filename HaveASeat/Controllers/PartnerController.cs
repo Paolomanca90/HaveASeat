@@ -1203,7 +1203,7 @@ namespace HaveASeat.Controllers
             }
         }
 
-        public async Task<IActionResult> Personalizza(Guid? id)
+		public async Task<IActionResult> Personalizza(Guid? id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (string.IsNullOrEmpty(userId))
@@ -1214,6 +1214,7 @@ namespace HaveASeat.Controllers
 			// Recupera tutti i saloni dell'utente
 			var saloniUtente = await _context.Salone
 				.Include(x => x.SaloneAbbonamenti)
+				.Include(x => x.SalonePersonalizzazione)
 				.Where(s => s.ApplicationUserId == userId && s.Stato == Stato.Attivo)
 				.OrderBy(s => s.Nome)
 				.ToListAsync();

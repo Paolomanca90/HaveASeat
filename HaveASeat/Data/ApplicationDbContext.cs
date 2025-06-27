@@ -1,6 +1,7 @@
 ﻿using HaveASeat.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace HaveASeat.Data
 {
@@ -26,6 +27,7 @@ namespace HaveASeat.Data
 		public DbSet<Categoria> Categoria { get; set; } 
 		public DbSet<SaloneCategoria> SaloneCategoria { get; set; } 
 		public DbSet<PianoSelezionato> PianoSelezionato { get; set; }
+		public DbSet<SalonePersonalizzazione> SalonePersonalizzazione { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -157,6 +159,10 @@ namespace HaveASeat.Data
 				.HasForeignKey(o => o.SaloneId)
 				.OnDelete(DeleteBehavior.NoAction);
 
+			builder.Entity<Immagine>()
+				.Property(e => e.IsCover)
+				.HasDefaultValue(false);
+
 			builder.Entity<Appuntamento>()
 				.HasOne(o => o.Salone)
 				.WithMany(s => s.Appuntamenti)
@@ -190,6 +196,51 @@ namespace HaveASeat.Data
             builder.Entity<PianoSelezionato>()
 				.HasKey(p => p.PianoSelezionatoId);
 
-        }
+			// CONFIGURAZIONI per SalonePersonalizzazione
+			builder.Entity<SalonePersonalizzazione>(entity =>
+			{
+				entity.HasKey(e => e.SalonePersonalizzazioneId);
+
+				entity.HasOne(e => e.Salone)
+					  .WithOne(s => s.SalonePersonalizzazione)
+					  .HasForeignKey<SalonePersonalizzazione>(e => e.SaloneId)
+					  .OnDelete(DeleteBehavior.Cascade);
+
+				entity.Property(e => e.TemaColore)
+					  .HasMaxLength(50)
+					  .IsRequired();
+
+				entity.Property(e => e.ColorePrimario)
+					  .HasMaxLength(7)
+					  .IsRequired();
+
+				entity.Property(e => e.ColoreSecondario)
+					  .HasMaxLength(7)
+					  .IsRequired();
+
+				entity.Property(e => e.ColoreAccento)
+					  .HasMaxLength(7)
+					  .IsRequired();
+
+				entity.Property(e => e.LayoutTipo)
+					  .HasMaxLength(50)
+					  .IsRequired();
+
+				entity.Property(e => e.LogoUrl)
+					  .HasMaxLength(500);
+
+				entity.Property(e => e.Slogan)
+					  .HasMaxLength(200);
+
+				entity.Property(e => e.InstagramUrl)
+					  .HasMaxLength(500);
+
+				entity.Property(e => e.FacebookUrl)
+					  .HasMaxLength(500);
+
+				entity.Property(e => e.TiktokUrl)
+					  .HasMaxLength(500);
+			});
+		}
     }
 }

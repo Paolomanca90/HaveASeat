@@ -6,6 +6,7 @@ using HaveASeat.Utilities.Roles;
 using HaveASeat.Utilities.Subscriptions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Stripe;
@@ -90,6 +91,16 @@ builder.Services.AddScoped<IExportService, ExportService>();
 builder.Services.AddHttpClient();
 StripeConfiguration.ApiKey = builder.Configuration.GetValue<string>("Stripe:SecretKey");
 
+builder.Services.Configure<IISServerOptions>(options =>
+{
+	options.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+});
+
+builder.Services.Configure<FormOptions>(options =>
+{
+	options.MultipartBodyLengthLimit = 10 * 1024 * 1024; // 10MB
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -108,6 +119,8 @@ using (var scope = app.Services.CreateScope())
 		logger.LogError(ex, "Errore durante l'inizializzazione");
 	}
 }
+
+CreateUploadDirectories(app.Environment);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -138,3 +151,13 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+
+static void CreateUploadDirectories(IWebHostEnvironment environment)
+{
+	var uploadsPath = Path.Combine(environment.WebRootPath, "uploads");
+	var galleryPath = Path.Combine(uploadsPath, "gallery");
+	var logosPath = Path.Combine(uploadsPath, "logos");
+
+	Directory.CreateDirectory(galleryPath);
+	Directory.CreateDirectory(logosPath);
+}

@@ -21,6 +21,7 @@ namespace HaveASeat.Models
 		public DateTime DataCreazione { get; set; } = DateTime.Now;
 		public Stato Stato { get; set; } = Stato.InAttesaDiApprovazione; // Stato del salone (attivo, in attesa di approvazione, rifiutato, ecc.)
 		public ApplicationUser ApplicationUser { get; set; } = new ApplicationUser();
+		public SalonePersonalizzazione? SalonePersonalizzazione { get; set; }
 		public ICollection<Servizio> Servizi { get; set; } = new List<Servizio>();
 		public ICollection<Orario> Orari { get; set; } = new List<Orario>();
 		public ICollection<Appuntamento> Appuntamenti { get; set; } = new List<Appuntamento>();
