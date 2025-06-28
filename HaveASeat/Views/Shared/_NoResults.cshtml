@@ -1,0 +1,99 @@
+﻿<div class="text-center py-16">
+    <div class="max-w-md mx-auto">
+        <div class="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full flex items-center justify-center">
+            <i class="fas fa-search text-6xl text-gray-400 dark:text-gray-600"></i>
+        </div>
+
+        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Nessun risultato trovato</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
+            Non abbiamo trovato saloni che corrispondono alla tua ricerca. Prova a modificare i filtri o ampliare l'area di ricerca.
+        </p>
+
+        <div class="space-y-4">
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Suggerimenti:</h4>
+            <ul class="text-left text-gray-600 dark:text-gray-400 space-y-2">
+                <li class="flex items-center">
+                    <i class="fas fa-check text-green-500 mr-3"></i>
+                    Verifica l'ortografia dei termini di ricerca
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-green-500 mr-3"></i>
+                    Prova con termini più generici (es. "taglio" invece di "taglio scalato")
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-green-500 mr-3"></i>
+                    Rimuovi alcuni filtri per ampliare la ricerca
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-check text-green-500 mr-3"></i>
+                    Cerca in una zona più ampia
+                </li>
+            </ul>
+        </div>
+
+        <div class="mt-8 space-y-4">
+            <button onclick="clearFilters()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                <i class="fas fa-times mr-2"></i>
+                Rimuovi tutti i filtri
+            </button>
+            <a href="/Search" class="block w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 px-6 py-3 rounded-lg font-medium transition-colors">
+                <i class="fas fa-home mr-2"></i>
+                Nuova ricerca
+            </a>
+        </div>
+
+        <!-- Popular searches -->
+        <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ricerche popolari:</h4>
+            <div class="flex flex-wrap gap-3 justify-center">
+                <a href="/Search?q=taglio" class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-colors">
+                    Taglio capelli
+                </a>
+                <a href="/Search?q=manicure" class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-colors">
+                    Manicure
+                </a>
+                <a href="/Search?q=colorazione" class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-colors">
+                    Colorazione
+                </a>
+                <a href="/Search?q=massaggio" class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-colors">
+                    Massaggio
+                </a>
+                <a href="/Search?q=barba" class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-colors">
+                    Barba
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function clearFilters() {
+        // Reset del form di ricerca
+        document.getElementById('searchQuery').value = '';
+        document.getElementById('locationInput').value = '';
+        document.getElementById('dateInput').value = '';
+
+        // Reset dei filtri avanzati se presenti
+        const advancedFilters = document.getElementById('advancedFilters');
+        if (advancedFilters && !advancedFilters.classList.contains('hidden')) {
+            const selects = advancedFilters.querySelectorAll('select');
+            selects.forEach(select => select.value = '');
+        }
+
+        // Mostra notifica
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'info',
+            title: 'Filtri rimossi',
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+
+        // Reload della pagina con parametri puliti
+        setTimeout(() => {
+            window.location.href = '/Search';
+        }, 1000);
+    }
+</script>

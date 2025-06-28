@@ -1,0 +1,534 @@
+﻿@model List<HaveASeat.ViewModels.UserBookingViewModel>
+
+@{
+    ViewData["Title"] = "Le Mie Prenotazioni";
+    var upcomingBookings = Model.Where(b => b.DataAppuntamento >= DateTime.Now && b.Stato == "Prenotato").OrderBy(b => b.DataAppuntamento).ToList();
+    var pastBookings = Model.Where(b => b.DataAppuntamento < DateTime.Now || b.Stato == "Annullato").OrderByDescending(b => b.DataAppuntamento).ToList();
+}
+
+@section Styles {
+    <style>
+        .booking-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+            .booking-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            }
+
+        .status-confirmed { @@apply
+            border-green-200 bg-green-50;
+        }
+
+        .status-cancelled { @@apply
+            border-red-200 bg-red-50;
+        }
+
+        .status-completed { @@apply
+            border-blue-200 bg-blue-50;
+        }
+
+        .booking-timeline {
+            position: relative;
+        }
+
+            .booking-timeline::before {
+                content: '';
+                position: absolute;
+                left: 20px;
+                top: 0;
+                bottom: 0;
+                width: 2px;
+                background: linear-gradient(to bottom, #a855f7, #ec4899);
+            }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 2rem;
+        }
+
+        .timeline-icon {
+            position: absolute;
+            left: 8px;
+            top: 1rem;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            z-index: 1;
+        }
+
+        .filter-tabs {
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .filter-tab {
+            padding: 12px 24px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+            .filter-tab.active {
+                border-bottom-color: #7c3aed;
+                color: #7c3aed;
+                font-weight: 600;
+            }
+    </style>
+}
+
+<!-- Header -->
+<div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-12">
+    <div class="container mx-auto px-4">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-4xl font-bold mb-4">Le Mie Prenotazioni</h1>
+            <p class="text-xl opacity-90">Gestisci tutti i tuoi appuntamenti in un unico posto</p>
+        </div>
+    </div>
+</div>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-6xl mx-auto">
+
+        @if (!Model.Any())
+        {
+            <!-- Empty State -->
+            <div class="text-center py-16">
+                <div class="w-32 h-32 mx-auto mb-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-calendar-times text-6xl text-gray-400"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Nessuna prenotazione trovata</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-8">Non hai ancora effettuato nessuna prenotazione. Che aspetti?</p>
+                <a href="/Search" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Trova un Salone
+                </a>
+            </div>
+        }
+        else
+        {
+            <!-- Statistiche -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Prossimi</p>
+                            <p class="text-3xl font-bold text-purple-600">@upcomingBookings.Count</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-calendar-check text-purple-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Completati</p>
+                            <p class="text-3xl font-bold text-green-600">@pastBookings.Count(b => b.Stato == "Prenotato")</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-check-circle text-green-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Spesa Totale</p>
+                            <p class="text-3xl font-bold text-blue-600">€@Model.Where(b => b.Stato == "Prenotato").Sum(b => b.Prezzo).ToString("F0")</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-euro-sign text-blue-600"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Saloni Visitati</p>
+                            <p class="text-3xl font-bold text-orange-600">@Model.Select(b => b.SaloneId).Distinct().Count()</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-store text-orange-600"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtri Tab -->
+            <div class="filter-tabs mb-8">
+                <div class="flex space-x-8">
+                    <button class="filter-tab active" onclick="showTab('upcoming')" id="tab-upcoming">
+                        Prossimi (@upcomingBookings.Count)
+                    </button>
+                    <button class="filter-tab" onclick="showTab('past')" id="tab-past">
+                        Passati (@pastBookings.Count)
+                    </button>
+                    <button class="filter-tab" onclick="showTab('all')" id="tab-all">
+                        Tutti (@Model.Count)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Prossimi Appuntamenti -->
+            <div id="upcoming-bookings" class="tab-content">
+                @if (upcomingBookings.Any())
+                {
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Prossimi Appuntamenti</h2>
+
+                        <div class="booking-timeline">
+                            @foreach (var booking in upcomingBookings.Take(5))
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-icon bg-purple-600">
+                                        <i class="fas fa-calendar"></i>
+                                    </div>
+
+                                    <div class="booking-card bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm status-confirmed">
+                                        <div class="flex flex-col lg:flex-row lg:items-center justify-between">
+                                            <div class="flex-1">
+                                                <div class="flex items-start space-x-4">
+                                                    <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                                                        <i class="fas fa-cut text-purple-600 text-xl"></i>
+                                                    </div>
+                                                    <div class="flex-1">
+                                                        <h3 class="font-bold text-lg text-gray-900 dark:text-white">@booking.NomeServizio</h3>
+                                                        <p class="text-purple-600 font-semibold">@booking.NomeSalone</p>
+                                                        <p class="text-gray-600 dark:text-gray-400 text-sm">@booking.IndirizzoSalone</p>
+                                                        @if (!string.IsNullOrEmpty(booking.NomeDipendente))
+                                                        {
+                                                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                                                <i class="fas fa-user mr-1"></i>
+                                                                con @booking.NomeDipendente
+                                                            </p>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-4 lg:mt-0 lg:ml-6 text-right">
+                                                <div class="mb-2">
+                                                    <p class="text-lg font-bold text-gray-900 dark:text-white">
+                                                        @booking.DataAppuntamento.ToString("dddd, dd MMMM", new System.Globalization.CultureInfo("it-IT"))
+                                                    </p>
+                                                    <p class="text-purple-600 font-semibold">@booking.OrarioAppuntamento</p>
+                                                </div>
+
+                                                <div class="flex items-center space-x-2 justify-end">
+                                                    <span class="text-xl font-bold text-green-600">€@booking.Prezzo.ToString("F2")</span>
+                                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                                        Confermato
+                                                    </span>
+                                                </div>
+
+                                                <div class="mt-3 flex space-x-2">
+                                                    <button onclick="viewBookingDetails('@booking.AppuntamentoId')"
+                                                            class="px-3 py-1 text-sm border border-purple-300 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
+                                                        <i class="fas fa-eye mr-1"></i>
+                                                        Dettagli
+                                                    </button>
+                                                    <button onclick="cancelBooking('@booking.AppuntamentoId')"
+                                                            class="px-3 py-1 text-sm border border-red-300 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                        <i class="fas fa-times mr-1"></i>
+                                                        Cancella
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        @if (!string.IsNullOrEmpty(booking.Note))
+                                        {
+                                            <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                                                <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                                                    <i class="fas fa-sticky-note mr-2"></i>
+                                                    <strong>Note:</strong> @booking.Note
+                                                </p>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-12">
+                        <i class="fas fa-calendar-check text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Nessun appuntamento in programma</h3>
+                        <p class="text-gray-500 mb-6">Prenota il tuo prossimo trattamento di bellezza!</p>
+                        <a href="/Search" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                            <i class="fas fa-search mr-2"></i>
+                            Prenota Ora
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <!-- Appuntamenti Passati -->
+            <div id="past-bookings" class="tab-content hidden">
+                @if (pastBookings.Any())
+                {
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Storico Appuntamenti</h2>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            @foreach (var booking in pastBookings)
+                            {
+                                <div class="booking-card bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm @(booking.Stato == "Annullato" ? "status-cancelled" : "status-completed")">
+                                    <div class="flex items-start justify-between mb-4">
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-gray-900 dark:text-white">@booking.NomeServizio</h3>
+                                            <p class="text-purple-600 font-medium">@booking.NomeSalone</p>
+                                            <p class="text-sm text-gray-500">@booking.DataAppuntamento.ToString("dd/MM/yyyy")</p>
+                                        </div>
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full @(booking.Stato == "Annullato" ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800")">
+                                            @(booking.Stato == "Annullato" ? "Cancellato" : "Completato")
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-lg font-bold text-gray-900 dark:text-white">€@booking.Prezzo.ToString("F2")</span>
+                                        <button onclick="viewBookingDetails('@booking.AppuntamentoId')"
+                                                class="text-sm text-purple-600 hover:text-purple-700">
+                                            Vedi dettagli
+                                        </button>
+                                    </div>
+
+                                    @if (booking.Stato != "Annullato")
+                                    {
+                                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                            <button onclick="rebookService('@booking.SaloneId', '@booking.ServizioId')"
+                                                    class="w-full text-sm bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                                <i class="fas fa-redo mr-2"></i>
+                                                Prenota di Nuovo
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-12">
+                        <i class="fas fa-history text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Nessuno storico</h3>
+                        <p class="text-gray-500">Qui appariranno i tuoi appuntamenti passati</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Tutti gli Appuntamenti -->
+            <div id="all-bookings" class="tab-content hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tutti gli Appuntamenti</h2>
+
+                    <div class="space-y-4">
+                        @foreach (var booking in Model.OrderByDescending(b => b.DataAppuntamento))
+                        {
+                            <div class="booking-card bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                                <div class="flex flex-col lg:flex-row lg:items-center justify-between">
+                                    <div class="flex items-start space-x-4">
+                                        <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                                            <i class="fas fa-cut text-purple-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="font-semibold text-gray-900 dark:text-white">@booking.NomeServizio</h3>
+                                            <p class="text-purple-600">@booking.NomeSalone</p>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                @booking.DataAppuntamento.ToString("dd/MM/yyyy") - @booking.OrarioAppuntamento
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 lg:mt-0 text-right">
+                                        <div class="flex items-center space-x-3">
+                                            <span class="text-lg font-bold text-gray-900 dark:text-white">€@booking.Prezzo.ToString("F2")</span>
+                                            <span class="px-3 py-1 text-xs font-medium rounded-full @(booking.Stato == "Annullato" ? "bg-red-100 text-red-800" : booking.DataAppuntamento > DateTime.Now ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800")">
+                                                @(booking.Stato == "Annullato" ? "Cancellato" : booking.DataAppuntamento > DateTime.Now ? "Confermato" : "Completato")
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal per i dettagli -->
+<div id="bookingDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Dettagli Appuntamento</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div id="modalContent">
+            <!-- Contenuto caricato dinamicamente -->
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Gestione tab
+        function showTab(tabName) {
+            // Nascondi tutti i contenuti
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+
+            // Rimuovi classe active da tutti i tab
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Mostra il contenuto selezionato
+            document.getElementById(tabName + '-bookings').classList.remove('hidden');
+
+            // Attiva il tab corrente
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        // Visualizza dettagli prenotazione
+        function viewBookingDetails(appuntamentoId) {
+            fetch(`/Search/GetBookingDetails/${appuntamentoId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('modalContent').innerHTML = `
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Servizio</p>
+                                        <p class="font-semibold">${data.booking.nomeServizio}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Data</p>
+                                        <p class="font-semibold">${data.booking.dataAppuntamento}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Orario</p>
+                                        <p class="font-semibold">${data.booking.orarioAppuntamento}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Prezzo</p>
+                                        <p class="font-semibold">€${data.booking.prezzo.toFixed(2)}</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Salone</p>
+                                    <p class="font-semibold">${data.booking.nomeSalone}</p>
+                                    <p class="text-sm text-gray-500">${data.booking.indirizzoSalone}</p>
+                                </div>
+
+                                ${data.booking.nomeDipendente ? `
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Professionista</p>
+                                    <p class="font-semibold">${data.booking.nomeDipendente}</p>
+                                </div>
+                                ` : ''}
+
+                                ${data.booking.note ? `
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Note</p>
+                                    <p class="text-sm bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">${data.booking.note}</p>
+                                </div>
+                                ` : ''}
+
+                                <div class="flex space-x-3 pt-4">
+                                    <a href="tel:${data.booking.telefonoSalone}" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-center transition-colors">
+                                        <i class="fas fa-phone mr-2"></i>Chiama
+                                    </a>
+                                    <button onclick="getDirections('${data.booking.indirizzoSalone}')" class="flex-1 border border-purple-600 text-purple-600 hover:bg-purple-50 px-4 py-2 rounded-lg transition-colors">
+                                        <i class="fas fa-directions mr-2"></i>Mappa
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        document.getElementById('bookingDetailsModal').classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore:', error);
+                    Swal.fire('Errore', 'Impossibile caricare i dettagli', 'error');
+                });
+        }
+
+        // Cancellazione prenotazione
+        function cancelBooking(appuntamentoId) {
+            Swal.fire({
+                title: 'Cancellare l\'appuntamento?',
+                text: 'Questa azione non può essere annullata',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Sì, cancella',
+                cancelButtonText: 'Annulla'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/Search/CancelBooking/${appuntamentoId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Cancellato!', 'L\'appuntamento è stato cancellato', 'success')
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire('Errore', data.message || 'Impossibile cancellare l\'appuntamento', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Prenota di nuovo
+        function rebookService(saloneId, servizioId) {
+            window.location.href = `/Search/Details/${saloneId}?servizio=${servizioId}`;
+        }
+
+        // Chiudi modal
+        function closeModal() {
+            document.getElementById('bookingDetailsModal').classList.add('hidden');
+        }
+
+        // Indicazioni
+        function getDirections(address) {
+            const encodedAddress = encodeURIComponent(address);
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+        }
+
+        // Chiudi modal con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+}

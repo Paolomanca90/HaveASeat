@@ -105,6 +105,22 @@ namespace HaveASeat.ViewModels
 		public bool MostraContatti { get; set; } = true;
 	}
 
+	public class BookingConfirmationViewModel
+	{
+		public Guid AppuntamentoId { get; set; }
+		public string NomeSalone { get; set; } = string.Empty;
+		public string IndirizzoSalone { get; set; } = string.Empty;
+		public string TelefonoSalone { get; set; } = string.Empty;
+		public string NomeServizio { get; set; } = string.Empty;
+		public DateTime DataAppuntamento { get; set; }
+		public string OrarioAppuntamento { get; set; } = string.Empty;
+		public string? NomeDipendente { get; set; }
+		public decimal PrezzoTotale { get; set; }
+		public string? Note { get; set; }
+		public bool IsGuestBooking { get; set; }
+		public string? EmailConferma { get; set; }
+	}
+
 	public class BookingViewModel
 	{
 		public Guid SaloneId { get; set; }
@@ -122,19 +138,24 @@ namespace HaveASeat.ViewModels
 		public PersonalizzazioneColori PersonalizzazioneColori { get; set; } = new PersonalizzazioneColori();
 	}
 
-	public class BookingConfirmationViewModel
+	public class SlotAvailabilityViewModel
 	{
-		public Guid AppuntamentoId { get; set; }
-		public string NomeSalone { get; set; } = string.Empty;
-		public string IndirizzoSalone { get; set; } = string.Empty;
-		public string TelefonoSalone { get; set; } = string.Empty;
-		public string NomeServizio { get; set; } = string.Empty;
-		public DateTime DataAppuntamento { get; set; }
-		public string OrarioAppuntamento { get; set; } = string.Empty;
-		public string? NomeDipendente { get; set; }
-		public decimal PrezzoTotale { get; set; }
-		public string? Note { get; set; }
-		public bool IsGuestBooking { get; set; }
-		public string? EmailConferma { get; set; }
+		public Guid SlotId { get; set; }
+		public string OraInizio { get; set; } = string.Empty;
+		public string OraFine { get; set; } = string.Empty;
+		public string Display { get; set; } = string.Empty;
+		public bool Disponibile { get; set; }
+		public int PostiLiberi { get; set; }
+		public int Capacita { get; set; }
+	}
+
+	public class BookingStepViewModel
+	{
+		public int CurrentStep { get; set; }
+		public int TotalSteps { get; set; }
+		public bool CanProceed { get; set; }
+		public bool ShowStaffSelection { get; set; }
+		public string StepTitle { get; set; } = string.Empty;
+		public string StepDescription { get; set; } = string.Empty;
 	}
 }

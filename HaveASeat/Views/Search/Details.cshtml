@@ -1,0 +1,914 @@
+﻿@model HaveASeat.ViewModels.SaloneDetailsViewModel
+
+@{
+    ViewData["Title"] = Model.Salone.Nome;
+    var colori = Model.PersonalizzazioneColori;
+    var layout = Model.LayoutPersonalizzazione;
+}
+
+@section Styles {
+    <style>
+        :root {
+            --primary-color: @colori.ColorePrimario;
+            --secondary-color: @colori.ColoreSecondario;
+            --accent-color: @colori.ColoreAccento;
+        }
+
+        .salon-primary {
+            color: var(--primary-color) !important;
+        }
+
+        .salon-secondary {
+            color: var(--secondary-color) !important;
+        }
+
+        .salon-accent {
+            color: var(--accent-color) !important;
+        }
+
+        .bg-salon-primary {
+            background-color: var(--primary-color) !important;
+        }
+
+        .bg-salon-secondary {
+            background-color: var(--secondary-color) !important;
+        }
+
+        .bg-salon-accent {
+            background-color: var(--accent-color) !important;
+        }
+
+        .border-salon-primary {
+            border-color: var(--primary-color) !important;
+        }
+
+        .border-salon-accent {
+            border-color: var(--accent-color) !important;
+        }
+
+        .btn-salon-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+            .btn-salon-primary:hover {
+                background-color: var(--secondary-color);
+                border-color: var(--secondary-color);
+            }
+
+        .btn-salon-accent {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, @colori.ColorePrimario 0%, @colori.ColoreSecondario 100%);
+        }
+
+        .service-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+            .service-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                border-color: var(--primary-color);
+            }
+
+        .booking-sticky {
+            position: sticky;
+            top: 100px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .gallery-item {
+            aspect-ratio: 1;
+            overflow: hidden;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+            .gallery-item:hover {
+                transform: scale(1.05);
+            }
+    </style>
+}
+
+<!-- Header del salone con breadcrumb -->
+<nav class="bg-gray-50 dark:bg-gray-800 py-4">
+    <div class="container mx-auto px-4">
+        <div class="flex items-center space-x-2 text-sm">
+            <a href="/Search" class="text-gray-600 dark:text-gray-400 hover:text-purple-600">Ricerca</a>
+            <i class="fas fa-chevron-right text-gray-400"></i>
+            <a href="/Search?location=@Model.Salone.Citta" class="text-gray-600 dark:text-gray-400 hover:text-purple-600">@Model.Salone.Citta</a>
+            <i class="fas fa-chevron-right text-gray-400"></i>
+            <span class="salon-primary font-medium">@Model.Salone.Nome</span>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section del Salone -->
+<section class="relative">
+    @if (Model.CoverImage != null)
+    {
+        <div class="h-96 bg-gray-200 relative overflow-hidden">
+            <img src="@Model.CoverImage.Percorso" alt="@Model.Salone.Nome" class="w-full h-full object-cover">
+            <div class="absolute inset-0 hero-gradient opacity-70"></div>
+        </div>
+    }
+    else
+    {
+        <div class="h-96 hero-gradient"></div>
+    }
+
+    <!-- Overlay con informazioni principali -->
+    <div class="absolute inset-0 flex items-end">
+        <div class="container mx-auto px-4 pb-8">
+            <div class="text-white">
+                <div class="flex items-center space-x-4 mb-4">
+                    @if (Model.Salone.SalonePersonalizzazione?.LogoUrl != null)
+                    {
+                        <img src="@Model.Salone.SalonePersonalizzazione.LogoUrl" alt="@Model.Salone.Nome" class="w-16 h-16 rounded-xl bg-white p-2 shadow-lg">
+                    }
+                    <div>
+                        <h1 class="text-4xl font-bold mb-2">@Model.Salone.Nome</h1>
+                        @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.Slogan))
+                        {
+                            <p class="text-xl opacity-90">@Model.Salone.SalonePersonalizzazione.Slogan</p>
+                        }
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-6 text-sm">
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        <span>@Model.Salone.Indirizzo, @Model.Salone.Citta</span>
+                    </div>
+                    <div class="flex items-center">
+                        @if (Model.MediaVoti > 0)
+                        {
+                            <div class="flex items-center bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                                <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                <span class="font-semibold">@Model.VotiDisplay</span>
+                                <span class="ml-1 opacity-75">(@Model.Salone.Recensioni.Count recensioni)</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-phone mr-2"></i>
+                        <a href="tel:@Model.Salone.Telefono" class="hover:underline">@Model.Salone.Telefono</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Contenuto principale -->
+        <div class="lg:col-span-2 space-y-8">
+
+            <!-- Servizi Section -->
+            @if (layout.MostraServizi && Model.ServiziPerCategoria.Any())
+            {
+                <section id="servizi" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
+                        <i class="fas fa-cut mr-3"></i>
+                        I Nostri Servizi
+                    </h2>
+
+                    @foreach (var categoria in Model.ServiziPerCategoria)
+                    {
+                        <div class="mb-8 last:mb-0">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                                @categoria.Key
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                @foreach (var servizio in categoria.Value)
+                                {
+                                    <div class="service-card bg-white dark:bg-gray-700 p-4 rounded-lg">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-900 dark:text-white">@servizio.Nome</h4>
+                                                @if (!string.IsNullOrEmpty(servizio.Descrizione))
+                                                {
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">@servizio.Descrizione</p>
+                                                }
+                                            </div>
+                                            @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                                            {
+                                                <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium ml-2">
+                                                    PROMO
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-2">
+                                                @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                                                {
+                                                    <span class="text-lg font-bold salon-accent">€@servizio.PrezzoPromozione.ToString("F2")</span>
+                                                    <span class="text-sm text-gray-400 line-through">€@servizio.Prezzo.ToString("F2")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-lg font-bold salon-primary">€@servizio.Prezzo.ToString("F2")</span>
+                                                }
+                                            </div>
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                @servizio.Durata min
+                                            </div>
+                                        </div>
+
+                                        <button onclick="selectService('@servizio.ServizioId', '@servizio.Nome', @servizio.PrezzoEffettivo, @servizio.Durata)"
+                                                class="w-full mt-3 btn-salon-primary px-4 py-2 rounded-lg font-medium transition-colors">
+                                            Prenota questo servizio
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </section>
+            }
+
+            <!-- Team Section -->
+            @if (layout.MostraTeam && Model.DipendenteDisponibile.Any())
+            {
+                <section id="team" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
+                        <i class="fas fa-users mr-3"></i>
+                        Il Nostro Team
+                    </h2>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @foreach (var dipendente in Model.DipendenteDisponibile)
+                        {
+                            <div class="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-salon-primary transition-colors">
+                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    @if (!string.IsNullOrEmpty(dipendente.ApplicationUser.ImmagineUser))
+                                    {
+                                        <img src="@dipendente.ApplicationUser.ImmagineUser" alt="@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome" class="w-full h-full object-cover">
+                                    }
+                                    else
+                                    {
+                                        <div class="w-full h-full bg-salon-primary flex items-center justify-center text-white font-bold">
+                                            @dipendente.ApplicationUser.Nome?.FirstOrDefault()@dipendente.ApplicationUser.Cognome?.FirstOrDefault()
+                                        </div>
+                                    }
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900 dark:text-white">
+                                        @dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome
+                                    </h3>
+                                    @if (dipendente.ServiziOfferti.Any())
+                                    {
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Specialista in @string.Join(", ", dipendente.ServiziOfferti.Take(3).Select(s => s.Servizio.Nome))
+                                        </p>
+                                    }
+                                    @if (Model.MostraSceltaDipendente)
+                                    {
+                                        <button onclick="selectStaff('@dipendente.DipendenteId', '@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome')"
+                                                class="text-sm salon-primary hover:underline mt-1">
+                                            Prenota con @dipendente.ApplicationUser.Nome
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+
+            <!-- Galleria Section -->
+            @if (layout.MostraGalleria && Model.GalleryImages.Any())
+            {
+                <section id="galleria" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
+                        <i class="fas fa-images mr-3"></i>
+                        Galleria
+                    </h2>
+
+                    <div class="gallery-grid">
+                        @foreach (var immagine in Model.GalleryImages)
+                        {
+                            <div class="gallery-item" onclick="openGallery('@immagine.Percorso')">
+                                <img src="@immagine.Percorso" alt="Galleria @Model.Salone.Nome" class="w-full h-full object-cover">
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+
+            <!-- Recensioni Section -->
+            @if (layout.MostraRecensioni && Model.RecensioniRecenti.Any())
+            {
+                <section id="recensioni" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
+                        <i class="fas fa-star mr-3"></i>
+                        Recensioni dei Clienti
+                    </h2>
+
+                    <div class="space-y-4">
+                        @foreach (var recensione in Model.RecensioniRecenti)
+                        {
+                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4 last:border-b-0">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 bg-salon-primary rounded-full flex items-center justify-center text-white font-bold">
+                                        @recensione.ApplicationUser.Nome?.FirstOrDefault()@recensione.ApplicationUser.Cognome?.FirstOrDefault()
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h4 class="font-semibold text-gray-900 dark:text-white">
+                                                @recensione.ApplicationUser.Nome @recensione.ApplicationUser.Cognome
+                                            </h4>
+                                            <div class="flex items-center">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="fas fa-star @(i <= recensione.Voto ? "text-yellow-400" : "text-gray-300")"></i>
+                                                }
+                                            </div>
+                                        </div>
+                                        <p class="text-gray-600 dark:text-gray-400">@recensione.Commento</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-500 mt-2">@recensione.DataCreazione.ToString("dd MMMM yyyy")</p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+
+        <!-- Sidebar Prenotazione -->
+        <div class="lg:col-span-1">
+            <div class="booking-sticky">
+                <!-- Widget Prenotazione -->
+                <div id="prenota" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <div class="bg-salon-primary text-white p-6">
+                        <h3 class="text-xl font-bold mb-2">Prenota Appuntamento</h3>
+                        <p class="opacity-90">Scegli il servizio e prenota subito</p>
+                    </div>
+
+                    <div class="p-6" id="bookingWidget">
+                        <!-- Step 3: Selezione Data e Ora -->
+                        <div id="step3" class="booking-step hidden">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">3. Scegli data e orario</h4>
+
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data</label>
+                                <input type="date" id="bookingDate"
+                                       min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                                       max="@DateTime.Now.AddMonths(2).ToString("yyyy-MM-dd")"
+                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                       onchange="loadAvailableSlots()">
+                            </div>
+
+                            <div id="slotsContainer" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Orario disponibile</label>
+                                <div id="availableSlots" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                                    <!-- Slots will be loaded here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Dati Cliente -->
+                        <div id="step4" class="booking-step hidden">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">4. I tuoi dati</h4>
+
+                            @if (User.Identity.IsAuthenticated)
+                            {
+                                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                                    <div class="flex items-center text-green-800 dark:text-green-200">
+                                        <i class="fas fa-check-circle mr-2"></i>
+                                        <span class="font-medium">Sei già loggato!</span>
+                                    </div>
+                                    <p class="text-sm text-green-700 dark:text-green-300 mt-1">
+                                        Procederemo con i tuoi dati salvati.
+                                    </p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                                            <input type="text" id="customerName" required
+                                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cognome</label>
+                                            <input type="text" id="customerSurname" required
+                                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                                        <input type="email" id="customerEmail" required
+                                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
+                                        <input type="tel" id="customerPhone" required
+                                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note aggiuntive (opzionale)</label>
+                                <textarea id="bookingNotes" rows="3"
+                                          placeholder="Richieste speciali, allergie, ecc..."
+                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Riepilogo Prenotazione -->
+                        <div id="bookingSummary" class="mt-6 hidden">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Riepilogo</h4>
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 dark:text-gray-400">Servizio:</span>
+                                    <span id="summaryService" class="font-medium text-gray-900 dark:text-white"></span>
+                                </div>
+                                <div class="flex justify-between" id="summaryStaffRow" style="display: none;">
+                                    <span class="text-gray-600 dark:text-gray-400">Professionista:</span>
+                                    <span id="summaryStaff" class="font-medium text-gray-900 dark:text-white"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 dark:text-gray-400">Data:</span>
+                                    <span id="summaryDate" class="font-medium text-gray-900 dark:text-white"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 dark:text-gray-400">Orario:</span>
+                                    <span id="summaryTime" class="font-medium text-gray-900 dark:text-white"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600 dark:text-gray-400">Durata:</span>
+                                    <span id="summaryDuration" class="font-medium text-gray-900 dark:text-white"></span>
+                                </div>
+                                <hr class="border-gray-300 dark:border-gray-600">
+                                <div class="flex justify-between">
+                                    <span class="font-semibold text-gray-900 dark:text-white">Totale:</span>
+                                    <span id="summaryPrice" class="font-bold salon-primary text-lg"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pulsanti Navigazione -->
+                        <div class="mt-6 space-y-3">
+                            <button id="continueBtn" onclick="nextStep()"
+                                    class="w-full btn-salon-primary px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+                                    disabled>
+                                Continua
+                            </button>
+
+                            <button id="backBtn" onclick="prevStep()"
+                                    class="w-full border-2 border-salon-primary salon-primary px-6 py-3 rounded-lg font-medium transition-colors hidden">
+                                Indietro
+                            </button>
+
+                            <button id="confirmBtn" onclick="confirmBooking()"
+                                    class="w-full btn-salon-accent px-6 py-3 rounded-lg font-medium transition-colors hidden">
+                                <i class="fas fa-check mr-2"></i>
+                                Conferma Prenotazione
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informazioni Contatto -->
+                @if (layout.MostraContatti)
+                {
+                    <div class="mt-6 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Contatti</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-map-marker-alt w-5 mr-3 salon-primary"></i>
+                                <span class="text-sm">@Model.Salone.Indirizzo, @Model.Salone.Citta</span>
+                            </div>
+                            <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-phone w-5 mr-3 salon-primary"></i>
+                                <a href="tel:@Model.Salone.Telefono" class="text-sm hover:salon-primary">@Model.Salone.Telefono</a>
+                            </div>
+                            <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                <i class="fas fa-envelope w-5 mr-3 salon-primary"></i>
+                                <a href="mailto:@Model.Salone.Email" class="text-sm hover:salon-primary">@Model.Salone.Email</a>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.Salone.SitoWeb))
+                            {
+                                <div class="flex items-center text-gray-600 dark:text-gray-400">
+                                    <i class="fas fa-globe w-5 mr-3 salon-primary"></i>
+                                    <a href="@Model.Salone.SitoWeb" target="_blank" class="text-sm hover:salon-primary">Sito Web</a>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <button onclick="getDirections()" class="w-full btn-salon-primary px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-directions mr-2"></i>
+                                Ottieni Indicazioni
+                            </button>
+                        </div>
+                    </div>
+                }
+
+                <!-- Social Links -->
+                @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.InstagramUrl) ||
+                                !string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.FacebookUrl) ||
+                                !string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.TiktokUrl))
+                {
+                    <div class="mt-6 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Seguici sui social</h3>
+                        <div class="flex space-x-4">
+                            @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.InstagramUrl))
+                            {
+                                <a href="@Model.Salone.SalonePersonalizzazione.InstagramUrl" target="_blank"
+                                   class="w-10 h-10 bg-salon-primary rounded-lg flex items-center justify-center text-white hover:bg-salon-secondary transition-colors">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.FacebookUrl))
+                            {
+                                <a href="@Model.Salone.SalonePersonalizzazione.FacebookUrl" target="_blank"
+                                   class="w-10 h-10 bg-salon-primary rounded-lg flex items-center justify-center text-white hover:bg-salon-secondary transition-colors">
+                                    <i class="fab fa-facebook"></i>
+                                </a>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.TiktokUrl))
+                            {
+                                <a href="@Model.Salone.SalonePersonalizzazione.TiktokUrl" target="_blank"
+                                   class="w-10 h-10 bg-salon-primary rounded-lg flex items-center justify-center text-white hover:bg-salon-secondary transition-colors">
+                                    <i class="fab fa-tiktok"></i>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal per Galleria Immagini -->
+<div id="galleryModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden flex items-center justify-center p-4" onclick="closeGallery()">
+    <div class="max-w-4xl max-h-full relative">
+        <img id="galleryImage" src="" alt="" class="max-w-full max-h-full object-contain">
+        <button onclick="closeGallery()" class="absolute top-4 right-4 text-white text-2xl hover:text-gray-300">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white text-center">
+            <p class="bg-black bg-opacity-50 px-4 py-2 rounded-lg">@Model.Salone.Nome</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Stato della prenotazione
+        let bookingState = {
+            currentStep: 1,
+            saloneId: '@Model.Salone.SaloneId',
+            servizioId: null,
+            serviceName: '',
+            servicePrice: 0,
+            serviceDuration: 0,
+            dipendenteId: null,
+            staffName: '',
+            selectedDate: '',
+            selectedSlot: null,
+            slotTime: '',
+            showStaffSelection: @Model.MostraSceltaDipendente.ToString().ToLower()
+        };
+
+        // Inizializzazione
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepVisibility();
+            updateButtons();
+        });
+
+        // Selezione servizio
+        function selectService(servizioId, serviceName, price, duration) {
+            bookingState.servizioId = servizioId;
+            bookingState.serviceName = serviceName;
+            bookingState.servicePrice = price;
+            bookingState.serviceDuration = duration;
+
+            // Evidenzia il servizio selezionato
+            document.querySelectorAll('.service-card, button[onclick*="selectService"]').forEach(el => {
+                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            });
+
+            event.target.closest('.service-card, button').classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+
+            updateButtons();
+            updateSummary();
+        }
+
+        // Selezione staff
+        function selectStaff(dipendenteId, staffName) {
+            bookingState.dipendenteId = dipendenteId;
+            bookingState.staffName = staffName;
+
+            // Evidenzia lo staff selezionato
+            document.querySelectorAll('.staff-option').forEach(el => {
+                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            });
+
+            event.target.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+
+            updateButtons();
+            updateSummary();
+        }
+
+        // Caricamento slot disponibili
+        function loadAvailableSlots() {
+            const date = document.getElementById('bookingDate').value;
+            if (!date) return;
+
+            bookingState.selectedDate = date;
+
+            const slotsContainer = document.getElementById('slotsContainer');
+            const slotsGrid = document.getElementById('availableSlots');
+
+            // Mostra loading
+            slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Caricamento...</div>';
+            slotsContainer.classList.remove('hidden');
+
+            // Chiamata AJAX per caricare gli slot
+            fetch(`/Search/GetAvailableSlots?saloneId=${bookingState.saloneId}&data=${date}&dipendenteId=${bookingState.dipendenteId || ''}&servizioId=${bookingState.servizioId || ''}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.slots.length > 0) {
+                        slotsGrid.innerHTML = data.slots.map(slot => `
+                            <button onclick="selectSlot('${slot.slotId}', '${slot.display}')"
+                                    class="slot-option p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-salon-primary transition-colors ${slot.disponibile ? '' : 'opacity-50 cursor-not-allowed'}"
+                                    ${!slot.disponibile ? 'disabled' : ''}>
+                                ${slot.display}
+                                ${slot.postiLiberi < slot.capacita ? `<br><small class="text-xs text-gray-500">${slot.postiLiberi} posti</small>` : ''}
+                            </button>
+                        `).join('');
+                    } else {
+                        slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4 text-gray-500">Nessun orario disponibile per questa data</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Errore caricamento slot:', error);
+                    slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4 text-red-500">Errore nel caricamento degli orari</div>';
+                });
+        }
+
+        // Selezione slot
+        function selectSlot(slotId, slotTime) {
+            bookingState.selectedSlot = slotId;
+            bookingState.slotTime = slotTime;
+
+            // Evidenzia lo slot selezionato
+            document.querySelectorAll('.slot-option').forEach(el => {
+                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            });
+
+            event.target.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+
+            updateButtons();
+            updateSummary();
+        }
+
+        // Navigazione tra i passi
+        function nextStep() {
+            if (!canProceed()) return;
+
+            bookingState.currentStep++;
+
+            // Salta lo step del personale se non abilitato
+            if (bookingState.currentStep === 2 && !bookingState.showStaffSelection) {
+                bookingState.currentStep = 3;
+            }
+
+            updateStepVisibility();
+            updateButtons();
+        }
+
+        function prevStep() {
+            bookingState.currentStep--;
+
+            // Salta lo step del personale se non abilitato
+            if (bookingState.currentStep === 2 && !bookingState.showStaffSelection) {
+                bookingState.currentStep = 1;
+            }
+
+            updateStepVisibility();
+            updateButtons();
+        }
+
+        // Verifica se si può procedere
+        function canProceed() {
+            switch (bookingState.currentStep) {
+                case 1:
+                    return bookingState.servizioId !== null;
+                case 2:
+                    return !bookingState.showStaffSelection || bookingState.staffName !== '';
+                case 3:
+                    return bookingState.selectedDate !== '' && bookingState.selectedSlot !== null;
+                case 4:
+                    if (!@User.Identity.IsAuthenticated.ToString().ToLower()) {
+                        const name = document.getElementById('customerName')?.value;
+                        const surname = document.getElementById('customerSurname')?.value;
+                        const email = document.getElementById('customerEmail')?.value;
+                        const phone = document.getElementById('customerPhone')?.value;
+                        return name && surname && email && phone;
+                    }
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        // Aggiorna visibilità dei passi
+        function updateStepVisibility() {
+            document.querySelectorAll('.booking-step').forEach((step, index) => {
+                const stepNumber = index + 1;
+                if (stepNumber === 2 && !bookingState.showStaffSelection) {
+                    step.classList.add('hidden');
+                } else if (stepNumber === bookingState.currentStep) {
+                    step.classList.remove('hidden');
+                } else {
+                    step.classList.add('hidden');
+                }
+            });
+
+            // Mostra il riepilogo se siamo oltre lo step 2
+            const summaryVisible = bookingState.currentStep > (bookingState.showStaffSelection ? 2 : 1);
+            document.getElementById('bookingSummary').classList.toggle('hidden', !summaryVisible);
+        }
+
+        // Aggiorna i pulsanti
+        function updateButtons() {
+            const continueBtn = document.getElementById('continueBtn');
+            const backBtn = document.getElementById('backBtn');
+            const confirmBtn = document.getElementById('confirmBtn');
+
+            const canContinue = canProceed();
+            continueBtn.disabled = !canContinue;
+
+            // Mostra/nascondi pulsanti basandosi sullo step corrente
+            const maxStep = bookingState.showStaffSelection ? 4 : 3;
+            const isLastStep = bookingState.currentStep >= maxStep;
+
+            continueBtn.classList.toggle('hidden', isLastStep);
+            confirmBtn.classList.toggle('hidden', !isLastStep || !canContinue);
+            backBtn.classList.toggle('hidden', bookingState.currentStep === 1);
+        }
+
+        // Aggiorna il riepilogo
+        function updateSummary() {
+            document.getElementById('summaryService').textContent = bookingState.serviceName || '-';
+
+            const staffRow = document.getElementById('summaryStaffRow');
+            if (bookingState.showStaffSelection && bookingState.staffName) {
+                document.getElementById('summaryStaff').textContent = bookingState.staffName;
+                staffRow.style.display = 'flex';
+            } else {
+                staffRow.style.display = 'none';
+            }
+
+            if (bookingState.selectedDate) {
+                const date = new Date(bookingState.selectedDate);
+                document.getElementById('summaryDate').textContent = date.toLocaleDateString('it-IT', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            document.getElementById('summaryTime').textContent = bookingState.slotTime || '-';
+            document.getElementById('summaryDuration').textContent = bookingState.serviceDuration ? `${bookingState.serviceDuration} min` : '-';
+            document.getElementById('summaryPrice').textContent = bookingState.servicePrice ? `€${bookingState.servicePrice.toFixed(2)}` : '-';
+        }
+
+        // Conferma prenotazione
+        function confirmBooking() {
+            if (!canProceed()) return;
+
+            const bookingData = {
+                saloneId: bookingState.saloneId,
+                servizioId: bookingState.servizioId,
+                dipendenteId: bookingState.dipendenteId,
+                slotId: bookingState.selectedSlot,
+                data: bookingState.selectedDate,
+                note: document.getElementById('bookingNotes')?.value || ''
+            };
+
+            // Aggiungi dati cliente se non autenticato
+            if (!@User.Identity.IsAuthenticated.ToString().ToLower()) {
+                bookingData.nome = document.getElementById('customerName').value;
+                bookingData.cognome = document.getElementById('customerSurname').value;
+                bookingData.email = document.getElementById('customerEmail').value;
+                bookingData.telefono = document.getElementById('customerPhone').value;
+            }
+
+            // Disabilita il pulsante
+            const confirmBtn = document.getElementById('confirmBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Prenotando...';
+
+            // Invia la prenotazione
+            fetch('/Search/CreateBooking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                },
+                body: JSON.stringify(bookingData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Mostra conferma con SweetAlert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Prenotazione Confermata!',
+                        html: `
+                            <div class="text-left space-y-2">
+                                <p><strong>Servizio:</strong> ${bookingState.serviceName}</p>
+                                <p><strong>Data:</strong> ${document.getElementById('summaryDate').textContent}</p>
+                                <p><strong>Orario:</strong> ${bookingState.slotTime}</p>
+                                <p><strong>Presso:</strong> @Model.Salone.Nome</p>
+                                <p class="text-sm text-gray-600 mt-4">Riceverai una conferma via email con tutti i dettagli.</p>
+                            </div>
+                        `,
+                        confirmButtonText: 'Ottimo!',
+                        confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color')
+                    }).then(() => {
+                        // Reset del form o redirect
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Errore nella prenotazione',
+                        text: data.message || 'Si è verificato un errore. Riprova.',
+                        confirmButtonColor: '#ef4444'
+                    });
+
+                    // Riabilita il pulsante
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Conferma Prenotazione';
+                }
+            })
+            .catch(error => {
+                console.error('Errore prenotazione:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errore di rete',
+                    text: 'Verifica la connessione e riprova.',
+                    confirmButtonColor: '#ef4444'
+                });
+
+                // Riabilita il pulsante
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Conferma Prenotazione';
+            });
+        }
+
+        // Galleria immagini
+        function openGallery(imageSrc) {
+            document.getElementById('galleryImage').src = imageSrc;
+            document.getElementById('galleryModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeGallery() {
+            document.getElementById('galleryModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Indicazioni stradali
+        function getDirections() {
+            const address = encodeURIComponent('@Model.Salone.Indirizzo, @Model.Salone.Citta, @Model.Salone.Provincia');
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`, '_blank');
+        }
+
+        // Chiudi modal con ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeGallery();
+            }
+        });
+    </script>
+}
