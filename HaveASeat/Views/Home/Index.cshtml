@@ -14,19 +14,19 @@
             @* <p>Prenota trattamenti di bellezza, benessere e molto altro con un click</p> *@
         </div>
 
-        <form class="search-form dark:bg-gray-700">
+        <form action="/Search" method="get" class="search-form dark:bg-gray-700" id="homeSearchForm">
             <div class="form-row">
                 <div class="form-group">
                     <label for="service" class="dark:text-white">Che servizio stai cercando?</label>
-                    <input type="text" id="service" placeholder="Es. Taglio capelli, Manicure, Massaggio">
+                    <input type="text" id="service" name="q" placeholder="Es. Taglio capelli, Manicure, Massaggio">
                 </div>
                 <div class="form-group">
                     <label for="location" class="dark:text-white">Dove?</label>
-                    <input type="text" id="location" placeholder="Città, quartiere o codice postale">
+                    <input type="text" id="location" name="location" placeholder="Città, quartiere o codice postale">
                 </div>
                 <div class="form-group">
                     <label for="date" class="dark:text-white">Quando?</label>
-                    <input type="date" id="date">
+                    <input type="date" id="date" name="data" min="@DateTime.Now.ToString("yyyy-MM-dd")">
                 </div>
                 <button type="submit" class="search-btn mb-1">Cerca</button>
             </div>
@@ -327,3 +327,132 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Script per migliorare l'esperienza utente
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchForm = document.getElementById('homeSearchForm');
+        const serviceInput = document.getElementById('service');
+        const locationInput = document.getElementById('location');
+        const dateInput = document.getElementById('date');
+
+        // Auto-suggest per servizi
+        let searchTimeout;
+        serviceInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    // Chiamata per suggerimenti servizi
+                    fetch(`/Search/Suggestions?q=${encodeURIComponent(query)}&limit=5`)
+                        .then(response => response.json())
+                        .then(data => {
+                            showSuggestions(data.suggestions, serviceInput);
+                        })
+                        .catch(error => console.log('Errore suggerimenti:', error));
+                }, 300);
+            }
+        });
+
+        // Geolocalizzazione per il campo location
+        if ("geolocation" in navigator) {
+            const geoButton = document.createElement('button');
+            geoButton.type = 'button';
+            geoButton.className = 'absolute right-2 top-1/2 transform -translate-y-1/2 text-purple-600 hover:text-purple-700';
+            geoButton.innerHTML = '<i class="fas fa-location-arrow"></i>';
+            geoButton.title = 'Usa la mia posizione';
+
+            locationInput.parentElement.style.position = 'relative';
+            locationInput.parentElement.appendChild(geoButton);
+
+            geoButton.addEventListener('click', function() {
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        // Geocoding inverso (richiederebbe un servizio)
+                        locationInput.value = 'Posizione corrente';
+                        geoButton.innerHTML = '<i class="fas fa-check text-green-600"></i>';
+                        setTimeout(() => {
+                            geoButton.innerHTML = '<i class="fas fa-location-arrow"></i>';
+                        }, 2000);
+                    },
+                    function(error) {
+                        geoButton.innerHTML = '<i class="fas fa-exclamation-triangle text-red-600"></i>';
+                        setTimeout(() => {
+                            geoButton.innerHTML = '<i class="fas fa-location-arrow"></i>';
+                        }, 2000);
+                    }
+                );
+            });
+        }
+
+        // Validazione form
+        searchForm.addEventListener('submit', function(e) {
+            const service = serviceInput.value.trim();
+            const location = locationInput.value.trim();
+
+            if (!service && !location) {
+                e.preventDefault();
+                alert('Inserisci almeno un servizio o una località per la ricerca');
+                return false;
+            }
+        });
+
+        // Imposta data di default a domani
+        if (!dateInput.value) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.value = tomorrow.toISOString().split('T')[0];
+        }
+    });
+
+    function showSuggestions(suggestions, inputElement) {
+        // Rimuovi suggerimenti esistenti
+        const existingSuggestions = document.getElementById('serviceSuggestions');
+        if (existingSuggestions) {
+            existingSuggestions.remove();
+        }
+
+        if (suggestions.length === 0) return;
+
+        // Crea container suggerimenti
+        const suggestionsContainer = document.createElement('div');
+        suggestionsContainer.id = 'serviceSuggestions';
+        suggestionsContainer.className = 'absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto';
+
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0';
+            suggestionItem.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${suggestion.tipo === 'salone' ? 'fa-store' : 'fa-cut'} text-gray-400 mr-3"></i>
+                    <div>
+                        <div class="font-medium text-gray-900">${suggestion.nome}</div>
+                        <div class="text-sm text-gray-500">${suggestion.location}</div>
+                    </div>
+                </div>
+            `;
+
+            suggestionItem.addEventListener('click', function() {
+                inputElement.value = suggestion.nome;
+                suggestionsContainer.remove();
+            });
+
+            suggestionsContainer.appendChild(suggestionItem);
+        });
+
+        // Posiziona i suggerimenti
+        inputElement.parentElement.style.position = 'relative';
+        inputElement.parentElement.appendChild(suggestionsContainer);
+
+        // Chiudi suggerimenti quando si clicca fuori
+        document.addEventListener('click', function closeHandler(e) {
+            if (!inputElement.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                suggestionsContainer.remove();
+                document.removeEventListener('click', closeHandler);
+            }
+        });
+    }
+</script>
