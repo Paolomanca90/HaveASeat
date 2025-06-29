@@ -3,57 +3,88 @@
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     @foreach (var salone in Model.Saloni)
     {
-        <div class="salon-card bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <!-- Card Image -->
-            <div class="relative h-48 bg-gray-200 dark:bg-gray-700">
+        <div class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300">
+            <!-- Card Image with overlay -->
+            <div class="relative h-56 overflow-hidden">
                 @if (!string.IsNullOrEmpty(salone.CoverImageUrl))
                 {
-                    <img src="@salone.CoverImageUrl" alt="@salone.Nome" class="w-full h-full object-cover">
+                    <img src="@salone.CoverImageUrl"
+                         alt="@salone.Nome"
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                 }
                 else
                 {
-                    <div class="w-full h-full flex items-center justify-center text-gray-400">
-                        <i class="fas fa-store text-4xl"></i>
+                    <div class="w-full h-full bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 flex items-center justify-center">
+                        <i class="fas fa-store text-6xl text-white/80"></i>
                     </div>
                 }
 
-                <!-- Overlay con logo -->
+                <!-- Gradient overlay -->
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+
+                <!-- Logo -->
                 @if (!string.IsNullOrEmpty(salone.LogoUrl))
                 {
                     <div class="absolute top-4 left-4">
-                        <img src="@salone.LogoUrl" alt="@salone.Nome" class="w-12 h-12 rounded-lg bg-white p-1 shadow-md">
+                        <img src="@salone.LogoUrl"
+                             alt="Logo @salone.Nome"
+                             class="w-14 h-14 rounded-xl bg-white/90 backdrop-blur-sm p-2 shadow-lg border border-white/20">
                     </div>
                 }
 
-                <!-- Badge promozioni -->
-                @if (salone.HasPromozioni)
-                {
-                    <div class="absolute top-4 right-4">
-                        <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                <!-- Badges -->
+                <div class="absolute top-4 right-4 flex flex-col gap-2">
+                    @if (salone.HasPromozioni)
+                    {
+                        <span class="bg-gradient-to-r from-red-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
                             <i class="fas fa-fire mr-1"></i>
-                            PROMO
+                            OFFERTE
                         </span>
-                    </div>
-                }
+                    }
+                    @if (salone.MediaVoti >= 4.5)
+                    {
+                        <span class="bg-gradient-to-r from-yellow-400 to-orange-400 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                            <i class="fas fa-crown mr-1"></i>
+                            TOP
+                        </span>
+                    }
+                </div>
 
-                <!-- Valutazione overlay -->
+                <!-- Rating bottom left -->
                 <div class="absolute bottom-4 left-4">
-                    <div class="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1 flex items-center space-x-2">
-                        <div class="flex items-center">
-                            @if (salone.MediaVoti > 0)
-                            {
-                                <i class="fas fa-star text-yellow-400 text-sm"></i>
-                                <span class="ml-1 text-sm font-semibold text-gray-900">@salone.VotiDisplay</span>
-                            }
-                            else
-                            {
-                                <span class="text-sm font-medium text-gray-600">Nuovo</span>
-                            }
-                        </div>
-                        @if (salone.NumeroRecensioni > 0)
+                    <div class="bg-white/90 backdrop-blur-sm rounded-xl px-3 py-2 flex items-center gap-2 shadow-lg border border-white/20">
+                        @if (salone.MediaVoti > 0)
                         {
-                            <span class="text-xs text-gray-500">(@salone.NumeroRecensioni)</span>
+                            <div class="flex items-center gap-1">
+                                <i class="fas fa-star text-yellow-500"></i>
+                                <span class="font-bold text-gray-900 text-sm">@salone.VotiDisplay</span>
+                            </div>
+                            @if (salone.NumeroRecensioni > 0)
+                            {
+                                <span class="text-xs text-gray-600">(@salone.NumeroRecensioni)</span>
+                            }
                         }
+                        else
+                        {
+                            <span class="text-sm font-medium text-gray-700">
+                                <i class="fas fa-sparkles text-purple-500 mr-1"></i>
+                                Nuovo
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Quick actions overlay -->
+                <div class="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div class="flex gap-2">
+                        <button onclick="getDirections('@salone.Indirizzo, @salone.Citta')"
+                                class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:bg-white hover:scale-110 transition-all duration-200 shadow-lg">
+                            <i class="fas fa-directions text-sm"></i>
+                        </button>
+                        <a href="tel:@salone.Telefono"
+                           class="w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-700 hover:bg-white hover:scale-110 transition-all duration-200 shadow-lg">
+                            <i class="fas fa-phone text-sm"></i>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -62,76 +93,101 @@
             <div class="p-6">
                 <!-- Header -->
                 <div class="mb-4">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">@salone.Nome</h3>
+                    <div class="flex items-start justify-between mb-2">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white line-clamp-1 group-hover:text-purple-600 transition-colors">
+                            @salone.Nome
+                        </h3>
+                        <div class="text-right ml-3">
+                            <div class="text-lg font-bold text-gray-900 dark:text-white">@salone.PrezzoRange</div>
+                            <div class="text-xs text-gray-500">@salone.NumeroServizi servizi</div>
+                        </div>
+                    </div>
+
                     <div class="flex items-center text-gray-600 dark:text-gray-400 text-sm mb-2">
-                        <i class="fas fa-map-marker-alt mr-2"></i>
-                        <span>@salone.Citta, @salone.Provincia</span>
+                        <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i>
+                        <span class="line-clamp-1">@salone.Citta, @salone.Provincia</span>
                     </div>
 
                     @if (!string.IsNullOrEmpty(salone.Slogan))
                     {
-                        <p class="text-sm text-gray-600 dark:text-gray-400 italic">@salone.Slogan</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 italic line-clamp-2 mt-2">
+                            "@salone.Slogan"
+                        </p>
                     }
                 </div>
 
-                <!-- Servizi popolari -->
+                <!-- Services Tags -->
                 @if (salone.ServiziPopolari.Any())
                 {
                     <div class="mb-4">
                         <div class="flex flex-wrap gap-2">
-                            @foreach (var servizio in salone.ServiziPopolari.Take(3))
+                            @foreach (var servizio in salone.ServiziPopolari.Take(2))
                             {
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-700">
+                                    <i class="fas fa-cut mr-1 text-xs"></i>
                                     @servizio
                                 </span>
                             }
-                            @if (salone.NumeroServizi > 3)
+                            @if (salone.NumeroServizi > 2)
                             {
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400">
-                                    +@(salone.NumeroServizi - 3) altri
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                    +@(salone.NumeroServizi - 2) altri
                                 </span>
                             }
                         </div>
                     </div>
                 }
 
-                <!-- Prezzo e info -->
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <span class="text-lg font-bold text-gray-900 dark:text-white">@salone.PrezzoRange</span>
+                <!-- Features -->
+                <div class="mb-4 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-3">
+                        @if (salone.HasPromozioni)
+                        {
+                            <span class="flex items-center text-red-600 dark:text-red-400">
+                                <i class="fas fa-tag mr-1"></i>
+                                Offerte
+                            </span>
+                        }
+                        <span class="flex items-center text-green-600 dark:text-green-400">
+                            <i class="fas fa-clock mr-1"></i>
+                            Disponibile
+                        </span>
                     </div>
-                    <div class="text-right">
-                        <div class="text-sm text-gray-600 dark:text-gray-400">@salone.NumeroServizi servizi</div>
+                    <div class="text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-users mr-1"></i>
+                        Team qualificato
                     </div>
                 </div>
 
-                <!-- Actions -->
-                <div class="flex space-x-3">
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
                     <a href="/Search/Details/@salone.SaloneId"
-                       class="flex-1 bg-white border-2 border-purple-600 text-purple-600 px-4 py-2 rounded-lg text-center font-medium hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors">
-                        Dettagli
+                       class="flex-1 bg-white border-2 border-purple-600 text-purple-600 px-4 py-3 rounded-xl text-center font-semibold hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Scopri
                     </a>
                     <a href="/Search/Details/@salone.SaloneId#prenota"
-                       class="flex-1 text-white px-4 py-2 rounded-lg text-center font-medium transition-colors"
-                       style="background-color: @salone.PersonalizzazioneColori.ColorePrimario"
-                       onmouseover="this.style.backgroundColor='@salone.PersonalizzazioneColori.ColoreSecondario'"
-                       onmouseout="this.style.backgroundColor='@salone.PersonalizzazioneColori.ColorePrimario'">
-                        Prenota
+                       class="flex-1 text-white px-4 py-3 rounded-xl text-center font-semibold transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 relative overflow-hidden"
+                       style="background: linear-gradient(135deg, @salone.PersonalizzazioneColori.ColorePrimario 0%, @salone.PersonalizzazioneColori.ColoreSecondario 100%)">
+                        <span class="relative z-10">
+                            <i class="fas fa-calendar-check mr-2"></i>
+                            Prenota Ora
+                        </span>
+                        <div class="absolute inset-0 bg-white/20 translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
                     </a>
                 </div>
             </div>
 
-            <!-- Quick contact -->
-            <div class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-600">
-                <div class="flex items-center justify-between">
-                    <a href="tel:@salone.Telefono" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 text-sm">
-                        <i class="fas fa-phone mr-2"></i>
-                        <span>@salone.Telefono</span>
-                    </a>
-                    <button onclick="getDirections('@salone.Indirizzo, @salone.Citta')"
-                            class="flex items-center text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 text-sm">
-                        <i class="fas fa-directions mr-2"></i>
-                        <span>Indicazioni</span>
+            <!-- Bottom Info Bar -->
+            <div class="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-600/50 border-t border-gray-200 dark:border-gray-600">
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center text-gray-600 dark:text-gray-400">
+                        <i class="fas fa-map-marker-alt mr-2 text-purple-500"></i>
+                        <span class="truncate">@salone.Indirizzo</span>
+                    </div>
+                    <button onclick="addToFavorites('@salone.SaloneId')"
+                            class="text-gray-400 hover:text-red-500 transition-colors duration-200">
+                        <i class="far fa-heart hover:fas"></i>
                     </button>
                 </div>
             </div>
@@ -139,9 +195,37 @@
     }
 </div>
 
+<style>
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+
 <script>
     function getDirections(address) {
         const encodedAddress = encodeURIComponent(address);
         window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+    }
+
+    function addToFavorites(saloneId) {
+        // TODO: Implementare logica dei preferiti
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Aggiunto ai preferiti!',
+            showConfirmButton: false,
+            timer: 2000
+        });
     }
 </script>

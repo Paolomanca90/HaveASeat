@@ -1,9 +1,152 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
-    
+    var saloniPopolari = ViewBag.SaloniPopolari as IEnumerable<dynamic> ?? new List<dynamic>();
 }
+
 @section Styles{
     <link href="~/css/Clienti.css" rel="stylesheet" />
+    <style>
+        /* Aggiungi stili per i nuovi elementi */
+        .promo-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+
+        .premium-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .salon-image {
+            position: relative;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .service-tag.more {
+            background-color: #e5e7eb;
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        /* Skeleton loading styles */
+        .skeleton-card {
+            pointer-events: none;
+        }
+
+        .skeleton-loading {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-text {
+            display: block;
+            border-radius: 4px;
+        }
+
+        @@keyframes loading {
+            0%
+
+        {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+
+        }
+
+        @@keyframes pulse {
+            0%, 100%
+
+        {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.8;
+        }
+
+        }
+
+        /* Filtri responsive */
+        @@media (max-width: 768px) {
+            .filters
+
+        {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            font-size: 0.875rem;
+            padding: 8px 12px;
+        }
+
+        }
+
+        .salons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .salon-card {
+            display: grid;
+            grid-template-rows: 200px 1fr;
+            height: 100%;
+            /* Rimuovi questa transizione che può causare conflitti */
+        }
+
+            /* Aggiungi una classe per le card nascoste invece di usare display: none */
+            .salon-card.hidden {
+                display: none !important;
+            }
+
+        .salon-image {
+            grid-row: 1;
+            height: 200px;
+            overflow: hidden; /* Aggiungi questo per evitare overflow delle immagini */
+        }
+
+        .salon-info {
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .salon-services {
+            flex-grow: 1;
+        }
+
+        .salon-footer {
+            margin-top: auto;
+            padding-top: 16px;
+        }
+    </style>
 }
 
 <!--FORM RICERCA-->
@@ -39,203 +182,133 @@
         <h2 class="section-title dark:text-gray-300">Saloni popolari nella tua zona</h2>
 
         <div class="filters">
-            <button class="filter-btn active">Tutti</button>
-            <button class="filter-btn">Parrucchieri</button>
-            <button class="filter-btn">Centri Estetici</button>
-            <button class="filter-btn">Spa & Benessere</button>
-            <button class="filter-btn">Barbieri</button>
-            <button class="filter-btn">Nail Salon</button>
+            <button class="filter-btn active" onclick="filterSalons('tutti')">Tutti</button>
+            <button class="filter-btn" onclick="filterSalons('parrucchieri')">Parrucchieri</button>
+            <button class="filter-btn" onclick="filterSalons('centri-estetici')">Centri Estetici</button>
+            <button class="filter-btn" onclick="filterSalons('spa-benessere')">Spa & Benessere</button>
+            <button class="filter-btn" onclick="filterSalons('barbieri')">Barbieri</button>
+            <button class="filter-btn" onclick="filterSalons('nail-salon')">Nail Salon</button>
         </div>
 
-        <div class="salons-grid">
-            <div class="salon-card">
-                <div class="salon-image"></div>
-                <div class="salon-info">
-                    <div class="salon-header">
-                        <div>
-                            <h3 class="salon-name">Bella Vista Hair Studio</h3>
-                            <div class="salon-location">
-                                📍 Milano, Brera
+        <div class="salons-grid" id="salonsGrid">
+            @if (saloniPopolari.Any())
+            {
+                @foreach (var salone in saloniPopolari)
+                {
+                    <a href="/Search/Details/@salone.SaloneId">
+                        <div class="salon-card" data-category="@GetSalonCategory(salone.ServiziPopolari)">
+                            <div class="salon-image">
+                                @if (!string.IsNullOrEmpty(salone.CoverImageUrl))
+                                {
+                                    <img src="@salone.CoverImageUrl"
+                                         alt="@salone.Nome"
+                                         class="w-full h-full object-cover">
+                                }
+                                else
+                                {
+                                    <div class="w-full h-full bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 flex items-center justify-center">
+                                        <i class="fas fa-store text-6xl text-white/80"></i>
+                                    </div>
+                                }
+                                @if (salone.HasPromozioni)
+                                {
+                                    <div class="promo-badge">OFFERTE</div>
+                                }
+                                @if (salone.IsPremium)
+                                {
+                                    <div class="premium-badge">PREMIUM</div>
+                                }
+                            </div>
+                            <div class="salon-info">
+                                <div class="salon-header">
+                                    <div>
+                                        <h3 class="salon-name">@salone.Nome</h3>
+                                        <div class="salon-location">
+                                            📍 @salone.Citta, @salone.Provincia
+                                        </div>
+                                    </div>
+                                    <div class="salon-rating">
+                                        <span class="stars">@GetStarsDisplay(salone.MediaVoti)</span>
+                                        <span class="rating-text">@salone.VotiDisplay @(salone.NumeroRecensioni > 0 ? $"({salone.NumeroRecensioni})" : "")</span>
+                                    </div>
+                                </div>
+                                <div class="salon-services">
+                                    <div class="services-title">Servizi</div>
+                                    <div class="services-list">
+                                        @if (salone.ServiziPopolari.Count > 0)
+                                        {
+                                            @foreach (var servizio in ((List<string>)salone.ServiziPopolari).Take(4))
+                                            {
+                                                <span class="service-tag">@servizio</span>
+                                            }
+                                            @if (salone.NumeroServizi > 4)
+                                            {
+                                                <span class="service-tag more">+@(salone.NumeroServizi - 4) altri</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="service-tag">Vari servizi</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="salon-footer">
+                                    <span class="price-range">@salone.PrezzoRange</span>
+                                    <button class="book-btn" onclick="location.href='/Search/Details/@salone.SaloneId'">Prenota ora</button>
+                                </div>
                             </div>
                         </div>
-                        <div class="salon-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">4.8 (127)</span>
-                        </div>
-                    </div>
-                    <div class="salon-services">
-                        <div class="services-title">Servizi</div>
-                        <div class="services-list">
-                            <span class="service-tag">Taglio donna</span>
-                            <span class="service-tag">Colore</span>
-                            <span class="service-tag">Piega</span>
-                            <span class="service-tag">Trattamenti</span>
-                        </div>
-                    </div>
-                    <div class="salon-footer">
-                        <span class="price-range">€25 - €150</span>
-                        <button class="book-btn">Prenota ora</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="salon-card">
-                <div class="salon-image"></div>
-                <div class="salon-info">
-                    <div class="salon-header">
-                        <div>
-                            <h3 class="salon-name">Zen Spa & Wellness</h3>
-                            <div class="salon-location">
-                                📍 Roma, Trastevere
+                    </a>
+                }
+            }
+            else
+            {
+                <!-- Fallback con skeleton loading -->
+                @for (int i = 0; i < 6; i++)
+                {
+                    <div class="salon-card skeleton-card">
+                        <div class="salon-image skeleton-loading"></div>
+                        <div class="salon-info">
+                            <div class="salon-header">
+                                <div>
+                                    <div class="skeleton-text skeleton-loading" style="width: 70%; height: 20px; margin-bottom: 8px;"></div>
+                                    <div class="skeleton-text skeleton-loading" style="width: 50%; height: 16px;"></div>
+                                </div>
+                                <div class="salon-rating">
+                                    <div class="skeleton-text skeleton-loading" style="width: 80px; height: 16px;"></div>
+                                </div>
+                            </div>
+                            <div class="salon-services">
+                                <div class="skeleton-text skeleton-loading" style="width: 40%; height: 16px; margin-bottom: 8px;"></div>
+                                <div class="services-list">
+                                    <div class="skeleton-text skeleton-loading service-tag" style="width: 60px;"></div>
+                                    <div class="skeleton-text skeleton-loading service-tag" style="width: 80px;"></div>
+                                    <div class="skeleton-text skeleton-loading service-tag" style="width: 70px;"></div>
+                                </div>
+                            </div>
+                            <div class="salon-footer">
+                                <div class="skeleton-text skeleton-loading" style="width: 60px; height: 16px;"></div>
+                                <div class="skeleton-text skeleton-loading" style="width: 80px; height: 32px;"></div>
                             </div>
                         </div>
-                        <div class="salon-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span class="rating-text">4.6 (89)</span>
-                        </div>
                     </div>
-                    <div class="salon-services">
-                        <div class="services-title">Servizi</div>
-                        <div class="services-list">
-                            <span class="service-tag">Massaggi</span>
-                            <span class="service-tag">Trattamenti viso</span>
-                            <span class="service-tag">Sauna</span>
-                            <span class="service-tag">Aromaterapia</span>
-                        </div>
-                    </div>
-                    <div class="salon-footer">
-                        <span class="price-range">€40 - €200</span>
-                        <button class="book-btn">Prenota ora</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="salon-card">
-                <div class="salon-image"></div>
-                <div class="salon-info">
-                    <div class="salon-header">
-                        <div>
-                            <h3 class="salon-name">Nails & Beauty Lab</h3>
-                            <div class="salon-location">
-                                📍 Firenze, Centro
-                            </div>
-                        </div>
-                        <div class="salon-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">4.9 (203)</span>
-                        </div>
-                    </div>
-                    <div class="salon-services">
-                        <div class="services-title">Servizi</div>
-                        <div class="services-list">
-                            <span class="service-tag">Manicure</span>
-                            <span class="service-tag">Pedicure</span>
-                            <span class="service-tag">Nail art</span>
-                            <span class="service-tag">Gel</span>
-                        </div>
-                    </div>
-                    <div class="salon-footer">
-                        <span class="price-range">€15 - €80</span>
-                        <button class="book-btn">Prenota ora</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="salon-card">
-                <div class="salon-image"></div>
-                <div class="salon-info">
-                    <div class="salon-header">
-                        <div>
-                            <h3 class="salon-name">Gentleman's Barbershop</h3>
-                            <div class="salon-location">
-                                📍 Torino, Quadrilatero
-                            </div>
-                        </div>
-                        <div class="salon-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span class="rating-text">4.5 (156)</span>
-                        </div>
-                    </div>
-                    <div class="salon-services">
-                        <div class="services-title">Servizi</div>
-                        <div class="services-list">
-                            <span class="service-tag">Taglio uomo</span>
-                            <span class="service-tag">Barba</span>
-                            <span class="service-tag">Shampoo</span>
-                            <span class="service-tag">Styling</span>
-                        </div>
-                    </div>
-                    <div class="salon-footer">
-                        <span class="price-range">€20 - €60</span>
-                        <button class="book-btn">Prenota ora</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="salon-card">
-                <div class="salon-image"></div>
-                <div class="salon-info">
-                    <div class="salon-header">
-                        <div>
-                            <h3 class="salon-name">Estetica Moderna</h3>
-                            <div class="salon-location">
-                                📍 Bologna, Centro
-                            </div>
-                        </div>
-                        <div class="salon-rating">
-                            <span class="stars">★★★★★</span>
-                            <span class="rating-text">4.7 (94)</span>
-                        </div>
-                    </div>
-                    <div class="salon-services">
-                        <div class="services-title">Servizi</div>
-                        <div class="services-list">
-                            <span class="service-tag">Trattamenti viso</span>
-                            <span class="service-tag">Epilazione</span>
-                            <span class="service-tag">Microblading</span>
-                            <span class="service-tag">Pulizia viso</span>
-                        </div>
-                    </div>
-                    <div class="salon-footer">
-                        <span class="price-range">€30 - €120</span>
-                        <button class="book-btn">Prenota ora</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="salon-card">
-                <div class="salon-image"></div>
-                <div class="salon-info">
-                    <div class="salon-header">
-                        <div>
-                            <h3 class="salon-name">Luxury Hair & Beauty</h3>
-                            <div class="salon-location">
-                                📍 Napoli, Vomero
-                            </div>
-                        </div>
-                        <div class="salon-rating">
-                            <span class="stars">★★★★☆</span>
-                            <span class="rating-text">4.4 (67)</span>
-                        </div>
-                    </div>
-                    <div class="salon-services">
-                        <div class="services-title">Servizi</div>
-                        <div class="services-list">
-                            <span class="service-tag">Taglio & colore</span>
-                            <span class="service-tag">Extension</span>
-                            <span class="service-tag">Keratina</span>
-                            <span class="service-tag">Styling</span>
-                        </div>
-                    </div>
-                    <div class="salon-footer">
-                        <span class="price-range">€35 - €180</span>
-                        <button class="book-btn">Prenota ora</button>
-                    </div>
-                </div>
-            </div>
+                }
+            }
         </div>
+
+        @if (saloniPopolari.Any())
+        {
+            <div class="text-center mt-8">
+                <a href="/Search" class="inline-flex items-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
+                    <i class="fas fa-search mr-2"></i>
+                    Esplora tutti i saloni
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        }
     </div>
 </section>
+
 <!--SEZIONE ILLUSTRATIVA PER POTENZIALI PARTNER-->
 <div class="bg-gray-50 py-24 sm:py-32 dark:bg-gray-700/80">
     <div class="mx-auto max-w-2xl px-6 lg:max-w-7xl lg:px-8">
@@ -327,6 +400,66 @@
         </div>
     </div>
 </div>
+
+@functions {
+    string GetStarsDisplay(double rating)
+    {
+        if (rating == 0) return "☆☆☆☆☆";
+
+        string stars = "";
+        int fullStars = (int)Math.Floor(rating);
+        bool hasHalfStar = (rating - fullStars) >= 0.5;
+
+        for (int i = 0; i < fullStars; i++)
+        {
+            stars += "★";
+        }
+
+        if (hasHalfStar && fullStars < 5)
+        {
+            stars += "☆"; // Mezza stella rappresentata come stella vuota
+            fullStars++;
+        }
+
+        for (int i = fullStars; i < 5; i++)
+        {
+            stars += "☆";
+        }
+
+        return stars;
+    }
+
+    string GetSalonCategory(List<string> servizi)
+    {
+        if (servizi == null || !servizi.Any()) return "generale";
+
+        var serviziLower = servizi.Select(s => s.ToLower()).ToList();
+        var tuttiServizi = string.Join(" ", serviziLower);
+
+        // Controlli più specifici con priorità
+        if (serviziLower.Any(s => s.Contains("barba") || s.Contains("barbiere")) ||
+            tuttiServizi.Contains("barba") || tuttiServizi.Contains("barbiere"))
+            return "barbieri";
+
+        if (serviziLower.Any(s => s.Contains("manicure") || s.Contains("pedicure") || s.Contains("unghie") || s.Contains("nail")) ||
+            tuttiServizi.Contains("nail"))
+            return "nail-salon";
+
+        if (serviziLower.Any(s => s.Contains("massaggio") || s.Contains("spa") || s.Contains("benessere") || s.Contains("relax") || s.Contains("wellness")) ||
+            tuttiServizi.Contains("massaggio") || tuttiServizi.Contains("spa"))
+            return "spa-benessere";
+
+        if (serviziLower.Any(s => s.Contains("taglio") || s.Contains("capelli") || s.Contains("piega") || s.Contains("colore") || s.Contains("tinta") || s.Contains("parrucchiere")) ||
+            tuttiServizi.Contains("capelli") || tuttiServizi.Contains("parrucchiere"))
+            return "parrucchieri";
+
+        if (serviziLower.Any(s => s.Contains("viso") || s.Contains("estetica") || s.Contains("epilazione") || s.Contains("trattamento") || s.Contains("pulizia")) ||
+            tuttiServizi.Contains("estetica") || tuttiServizi.Contains("trattamento"))
+            return "centri-estetici";
+
+        return "generale";
+    }
+}
 
 <script>
     // Script per migliorare l'esperienza utente
@@ -455,4 +588,94 @@
             }
         });
     }
+</script>
+
+<script>
+    // Funzione per filtrare i saloni per categoria
+        function filterSalons(category) {
+        const cards = document.querySelectorAll('.salon-card:not(.skeleton-card)');
+        const buttons = document.querySelectorAll('.filter-btn');
+
+        // Reset active button
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        cards.forEach((card, index) => {
+            const cardCategory = card.getAttribute('data-category');
+
+            // Reset degli stili inline che potrebbero essere stati applicati dalle animazioni
+            card.style.display = '';
+            card.style.opacity = '';
+            card.style.transform = '';
+            card.style.transition = '';
+
+            if (category === 'tutti' || cardCategory === category || cardCategory === 'generale') {
+                card.classList.remove('hidden');
+
+                // Animazione di entrata
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+
+                setTimeout(() => {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 50); // Ridotto il delay per una animazione più fluida
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        // Verifica se ci sono risultati
+        const visibleCards = Array.from(cards).filter(card => !card.classList.contains('hidden'));
+        const grid = document.getElementById('salonsGrid');
+
+        if (visibleCards.length === 0) {
+            // Mostra messaggio "nessun risultato"
+            if (!document.getElementById('noResultsMessage')) {
+                const noResults = document.createElement('div');
+                noResults.id = 'noResultsMessage';
+                noResults.className = 'col-span-full text-center py-12';
+                noResults.innerHTML = `
+                    <div class="text-gray-400 dark:text-gray-500">
+                        <i class="fas fa-search text-4xl mb-4"></i>
+                        <p class="text-lg font-medium">Nessun salone trovato per questa categoria</p>
+                        <p class="text-sm">Prova con una categoria diversa</p>
+                    </div>
+                `;
+                grid.appendChild(noResults);
+            }
+        } else {
+            // Rimuovi messaggio "nessun risultato" se presente
+            const noResults = document.getElementById('noResultsMessage');
+            if (noResults) {
+                noResults.remove();
+            }
+        }
+    }
+
+    // Animazione di entrata per le card al caricamento
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.salon-card:not(.skeleton-card)');
+
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                card.style.transition = 'all 0.6s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+
+        // Se ci sono skeleton cards, prova a ricaricare i dati dopo 2 secondi
+        const skeletonCards = document.querySelectorAll('.skeleton-card');
+        if (skeletonCards.length > 0) {
+            setTimeout(() => {
+                // Ricarica la pagina o fai una chiamata AJAX per ottenere i dati
+                location.reload();
+            }, 5000);
+        }
+    });
 </script>

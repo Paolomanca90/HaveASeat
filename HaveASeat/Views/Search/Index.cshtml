@@ -18,16 +18,33 @@
             transform: translateY(-8px);
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         }
-        
+
         .loading-skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
             animation: loading 1.5s infinite;
         }
-        
+
         @@keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .filter-chip.active {
+            background-color: rgb(233 213 255) !important;
+            border-color: rgb(196 181 253) !important;
+            color: rgb(109 40 217) !important;
+        }
+
+        .dark .filter-chip.active {
+            background-color: rgb(109 40 217 / 0.2) !important;
+            border-color: rgb(147 51 234) !important;
+            color: rgb(196 181 253) !important;
         }
         
         .filter-chip {
@@ -170,12 +187,14 @@
             
             <div class="flex items-center space-x-4 mt-4 lg:mt-0">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Ordina per:</label>
-                <select id="sortSelect" class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-                    <option value="rating">Valutazione più alta</option>
-                    <option value="distance">Distanza</option>
-                    <option value="price_low">Prezzo: dal più basso</option>
-                    <option value="price_high">Prezzo: dal più alto</option>
-                    <option value="newest">Più recenti</option>
+                <select id="sortSelect" 
+                        class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                    <option value="rating" selected="@(Model.SortBy == "rating")">Valutazione più alta</option>
+                    <option value="reviews" selected="@(Model.SortBy == "reviews")">Più recensioni</option>
+                    <option value="price_low" selected="@(Model.SortBy == "price_low")">Prezzo: dal più basso</option>
+                    <option value="price_high" selected="@(Model.SortBy == "price_high")">Prezzo: dal più alto</option>
+                    <option value="newest" selected="@(Model.SortBy == "newest")">Più recenti</option>
+                    <option value="name" selected="@(Model.SortBy == "name")">Nome A-Z</option>
                 </select>
             </div>
         </div>
@@ -184,18 +203,49 @@
         @if (Model.HasResults)
         {
             <div class="flex flex-wrap gap-3 mb-8">
-                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400">
-                    <i class="fas fa-star text-yellow-400 mr-2"></i>
+                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-200"
+                        data-filter="promozioni"
+                        onclick="applyFilter('promozioni', !this.classList.contains('active'))">
+                    <i class="fas fa-fire text-red-500 mr-2"></i>
                     Con promozioni
                 </button>
-                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400">
-                    <i class="fas fa-clock mr-2"></i>
+
+                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-200"
+                        data-filter="disponibile-oggi"
+                        onclick="applyFilter('disponibile-oggi', !this.classList.contains('active'))">
+                    <i class="fas fa-clock text-green-500 mr-2"></i>
                     Disponibile oggi
                 </button>
-                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400">
-                    <i class="fas fa-user-friends mr-2"></i>
+
+                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-200"
+                        data-filter="scelta-dipendente"
+                        onclick="applyFilter('scelta-dipendente', !this.classList.contains('active'))">
+                    <i class="fas fa-user-friends text-blue-500 mr-2"></i>
                     Scelta dipendente
                 </button>
+
+                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-200"
+                        data-filter="premium"
+                        onclick="applyFilter('premium', !this.classList.contains('active'))">
+                    <i class="fas fa-crown text-yellow-500 mr-2"></i>
+                    Premium
+                </button>
+
+                <button class="filter-chip px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-700 dark:hover:text-purple-400 transition-all duration-200"
+                        data-filter="rating-4"
+                        onclick="applyRatingFilter(4)">
+                    <i class="fas fa-star text-yellow-500 mr-2"></i>
+                    4+ stelle
+                </button>
+
+                @if (Model.HasActiveFilters)
+                {
+                    <button class="px-4 py-2 bg-red-100 text-red-700 border border-red-300 rounded-full text-sm font-medium hover:bg-red-200 transition-colors"
+                            onclick="clearAllFilters()">
+                        <i class="fas fa-times mr-2"></i>
+                        Rimuovi filtri
+                    </button>
+                }
             </div>
         }
         
@@ -251,108 +301,334 @@
             // Toggle advanced filters
             const toggleFilters = document.getElementById('toggleFilters');
             const advancedFilters = document.getElementById('advancedFilters');
-            
-            toggleFilters.addEventListener('click', function() {
-                advancedFilters.classList.toggle('hidden');
-                const icon = this.querySelector('i');
-                icon.classList.toggle('fa-filter');
-                icon.classList.toggle('fa-times');
-            });
-            
+
+            if (toggleFilters && advancedFilters) {
+                toggleFilters.addEventListener('click', function() {
+                    advancedFilters.classList.toggle('hidden');
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('fa-filter');
+                    icon.classList.toggle('fa-times');
+
+                    const text = icon.classList.contains('fa-times') ? 'Nascondi Filtri' : 'Filtri Avanzati';
+                    this.querySelector('span') ? this.querySelector('span').textContent = text.replace('Filtri Avanzati', '').replace('Nascondi Filtri', '') : null;
+                });
+            }
+
             // Search suggestions
             const searchInput = document.getElementById('searchQuery');
             const suggestionsContainer = document.getElementById('searchSuggestions');
             let searchTimeout;
-            
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                const query = this.value.trim();
-                
-                if (query.length < 2) {
-                    suggestionsContainer.classList.add('hidden');
-                    return;
-                }
-                
-                searchTimeout = setTimeout(() => {
-                    fetch(`/Search/Suggestions?q=${encodeURIComponent(query)}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            showSuggestions(data.suggestions);
-                        });
-                }, 300);
-            });
-            
+
+            if (searchInput && suggestionsContainer) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    const query = this.value.trim();
+
+                    if (query.length < 2) {
+                        suggestionsContainer.classList.add('hidden');
+                        return;
+                    }
+
+                    searchTimeout = setTimeout(() => {
+                        fetch(`/Search/Suggestions?q=${encodeURIComponent(query)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                showSuggestions(data.suggestions || []);
+                            })
+                            .catch(error => {
+                                console.error('Error fetching suggestions:', error);
+                                suggestionsContainer.classList.add('hidden');
+                            });
+                    }, 300);
+                });
+            }
+
             function showSuggestions(suggestions) {
+                if (!suggestionsContainer) return;
+
                 if (suggestions.length === 0) {
                     suggestionsContainer.classList.add('hidden');
                     return;
                 }
-                
+
                 suggestionsContainer.innerHTML = suggestions.map(suggestion => `
-                    <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" onclick="selectSuggestion('${suggestion.nome}', '${suggestion.id}')">
+                    <div class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+                         onclick="selectSuggestion('${suggestion.nome}', '${suggestion.id}')">
                         <div class="flex items-center">
                             <i class="fas ${suggestion.tipo === 'salone' ? 'fa-store' : 'fa-cut'} text-gray-400 mr-3"></i>
                             <div>
-                                <div class="font-medium text-gray-900">${suggestion.nome}</div>
-                                <div class="text-sm text-gray-500">${suggestion.location}</div>
+                                <div class="font-medium text-gray-900 dark:text-white">${suggestion.nome}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${suggestion.location}</div>
                             </div>
                         </div>
                     </div>
                 `).join('');
-                
+
                 suggestionsContainer.classList.remove('hidden');
             }
-            
+
             window.selectSuggestion = function(nome, id) {
-                searchInput.value = nome;
-                suggestionsContainer.classList.add('hidden');
+                if (searchInput) {
+                    searchInput.value = nome;
+                    suggestionsContainer.classList.add('hidden');
+                }
             };
-            
+
             // Hide suggestions when clicking outside
             document.addEventListener('click', function(e) {
-                if (!searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+                if (searchInput && suggestionsContainer &&
+                    !searchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
                     suggestionsContainer.classList.add('hidden');
                 }
             });
-            
+
             // Sort functionality
             const sortSelect = document.getElementById('sortSelect');
-            sortSelect.addEventListener('change', function() {
-                showLoading();
-                const url = new URL(window.location);
-                url.searchParams.set('sort', this.value);
-                url.searchParams.set('page', '1');
-                window.location.href = url.toString();
-            });
-            
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function() {
+                    showLoading();
+
+                    const url = new URL(window.location);
+                    url.searchParams.set('sort', this.value);
+                    url.searchParams.set('page', '1'); // Reset to first page
+
+                    window.location.href = url.toString();
+                });
+            }
+
             // Filter chips functionality
+            initializeFilterChips();
+
+            // Form submission with loading
+            const searchForm = document.getElementById('searchForm');
+            if (searchForm) {
+                searchForm.addEventListener('submit', function() {
+                    showLoading();
+                });
+            }
+        });
+
+        function initializeFilterChips() {
             const filterChips = document.querySelectorAll('.filter-chip');
+
             filterChips.forEach(chip => {
                 chip.addEventListener('click', function() {
+                    const filterType = this.getAttribute('data-filter');
+                    const isActive = this.classList.contains('active');
+
+                    // Toggle active state
+                    this.classList.toggle('active');
                     this.classList.toggle('bg-purple-100');
                     this.classList.toggle('border-purple-300');
                     this.classList.toggle('text-purple-700');
-                    // Apply filter logic here
+
+                    // Apply filter based on type
+                    applyFilter(filterType, !isActive);
                 });
             });
-            
-            function showLoading() {
-                const container = document.getElementById('resultsContainer');
-                container.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        ${Array(6).fill().map(() => `
-                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                <div class="loading-skeleton h-48"></div>
-                                <div class="p-6">
-                                    <div class="loading-skeleton h-6 mb-2 rounded"></div>
-                                    <div class="loading-skeleton h-4 mb-4 rounded w-3/4"></div>
-                                    <div class="loading-skeleton h-4 rounded w-1/2"></div>
+        }
+
+        // Funzioni per gestire i filtri
+        function applyFilter(filterType, isActive) {
+            showLoading();
+
+            const url = new URL(window.location);
+
+            switch (filterType) {
+                case 'promozioni':
+                    if (isActive) {
+                        url.searchParams.set('hasPromozioni', 'true');
+                    } else {
+                        url.searchParams.delete('hasPromozioni');
+                    }
+                    break;
+
+                case 'disponibile-oggi':
+                    if (isActive) {
+                        const today = new Date().toISOString().split('T')[0];
+                        url.searchParams.set('data', today);
+                    } else {
+                        url.searchParams.delete('data');
+                    }
+                    break;
+
+                case 'scelta-dipendente':
+                    if (isActive) {
+                        url.searchParams.set('sceltaDipendente', 'true');
+                    } else {
+                        url.searchParams.delete('sceltaDipendente');
+                    }
+                    break;
+
+                case 'premium':
+                    if (isActive) {
+                        url.searchParams.set('premium', 'true');
+                    } else {
+                        url.searchParams.delete('premium');
+                    }
+                    break;
+            }
+
+            url.searchParams.set('page', '1'); // Reset to first page
+            window.location.href = url.toString();
+        }
+
+        // Location suggestion (if needed)
+        function initializeLocationSuggestions() {
+            const locationInput = document.getElementById('locationInput');
+
+            if (locationInput) {
+                locationInput.addEventListener('input', function() {
+                    // TODO: Implement location suggestions if needed
+                    console.log('Location input:', this.value);
+                });
+            }
+        }
+
+        // Initialize location suggestions
+        document.addEventListener('DOMContentLoaded', initializeLocationSuggestions);
+
+        // Quick search functions
+        function quickSearch(query) {
+            const url = new URL('/Search', window.location.origin);
+            url.searchParams.set('q', query);
+            window.location.href = url.toString();
+        }
+
+        function searchByLocation(location) {
+            const url = new URL('/Search', window.location.origin);
+            url.searchParams.set('location', location);
+            window.location.href = url.toString();
+        }
+
+        function searchByCategory(category) {
+            const url = new URL('/Search', window.location.origin);
+            url.searchParams.set('categoria', category);
+            window.location.href = url.toString();
+        }
+
+        // Export functions for use in HTML
+        window.quickSearch = quickSearch;
+        window.searchByLocation = searchByLocation;
+        window.searchByCategory = searchByCategory;
+        window.applyFilter = applyFilter;
+    </script>
+
+    <script>        
+        function applyRatingFilter(rating) {
+            showLoading();
+
+            const url = new URL(window.location);
+            url.searchParams.set('rating', rating.toString());
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
+        }
+
+        function clearAllFilters() {
+            showLoading();
+
+            const url = new URL(window.location);
+            const searchParams = new URLSearchParams();
+
+            // Mantieni solo query di ricerca e location se presenti
+            if (url.searchParams.get('q')) {
+                searchParams.set('q', url.searchParams.get('q'));
+            }
+            if (url.searchParams.get('location')) {
+                searchParams.set('location', url.searchParams.get('location'));
+            }
+
+            const newUrl = `${url.pathname}?${searchParams.toString()}`;
+            window.location.href = newUrl;
+        }
+
+        // Inizializza i filtri attivi al caricamento della pagina
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Marca come attivi i filtri correnti
+            if (urlParams.get('hasPromozioni') === 'true') {
+                const chip = document.querySelector('[data-filter="promozioni"]');
+                if (chip) activateFilterChip(chip);
+            }
+
+            if (urlParams.get('data')) {
+                const today = new Date().toISOString().split('T')[0];
+                if (urlParams.get('data') === today) {
+                    const chip = document.querySelector('[data-filter="disponibile-oggi"]');
+                    if (chip) activateFilterChip(chip);
+                }
+            }
+
+            if (urlParams.get('sceltaDipendente') === 'true') {
+                const chip = document.querySelector('[data-filter="scelta-dipendente"]');
+                if (chip) activateFilterChip(chip);
+            }
+
+            if (urlParams.get('premium') === 'true') {
+                const chip = document.querySelector('[data-filter="premium"]');
+                if (chip) activateFilterChip(chip);
+            }
+
+            if (urlParams.get('rating')) {
+                const rating = urlParams.get('rating');
+                const chip = document.querySelector('[data-filter="rating-' + rating + '"]');
+                if (chip) activateFilterChip(chip);
+            }
+        });
+
+        function activateFilterChip(chip) {
+            chip.classList.add('active');
+            chip.classList.add('bg-purple-100', 'border-purple-300', 'text-purple-700');
+            chip.classList.remove('bg-white', 'border-gray-300', 'text-gray-700');
+        }
+
+        function showLoading() {
+            const container = document.getElementById('resultsContainer');
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${Array(6).fill().map(() => `
+                        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+                            <div class="loading-skeleton h-56"></div>
+                            <div class="p-6">
+                                <div class="loading-skeleton h-6 mb-2 rounded"></div>
+                                <div class="loading-skeleton h-4 mb-4 rounded w-3/4"></div>
+                                <div class="flex gap-2 mb-4">
+                                    <div class="loading-skeleton h-6 w-20 rounded-full"></div>
+                                    <div class="loading-skeleton h-6 w-16 rounded-full"></div>
+                                </div>
+                                <div class="flex gap-3">
+                                    <div class="loading-skeleton h-12 flex-1 rounded-xl"></div>
+                                    <div class="loading-skeleton h-12 flex-1 rounded-xl"></div>
                                 </div>
                             </div>
-                        `).join('')}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="text-center mt-8">
+                    <div class="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-lg">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Caricamento risultati...
                     </div>
-                `;
+                </div>
+            `;
+        }
+
+        // Sort functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sortSelect = document.getElementById('sortSelect');
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function() {
+                    showLoading();
+                    const url = new URL(window.location);
+                    url.searchParams.set('sort', this.value);
+                    url.searchParams.set('page', '1');
+                    window.location.href = url.toString();
+                });
             }
         });
     </script>
+
 }

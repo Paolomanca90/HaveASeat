@@ -4,17 +4,26 @@ namespace HaveASeat.ViewModels
 {
 	public class SearchResultsViewModel
 	{
-		public List<SaloneSearchResult> Saloni { get; set; } = new List<SaloneSearchResult>();
+		public List<SaloneSearchResult> Saloni { get; set; } = new();
 		public string SearchQuery { get; set; } = string.Empty;
 		public string Location { get; set; } = string.Empty;
 		public string CategoriaSelezionata { get; set; } = string.Empty;
 		public DateTime? DataSelezionata { get; set; }
-		public List<Categoria> Categorie { get; set; } = new List<Categoria>();
-		public int CurrentPage { get; set; }
-		public int TotalPages { get; set; }
-		public int TotalResults { get; set; }
+		public List<Categoria> Categorie { get; set; } = new();
+		public int CurrentPage { get; set; } = 1;
+		public int TotalPages { get; set; } = 1;
+		public int TotalResults { get; set; } = 0;
+		public string SortBy { get; set; } = "rating";
+
 		public bool HasResults => Saloni.Any();
 		public string ResultsText => TotalResults == 1 ? "1 risultato" : $"{TotalResults} risultati";
+
+		// Metodi helper per i filtri attivi
+		public bool HasActiveFilters =>
+			!string.IsNullOrEmpty(SearchQuery) ||
+			!string.IsNullOrEmpty(Location) ||
+			!string.IsNullOrEmpty(CategoriaSelezionata) ||
+			DataSelezionata.HasValue;
 	}
 
 	public class SaloneSearchResult
@@ -33,22 +42,16 @@ namespace HaveASeat.ViewModels
 		public int NumeroServizi { get; set; }
 		public decimal PrezzoMinimo { get; set; }
 		public decimal PrezzoMassimo { get; set; }
-		public List<string> ServiziPopolari { get; set; } = new List<string>();
+		public List<string> ServiziPopolari { get; set; } = new();
 		public bool HasPromozioni { get; set; }
-		public PersonalizzazioneColori PersonalizzazioneColori { get; set; } = new PersonalizzazioneColori();
-
-		public string PrezzoRange => PrezzoMinimo == PrezzoMassimo ?
-			$"€{PrezzoMinimo:F0}" :
-			$"€{PrezzoMinimo:F0} - €{PrezzoMassimo:F0}";
-
-		public string VotiDisplay => MediaVoti > 0 ? MediaVoti.ToString("F1") : "Nuovo";
-
-		public string RecensioniText => NumeroRecensioni switch
-		{
-			0 => "Nessuna recensione",
-			1 => "1 recensione",
-			_ => $"{NumeroRecensioni} recensioni"
-		};
+		public PersonalizzazioneColori PersonalizzazioneColori { get; set; } = new();
+		public bool IsPremium { get; set; }
+		public bool HasStaffSelection { get; set; }
+		public int NumeroDipendenti { get; set; }
+		public string VotiDisplay { get; set; } = string.Empty;
+		public string PrezzoRange { get; set; } = string.Empty;
+		public DateTime DataCreazione { get; set; }
+		public DateTime UltimaAttivita { get; set; }
 	}
 
 	public class SaloneDetailsViewModel

@@ -9,9 +9,12 @@ namespace HaveASeat.Utilities.Dto
 		public string? Location { get; set; }
 		public string? Categoria { get; set; }
 		public DateTime? Data { get; set; }
-		public int? Rating { get; set; }
+		public double? Rating { get; set; }
 		public decimal? MaxPrice { get; set; }
-		public string Sort { get; set; } = "rating";
+		public bool? HasPromozioni { get; set; }
+		public bool? SceltaDipendente { get; set; }
+		public bool? Premium { get; set; }
+		public string? Sort { get; set; }
 	}
 
 	// DTO per la creazione delle prenotazioni
@@ -30,6 +33,8 @@ namespace HaveASeat.Utilities.Dto
 
 		[Required]
 		public DateTime Data { get; set; }
+
+		public string TimeSlot { get; set; }
 
 		[StringLength(500)]
 		public string? Note { get; set; }

@@ -579,6 +579,8 @@
 
 @section Scripts {
     <script>
+                // JavaScript per la gestione migliorata della prenotazione nella view Details
+
         // Stato della prenotazione
         let bookingState = {
             currentStep: 1,
@@ -590,7 +592,7 @@
             dipendenteId: null,
             staffName: '',
             selectedDate: '',
-            selectedSlot: null,
+            selectedTimeSlot: null,
             slotTime: '',
             showStaffSelection: @Model.MostraSceltaDipendente.ToString().ToLower()
         };
@@ -599,6 +601,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateStepVisibility();
             updateButtons();
+
+            // Debug: Log dello stato iniziale
+            console.log('Booking state initialized:', bookingState);
         });
 
         // Selezione servizio
@@ -608,12 +613,18 @@
             bookingState.servicePrice = price;
             bookingState.serviceDuration = duration;
 
+            // Reset selezioni successive
+            bookingState.selectedTimeSlot = null;
+            bookingState.slotTime = '';
+
             // Evidenzia il servizio selezionato
-            document.querySelectorAll('.service-card, button[onclick*="selectService"]').forEach(el => {
+            document.querySelectorAll('.service-card').forEach(el => {
                 el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
             });
 
-            event.target.closest('.service-card, button').classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            event.target.closest('.service-card').classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+
+            console.log('Service selected:', { servizioId, serviceName, price, duration });
 
             updateButtons();
             updateSummary();
@@ -624,12 +635,16 @@
             bookingState.dipendenteId = dipendenteId;
             bookingState.staffName = staffName;
 
-            // Evidenzia lo staff selezionato
-            document.querySelectorAll('.staff-option').forEach(el => {
-                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-            });
+            // Reset selezioni successive
+            bookingState.selectedTimeSlot = null;
+            bookingState.slotTime = '';
 
-            event.target.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            // Ricarica gli slot se la data è già selezionata
+            if (bookingState.selectedDate) {
+                loadAvailableSlots();
+            }
+
+            console.log('Staff selected:', { dipendenteId, staffName });
 
             updateButtons();
             updateSummary();
@@ -640,42 +655,88 @@
             const date = document.getElementById('bookingDate').value;
             if (!date) return;
 
+            console.log('Loading slots for:', {
+                date,
+                saloneId: bookingState.saloneId,
+                servizioId: bookingState.servizioId,
+                dipendenteId: bookingState.dipendenteId
+            });
+
             bookingState.selectedDate = date;
+            bookingState.selectedTimeSlot = null;
+            bookingState.slotTime = '';
 
             const slotsContainer = document.getElementById('slotsContainer');
             const slotsGrid = document.getElementById('availableSlots');
 
             // Mostra loading
-            slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Caricamento...</div>';
+            slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Caricamento orari...</div>';
             slotsContainer.classList.remove('hidden');
 
+            // Costruisci URL con tutti i parametri
+            let url = `/Search/GetAvailableSlots?saloneId=${bookingState.saloneId}&data=${date}`;
+
+            if (bookingState.servizioId) {
+                url += `&servizioId=${bookingState.servizioId}`;
+            }
+
+            if (bookingState.dipendenteId) {
+                url += `&dipendenteId=${bookingState.dipendenteId}`;
+            }
+
+            console.log('Fetching slots from:', url);
+
             // Chiamata AJAX per caricare gli slot
-            fetch(`/Search/GetAvailableSlots?saloneId=${bookingState.saloneId}&data=${date}&dipendenteId=${bookingState.dipendenteId || ''}&servizioId=${bookingState.servizioId || ''}`)
-                .then(response => response.json())
+            fetch(url)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    return response.json();
+                })
                 .then(data => {
-                    if (data.success && data.slots.length > 0) {
+                    console.log('Slots response:', data);
+
+                    if (data.success && data.slots && data.slots.length > 0) {
                         slotsGrid.innerHTML = data.slots.map(slot => `
                             <button onclick="selectSlot('${slot.slotId}', '${slot.display}')"
-                                    class="slot-option p-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-salon-primary transition-colors ${slot.disponibile ? '' : 'opacity-50 cursor-not-allowed'}"
-                                    ${!slot.disponibile ? 'disabled' : ''}>
-                                ${slot.display}
-                                ${slot.postiLiberi < slot.capacita ? `<br><small class="text-xs text-gray-500">${slot.postiLiberi} posti</small>` : ''}
+                                    class="slot-option p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-salon-primary transition-colors bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                                    data-slot-id="${slot.slotId}"
+                                    data-time="${slot.display}">
+                                <div class="font-medium">${slot.display}</div>
+                                ${slot.durata ? `<div class="text-xs text-gray-500 mt-1">${slot.durata} min</div>` : ''}
                             </button>
                         `).join('');
                     } else {
-                        slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4 text-gray-500">Nessun orario disponibile per questa data</div>';
+                        slotsGrid.innerHTML = `
+                            <div class="col-span-2 text-center py-8">
+                                <i class="fas fa-calendar-times text-4xl text-gray-300 mb-3"></i>
+                                <div class="text-gray-500 dark:text-gray-400">
+                                    <div class="font-medium mb-1">Nessun orario disponibile</div>
+                                    <div class="text-sm">Prova una data diversa o contatta il salone</div>
+                                </div>
+                            </div>
+                        `;
                     }
                 })
                 .catch(error => {
                     console.error('Errore caricamento slot:', error);
-                    slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4 text-red-500">Errore nel caricamento degli orari</div>';
+                    slotsGrid.innerHTML = `
+                        <div class="col-span-2 text-center py-8">
+                            <i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-3"></i>
+                            <div class="text-red-500 dark:text-red-400">
+                                <div class="font-medium mb-1">Errore nel caricamento</div>
+                                <div class="text-sm">Riprova o contatta il supporto</div>
+                            </div>
+                        </div>
+                    `;
                 });
         }
 
         // Selezione slot
         function selectSlot(slotId, slotTime) {
-            bookingState.selectedSlot = slotId;
+            bookingState.selectedTimeSlot = slotId;
             bookingState.slotTime = slotTime;
+
+            console.log('Slot selected:', { slotId, slotTime });
 
             // Evidenzia lo slot selezionato
             document.querySelectorAll('.slot-option').forEach(el => {
@@ -690,7 +751,10 @@
 
         // Navigazione tra i passi
         function nextStep() {
-            if (!canProceed()) return;
+            if (!canProceed()) {
+                console.log('Cannot proceed to next step. Current state:', bookingState);
+                return;
+            }
 
             bookingState.currentStep++;
 
@@ -698,6 +762,8 @@
             if (bookingState.currentStep === 2 && !bookingState.showStaffSelection) {
                 bookingState.currentStep = 3;
             }
+
+            console.log('Moving to step:', bookingState.currentStep);
 
             updateStepVisibility();
             updateButtons();
@@ -711,28 +777,49 @@
                 bookingState.currentStep = 1;
             }
 
+            console.log('Moving back to step:', bookingState.currentStep);
+
             updateStepVisibility();
             updateButtons();
         }
 
         // Verifica se si può procedere
         function canProceed() {
+            console.log('Checking if can proceed. Current step:', bookingState.currentStep);
+            console.log('Current state:', bookingState);
+
             switch (bookingState.currentStep) {
                 case 1:
-                    return bookingState.servizioId !== null;
+                    const canProceedStep1 = bookingState.servizioId !== null;
+                    console.log('Step 1 - Service selected:', canProceedStep1);
+                    return canProceedStep1;
+
                 case 2:
-                    return !bookingState.showStaffSelection || bookingState.staffName !== '';
+                    if (!bookingState.showStaffSelection) return true;
+                    const canProceedStep2 = bookingState.dipendenteId !== null;
+                    console.log('Step 2 - Staff selected:', canProceedStep2);
+                    return canProceedStep2;
+
                 case 3:
-                    return bookingState.selectedDate !== '' && bookingState.selectedSlot !== null;
+                    const canProceedStep3 = bookingState.selectedDate !== '' && bookingState.selectedTimeSlot !== null;
+                    console.log('Step 3 - Date and time selected:', canProceedStep3, {
+                        date: bookingState.selectedDate,
+                        timeSlot: bookingState.selectedTimeSlot
+                    });
+                    return canProceedStep3;
+
                 case 4:
-                    if (!@User.Identity.IsAuthenticated.ToString().ToLower()) {
+                    if (@User.Identity.IsAuthenticated.ToString().ToLower()) {
+                        return true;
+                    } else {
                         const name = document.getElementById('customerName')?.value;
                         const surname = document.getElementById('customerSurname')?.value;
                         const email = document.getElementById('customerEmail')?.value;
                         const phone = document.getElementById('customerPhone')?.value;
-                        return name && surname && email && phone;
+                        const canProceedStep4 = name && surname && email && phone;
+                        console.log('Step 4 - Customer data valid:', canProceedStep4);
+                        return canProceedStep4;
                     }
-                    return true;
                 default:
                     return false;
             }
@@ -740,8 +827,11 @@
 
         // Aggiorna visibilità dei passi
         function updateStepVisibility() {
+            console.log('Updating step visibility. Current step:', bookingState.currentStep);
+
             document.querySelectorAll('.booking-step').forEach((step, index) => {
                 const stepNumber = index + 1;
+
                 if (stepNumber === 2 && !bookingState.showStaffSelection) {
                     step.classList.add('hidden');
                 } else if (stepNumber === bookingState.currentStep) {
@@ -751,8 +841,9 @@
                 }
             });
 
-            // Mostra il riepilogo se siamo oltre lo step 2
-            const summaryVisible = bookingState.currentStep > (bookingState.showStaffSelection ? 2 : 1);
+            // Mostra il riepilogo se siamo oltre lo step iniziale
+            const summaryVisible = bookingState.currentStep > 1 ||
+                                  (bookingState.currentStep === 1 && !bookingState.showStaffSelection);
             document.getElementById('bookingSummary').classList.toggle('hidden', !summaryVisible);
         }
 
@@ -762,33 +853,60 @@
             const backBtn = document.getElementById('backBtn');
             const confirmBtn = document.getElementById('confirmBtn');
 
+            if (!continueBtn || !backBtn || !confirmBtn) {
+                console.error('Button elements not found');
+                return;
+            }
+
             const canContinue = canProceed();
             continueBtn.disabled = !canContinue;
 
-            // Mostra/nascondi pulsanti basandosi sullo step corrente
+            // Determina se siamo all'ultimo step
             const maxStep = bookingState.showStaffSelection ? 4 : 3;
             const isLastStep = bookingState.currentStep >= maxStep;
+
+            console.log('Button state:', { canContinue, isLastStep, currentStep: bookingState.currentStep, maxStep });
 
             continueBtn.classList.toggle('hidden', isLastStep);
             confirmBtn.classList.toggle('hidden', !isLastStep || !canContinue);
             backBtn.classList.toggle('hidden', bookingState.currentStep === 1);
+
+            // Aggiorna il testo del pulsante continua
+            if (bookingState.currentStep === 1) {
+                continueBtn.innerHTML = bookingState.showStaffSelection ?
+                    '<i class="fas fa-arrow-right mr-2"></i>Scegli Professionista' :
+                    '<i class="fas fa-arrow-right mr-2"></i>Scegli Data e Ora';
+            } else if (bookingState.currentStep === 2) {
+                continueBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>Scegli Data e Ora';
+            } else if (bookingState.currentStep === 3) {
+                continueBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>I tuoi Dati';
+            }
         }
 
         // Aggiorna il riepilogo
         function updateSummary() {
-            document.getElementById('summaryService').textContent = bookingState.serviceName || '-';
+            const summaryService = document.getElementById('summaryService');
+            const summaryStaff = document.getElementById('summaryStaff');
+            const summaryStaffRow = document.getElementById('summaryStaffRow');
+            const summaryDate = document.getElementById('summaryDate');
+            const summaryTime = document.getElementById('summaryTime');
+            const summaryDuration = document.getElementById('summaryDuration');
+            const summaryPrice = document.getElementById('summaryPrice');
 
-            const staffRow = document.getElementById('summaryStaffRow');
-            if (bookingState.showStaffSelection && bookingState.staffName) {
-                document.getElementById('summaryStaff').textContent = bookingState.staffName;
-                staffRow.style.display = 'flex';
-            } else {
-                staffRow.style.display = 'none';
+            if (summaryService) summaryService.textContent = bookingState.serviceName || '-';
+
+            if (summaryStaffRow && summaryStaff) {
+                if (bookingState.showStaffSelection && bookingState.staffName) {
+                    summaryStaff.textContent = bookingState.staffName;
+                    summaryStaffRow.style.display = 'flex';
+                } else {
+                    summaryStaffRow.style.display = 'none';
+                }
             }
 
-            if (bookingState.selectedDate) {
+            if (summaryDate && bookingState.selectedDate) {
                 const date = new Date(bookingState.selectedDate);
-                document.getElementById('summaryDate').textContent = date.toLocaleDateString('it-IT', {
+                summaryDate.textContent = date.toLocaleDateString('it-IT', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
@@ -796,21 +914,25 @@
                 });
             }
 
-            document.getElementById('summaryTime').textContent = bookingState.slotTime || '-';
-            document.getElementById('summaryDuration').textContent = bookingState.serviceDuration ? `${bookingState.serviceDuration} min` : '-';
-            document.getElementById('summaryPrice').textContent = bookingState.servicePrice ? `€${bookingState.servicePrice.toFixed(2)}` : '-';
+            if (summaryTime) summaryTime.textContent = bookingState.slotTime || '-';
+            if (summaryDuration) summaryDuration.textContent = bookingState.serviceDuration ? `${bookingState.serviceDuration} min` : '-';
+            if (summaryPrice) summaryPrice.textContent = bookingState.servicePrice ? `€${bookingState.servicePrice.toFixed(2)}` : '-';
         }
 
         // Conferma prenotazione
         function confirmBooking() {
-            if (!canProceed()) return;
+            if (!canProceed()) {
+                console.log('Cannot confirm booking. State:', bookingState);
+                Swal.fire('Attenzione', 'Completa tutti i campi richiesti', 'warning');
+                return;
+            }
 
             const bookingData = {
                 saloneId: bookingState.saloneId,
                 servizioId: bookingState.servizioId,
                 dipendenteId: bookingState.dipendenteId,
-                slotId: bookingState.selectedSlot,
                 data: bookingState.selectedDate,
+                timeSlot: bookingState.slotTime, // Invia il formato "HH:mm - HH:mm"
                 note: document.getElementById('bookingNotes')?.value || ''
             };
 
@@ -821,6 +943,8 @@
                 bookingData.email = document.getElementById('customerEmail').value;
                 bookingData.telefono = document.getElementById('customerPhone').value;
             }
+
+            console.log('Sending booking request:', bookingData);
 
             // Disabilita il pulsante
             const confirmBtn = document.getElementById('confirmBtn');
@@ -838,25 +962,39 @@
             })
             .then(response => response.json())
             .then(data => {
+                console.log('Booking response:', data);
+
                 if (data.success) {
-                    // Mostra conferma con SweetAlert
                     Swal.fire({
                         icon: 'success',
                         title: 'Prenotazione Confermata!',
                         html: `
-                            <div class="text-left space-y-2">
-                                <p><strong>Servizio:</strong> ${bookingState.serviceName}</p>
-                                <p><strong>Data:</strong> ${document.getElementById('summaryDate').textContent}</p>
-                                <p><strong>Orario:</strong> ${bookingState.slotTime}</p>
-                                <p><strong>Presso:</strong> @Model.Salone.Nome</p>
-                                <p class="text-sm text-gray-600 mt-4">Riceverai una conferma via email con tutti i dettagli.</p>
+                            <div class="text-left space-y-3">
+                                <div class="bg-green-50 p-4 rounded-lg">
+                                    <p class="font-medium text-green-800 mb-2">Dettagli della prenotazione:</p>
+                                    <ul class="text-sm text-green-700 space-y-1">
+                                        <li><strong>Servizio:</strong> ${bookingState.serviceName}</li>
+                                        <li><strong>Data:</strong> ${document.getElementById('summaryDate')?.textContent || bookingState.selectedDate}</li>
+                                        <li><strong>Orario:</strong> ${bookingState.slotTime}</li>
+                                        <li><strong>Presso:</strong> @Model.Salone.Nome</li>
+                                        ${bookingState.staffName ? `<li><strong>Con:</strong> ${bookingState.staffName}</li>` : ''}
+                                    </ul>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-4">
+                                    <i class="fas fa-envelope mr-2"></i>
+                                    Riceverai una conferma via email con tutti i dettagli.
+                                </p>
                             </div>
                         `,
-                        confirmButtonText: 'Ottimo!',
-                        confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color')
+                        confirmButtonText: 'Perfetto!',
+                        confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#7c3aed',
+                        allowOutsideClick: false
                     }).then(() => {
-                        // Reset del form o redirect
-                        window.location.reload();
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            window.location.reload();
+                        }
                     });
                 } else {
                     Swal.fire({
@@ -886,29 +1024,31 @@
             });
         }
 
-        // Galleria immagini
-        function openGallery(imageSrc) {
-            document.getElementById('galleryImage').src = imageSrc;
-            document.getElementById('galleryModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+        // Inizializza il widget di prenotazione quando la pagina è caricata
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mostra il primo step
+            updateStepVisibility();
+            updateButtons();
 
-        function closeGallery() {
-            document.getElementById('galleryModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        // Indicazioni stradali
-        function getDirections() {
-            const address = encodeURIComponent('@Model.Salone.Indirizzo, @Model.Salone.Citta, @Model.Salone.Provincia');
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`, '_blank');
-        }
-
-        // Chiudi modal con ESC
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeGallery();
+            // Auto-scroll al widget se c'è l'hash #prenota
+            if (window.location.hash === '#prenota') {
+                document.getElementById('prenota')?.scrollIntoView({ behavior: 'smooth' });
             }
+
+            // Imposta data minima a domani
+            const dateInput = document.getElementById('bookingDate');
+            if (dateInput) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                dateInput.min = tomorrow.toISOString().split('T')[0];
+
+                // Se non c'è una data selezionata, imposta domani come default
+                if (!dateInput.value) {
+                    dateInput.value = tomorrow.toISOString().split('T')[0];
+                }
+            }
+
+            console.log('Booking widget initialized');
         });
     </script>
 }
