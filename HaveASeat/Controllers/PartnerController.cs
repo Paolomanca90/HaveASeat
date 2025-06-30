@@ -66,7 +66,10 @@ namespace HaveASeat.Controllers
 			}
 
 			viewModel.SaloneCorrente = viewModel.SaloniUtente.First(s => s.SaloneId == viewModel.SelectedSaloneId);
-			var abbonamentoStandard = viewModel.SaloneCorrente.SaloneAbbonamenti.Any(x => x.AbbonamentoId == SubscriptionsConstants.Basic);
+            ViewBag.HasMultipleSedi = viewModel.SaloniUtente.Count > 1;
+			ViewBag.Saloni = viewModel.SaloniUtente;
+			viewModel.se
+            var abbonamentoStandard = viewModel.SaloneCorrente.SaloneAbbonamenti.Any(x => x.AbbonamentoId == SubscriptionsConstants.Basic);
 			if (abbonamentoStandard)
 				ViewBag.Basic = true;
 			// Calcola le date del periodo

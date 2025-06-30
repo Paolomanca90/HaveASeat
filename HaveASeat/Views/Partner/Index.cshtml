@@ -3,6 +3,7 @@
     Layout = "_DashboardLayout";
     var promozioniAttive = ViewBag.PromozioniAttive as List<HaveASeat.Models.Servizio> ?? new List<HaveASeat.Models.Servizio>();
     var saloni = ViewBag.Saloni as List<HaveASeat.Models.Salone>;
+    var hasMultipleSedi = ViewBag.HasMultipleSedi as bool? ?? false;
 }
 @section Styles{
 <link href="/css/ReportDashboard.css" rel="stylesheet" />
