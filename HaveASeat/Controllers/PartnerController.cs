@@ -68,7 +68,6 @@ namespace HaveASeat.Controllers
 			viewModel.SaloneCorrente = viewModel.SaloniUtente.First(s => s.SaloneId == viewModel.SelectedSaloneId);
             ViewBag.HasMultipleSedi = viewModel.SaloniUtente.Count > 1;
 			ViewBag.Saloni = viewModel.SaloniUtente;
-			viewModel.se
             var abbonamentoStandard = viewModel.SaloneCorrente.SaloneAbbonamenti.Any(x => x.AbbonamentoId == SubscriptionsConstants.Basic);
 			if (abbonamentoStandard)
 				ViewBag.Basic = true;
@@ -208,6 +207,19 @@ namespace HaveASeat.Controllers
                 ? Math.Round(((decimal)(promozioniAttive - promozioniIeri) / promozioniIeri) * 100, 1)
                 : (promozioniAttive > 0 ? 100 : 0);
             viewModel.Stats.IsPromozioniPositive = viewModel.Stats.PercentualePromozioni >= 0;
+            // Numero di servizi attivi
+            var numeroServizi = await _context.Servizio
+                .Where(s => s.SaloneId == viewModel.SelectedSaloneId)
+                .CountAsync();
+
+            viewModel.Stats.NumeroServizi = numeroServizi;
+
+            // Numero di dipendenti
+            var numeroDipendenti = await _context.Dipendente
+                .Where(d => d.SaloneId == viewModel.SelectedSaloneId)
+                .CountAsync();
+
+            viewModel.Stats.NumeroDipendenti = numeroDipendenti;
         }
 
 		private async Task LoadChartData(DashboardViewModel viewModel)
@@ -558,6 +570,63 @@ namespace HaveASeat.Controllers
                 totalePromozioni,
                 promozioniInScadenza,
                 promozioni = promozioniAttive
+            });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetServiziAttivi(Guid saloneId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Non autorizzato" });
+            }
+
+            var salone = await _context.Salone
+                .Include(s => s.Servizi)
+                    .ThenInclude(s => s.DipendenteServizi)
+                        .ThenInclude(ds => ds.Dipendente)
+                            .ThenInclude(d => d.ApplicationUser)
+                .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+
+            if (salone == null)
+            {
+                return Json(new { success = false, message = "Salone non trovato" });
+            }
+
+            var serviziAttivi = salone.Servizi
+                .OrderBy(s => s.Nome)
+                .Select(s => new
+                {
+                    servizioId = s.ServizioId,
+                    nome = s.Nome,
+                    descrizione = s.Descrizione,
+                    prezzo = s.Prezzo,
+                    prezzoEffettivo = s.PrezzoEffettivo,
+                    durata = s.Durata,
+                    isPromotion = s.IsPromotion && s.DataFinePromozione > DateTime.Now,
+                    prezzoPromozione = s.PrezzoPromozione,
+                    percentualeSconto = s.IsPromotion && s.DataFinePromozione > DateTime.Now ?
+                        Math.Round(((s.Prezzo - s.PrezzoPromozione) / s.Prezzo) * 100, 0) : 0,
+                    dipendentiAssegnati = s.DipendenteServizi.Select(ds => new
+                    {
+                        nome = ds.Dipendente.ApplicationUser.Nome,
+                        cognome = ds.Dipendente.ApplicationUser.Cognome
+                    }).ToList(),
+                    numeroDipendenti = s.DipendenteServizi.Count
+                })
+                .ToList();
+
+            var totaleServizi = serviziAttivi.Count;
+            var serviziInPromozione = serviziAttivi.Count(s => s.isPromotion);
+            var prezzoMedio = serviziAttivi.Any() ? serviziAttivi.Average(s => s.prezzoEffettivo) : 0;
+
+            return Json(new
+            {
+                success = true,
+                totaleServizi,
+                serviziInPromozione,
+                prezzoMedio = Math.Round(prezzoMedio, 2),
+                servizi = serviziAttivi
             });
         }
         public IActionResult CreateCheckoutSession(string id)
