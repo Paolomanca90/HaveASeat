@@ -798,7 +798,9 @@ namespace HaveASeat.Controllers
 					{
 						SaloneAbbonamentoId = Guid.NewGuid(),
 						SaloneId = salone.SaloneId,
+						Salone = salone,
 						AbbonamentoId = pianoSelezionato.AbbonamentoId,
+						Abbonamento = _context.Abbonamento.Find(pianoSelezionato.AbbonamentoId),
 						DataInizio = DateTime.Now,
 						DataFine = DateTime.Now.AddMonths(1),
 						Stato = Stato.Attivo,

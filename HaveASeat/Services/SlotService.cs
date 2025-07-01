@@ -1,5 +1,6 @@
 ﻿using HaveASeat.Data;
 using HaveASeat.Models;
+using HaveASeat.Utilities.Constants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -50,7 +51,7 @@ namespace HaveASeat.Services
 
 				// Verifica se il salone ha la funzionalità di scelta dipendente
 				var hasStaffSelection = salone.SaloneAbbonamenti.Any(sa =>
-					sa.Abbonamento.Nome.Contains("Pro") || sa.Abbonamento.Nome.Contains("Business"));
+					(sa.AbbonamentoId == SubscriptionsConstants.Pro || sa.AbbonamentoId == SubscriptionsConstants.Business) && sa.Stato == Utilities.Enum.Stato.Attivo);
 
 				// Ottieni la durata del servizio se specificato
 				int? serviceDurationMinutes = null;
@@ -250,20 +251,20 @@ namespace HaveASeat.Services
 				{
 					// Crea uno slot ID temporaneo basato su orario per identificazione univoca
 					var tempSlotId = Guid.NewGuid();
-
+					
 					slots.Add(new SlotAvailabilityDto
 					{
 						SlotId = tempSlotId,
-						OraInizio = slotStart.ToString(@"HH\:mm"),
-						OraFine = slotEnd.ToString(@"HH\:mm"),
-						Display = $"{slotStart:HH\\:mm} - {slotEnd:HH\\:mm}",
+						OraInizio = slotStart.ToString("hh':'mm"),      
+						OraFine = slotEnd.ToString("hh':'mm"),    
+						Display = $"{slotStart:hh':'mm} - {slotEnd:hh':'mm}", 
 						Disponibile = true,
-						PostiLiberi = 1, // Sempre 1 quando c'è scelta dipendente
+						PostiLiberi = 1,
 						Capacita = 1,
 						ServiceDurationMinutes = serviceDurationMinutes ?? SLOT_DURATION_MINUTES
 					});
 
-					_logger.LogDebug($"Added available slot: {slotStart:HH\\:mm} - {slotEnd:HH\\:mm}");
+					_logger.LogDebug($"Added available slot: {slotStart:hh\\:mm} - {slotEnd:hh\\:mm}");
 				}
 
 				currentTime = currentTime.Add(slotDuration);

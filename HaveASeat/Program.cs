@@ -113,8 +113,9 @@ using (var scope = app.Services.CreateScope())
 	try
 	{
 		var context = services.GetRequiredService<ApplicationDbContext>();
-		await SubscriptionsInitializer.InitializeSubscriptions(context);
+		await context.Database.MigrateAsync();
 
+		await SubscriptionsInitializer.InitializeSubscriptions(context);
 		await RolesInitializer.InitializeRoles(services);
 	}
 	catch (Exception ex)
