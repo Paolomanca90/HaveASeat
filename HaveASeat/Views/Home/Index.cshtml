@@ -190,71 +190,127 @@
             <button class="filter-btn" onclick="filterSalons('nail-salon')">Nail Salon</button>
         </div>
 
-        <div class="salons-grid" id="salonsGrid">
+        <!-- Sostituisci la sezione delle card nella tua view con questo -->
+        <div class="flex flex-wrap gap-6 items-stretch" id="salonsGrid">
             @if (saloniPopolari.Any())
             {
                 @foreach (var salone in saloniPopolari)
                 {
-                    <a href="/Search/Details/@salone.SaloneId">
-                        <div class="salon-card" data-category="@GetSalonCategory(salone.ServiziPopolari)">
-                            <div class="salon-image">
+                    <a href="/Search/Details/@salone.SaloneId"
+                       class="flex-1 min-w-[320px] max-w-[500px] xl:flex-[0_1_calc(33.333%-16px)] lg:flex-[0_1_calc(50%-12px)]
+                              bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-xl
+                              transform hover:-translate-y-1 transition-all duration-300
+                              overflow-hidden group">
+
+                        <div class="salon-card flex flex-col h-full" data-category="@GetSalonCategory(salone.ServiziPopolari)">
+                            <!-- Immagine del salone -->
+                            <div class="relative h-48 overflow-hidden">
                                 @if (!string.IsNullOrEmpty(salone.CoverImageUrl))
                                 {
                                     <img src="@salone.CoverImageUrl"
                                          alt="@salone.Nome"
-                                         class="w-full h-full object-cover">
+                                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                                 }
                                 else
                                 {
-                                    <div class="w-full h-full bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 flex items-center justify-center">
+                                    <div class="w-full h-full bg-gradient-to-br from-purple-400 via-pink-500 to-red-500
+                                                    flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
                                         <i class="fas fa-store text-6xl text-white/80"></i>
                                     </div>
                                 }
+
+                                <!-- Badge promozionale -->
                                 @if (salone.HasPromozioni)
                                 {
-                                    <div class="promo-badge">OFFERTE</div>
+                                    <div class="absolute top-3 right-3 bg-gradient-to-r from-red-500 to-pink-500
+                                                    text-white px-2 py-1 rounded-full text-xs font-bold uppercase
+                                                    animate-pulse shadow-lg">
+                                        OFFERTE
+                                    </div>
                                 }
+
+                                <!-- Badge premium -->
                                 @if (salone.IsPremium)
                                 {
-                                    <div class="premium-badge">PREMIUM</div>
+                                    <div class="absolute top-3 left-3 bg-gradient-to-r from-yellow-400 to-yellow-500
+                                                    text-gray-800 px-2 py-1 rounded-full text-xs font-bold uppercase shadow-lg">
+                                        PREMIUM
+                                    </div>
                                 }
                             </div>
-                            <div class="salon-info">
-                                <div class="salon-header">
-                                    <div>
-                                        <h3 class="salon-name">@salone.Nome</h3>
-                                        <div class="salon-location">
-                                            📍 @salone.Citta, @salone.Provincia
+
+                            <!-- Contenuto della card -->
+                            <div class="flex flex-col flex-grow p-4">
+                                <!-- Header con nome e rating -->
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex-grow">
+                                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-1
+                                                   group-hover:text-purple-600 transition-colors">
+                                            @salone.Nome
+                                        </h3>
+                                        <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-map-marker-alt mr-1"></i>
+                                            @salone.Citta, @salone.Provincia
                                         </div>
                                     </div>
-                                    <div class="salon-rating">
-                                        <span class="stars">@GetStarsDisplay(salone.MediaVoti)</span>
-                                        <span class="rating-text">@salone.VotiDisplay @(salone.NumeroRecensioni > 0 ? $"({salone.NumeroRecensioni})" : "")</span>
+                                    <div class="text-right ml-3">
+                                        <div class="text-yellow-400 text-sm">
+                                            @GetStarsDisplay(salone.MediaVoti)
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                            @salone.VotiDisplay @(salone.NumeroRecensioni > 0 ? $"({salone.NumeroRecensioni})" : "")
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="salon-services">
-                                    <div class="services-title">Servizi</div>
-                                    <div class="services-list">
+
+                                <!-- Servizi -->
+                                <div class="flex-grow mb-4">
+                                    <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Servizi
+                                    </div>
+                                    <div class="flex flex-wrap gap-1">
                                         @if (salone.ServiziPopolari.Count > 0)
                                         {
                                             @foreach (var servizio in ((List<string>)salone.ServiziPopolari).Take(4))
                                             {
-                                                <span class="service-tag">@servizio</span>
+                                                <span class="inline-block bg-purple-100 dark:bg-purple-900
+                                                                     text-purple-800 dark:text-purple-200
+                                                                     text-xs px-2 py-1 rounded-full">
+                                                    @servizio
+                                                </span>
                                             }
                                             @if (salone.NumeroServizi > 4)
                                             {
-                                                <span class="service-tag more">+@(salone.NumeroServizi - 4) altri</span>
+                                                <span class="inline-block bg-gray-100 dark:bg-gray-700
+                                                                     text-gray-600 dark:text-gray-400
+                                                                     text-xs px-2 py-1 rounded-full">
+                                                    +@(salone.NumeroServizi - 4) altri
+                                                </span>
                                             }
                                         }
                                         else
                                         {
-                                            <span class="service-tag">Vari servizi</span>
+                                            <span class="inline-block bg-gray-100 dark:bg-gray-700
+                                                             text-gray-600 dark:text-gray-400
+                                                             text-xs px-2 py-1 rounded-full">
+                                                Vari servizi
+                                            </span>
                                         }
                                     </div>
                                 </div>
-                                <div class="salon-footer">
-                                    <span class="price-range">@salone.PrezzoRange</span>
-                                    <button class="book-btn" onclick="location.href='/Search/Details/@salone.SaloneId'">Prenota ora</button>
+
+                                <!-- Footer con prezzo e bottone -->
+                                <div class="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
+                                    <span class="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                        @salone.PrezzoRange
+                                    </span>
+                                    <button class="bg-purple-600 hover:bg-purple-700 text-white
+                                                   px-4 py-2 rounded-lg text-sm font-medium
+                                                   transition-colors duration-200
+                                                   focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                            onclick="event.stopPropagation(); location.href='/Search/Details/@salone.SaloneId'">
+                                        Prenota ora
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -263,32 +319,38 @@
             }
             else
             {
-                <!-- Fallback con skeleton loading -->
+                <!-- Skeleton loading cards -->
                 @for (int i = 0; i < 6; i++)
                 {
-                    <div class="salon-card skeleton-card">
-                        <div class="salon-image skeleton-loading"></div>
-                        <div class="salon-info">
-                            <div class="salon-header">
-                                <div>
-                                    <div class="skeleton-text skeleton-loading" style="width: 70%; height: 20px; margin-bottom: 8px;"></div>
-                                    <div class="skeleton-text skeleton-loading" style="width: 50%; height: 16px;"></div>
+                    <div class="flex-1 min-w-[320px] max-w-[500px] xl:flex-[0_1_calc(33.333%-16px)] lg:flex-[0_1_calc(50%-12px)]
+                                bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+                        <div class="salon-card skeleton-card flex flex-col h-full">
+                            <!-- Skeleton image -->
+                            <div class="h-48 bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+
+                            <!-- Skeleton content -->
+                            <div class="flex flex-col flex-grow p-4 space-y-3">
+                                <div class="flex justify-between">
+                                    <div class="space-y-2 flex-grow">
+                                        <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+                                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2"></div>
+                                    </div>
+                                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16 ml-3"></div>
                                 </div>
-                                <div class="salon-rating">
-                                    <div class="skeleton-text skeleton-loading" style="width: 80px; height: 16px;"></div>
+
+                                <div class="space-y-2">
+                                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/3"></div>
+                                    <div class="flex gap-1">
+                                        <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse w-16"></div>
+                                        <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse w-20"></div>
+                                        <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse w-14"></div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="salon-services">
-                                <div class="skeleton-text skeleton-loading" style="width: 40%; height: 16px; margin-bottom: 8px;"></div>
-                                <div class="services-list">
-                                    <div class="skeleton-text skeleton-loading service-tag" style="width: 60px;"></div>
-                                    <div class="skeleton-text skeleton-loading service-tag" style="width: 80px;"></div>
-                                    <div class="skeleton-text skeleton-loading service-tag" style="width: 70px;"></div>
+
+                                <div class="flex justify-between items-center pt-3 mt-auto">
+                                    <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-16"></div>
+                                    <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-24"></div>
                                 </div>
-                            </div>
-                            <div class="salon-footer">
-                                <div class="skeleton-text skeleton-loading" style="width: 60px; height: 16px;"></div>
-                                <div class="skeleton-text skeleton-loading" style="width: 80px; height: 32px;"></div>
                             </div>
                         </div>
                     </div>
@@ -334,7 +396,7 @@
                 <div class="absolute inset-px rounded-lg bg-white max-lg:rounded-t-4xl"></div>
                 <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)] max-lg:rounded-t-[calc(2rem+1px)]">
                     <div class="px-8 pt-8 sm:px-10 sm:pt-10">
-                        <p class="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">Calendario Intelligente</p>
+                        <p class="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">Dashboard avanzata</p>
                         <p class="mt-2 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">Gestisci appuntamenti, staff e servizi in un'unica dashboard intuitiva e veloce.</p>
                     </div>
                     <div class="flex flex-1 items-center justify-center px-8 max-lg:pt-10 max-lg:pb-12 sm:px-10 lg:pb-2">
@@ -347,7 +409,7 @@
                 <div class="absolute inset-px rounded-lg bg-white"></div>
                 <div class="relative flex h-full flex-col overflow-hidden rounded-[calc(var(--radius-lg)+1px)]">
                     <div class="px-8 pt-8 sm:px-10 sm:pt-10">
-                        <p class="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">Gestione Clienti</p>
+                        <p class="mt-2 text-lg font-medium tracking-tight text-gray-950 max-lg:text-center">Report informativi</p>
                         <p class="mt-2 max-w-lg text-sm/6 text-gray-600 max-lg:text-center">Storico trattamenti, preferenze e promemoria automatici per fidelizzare la tua clientela.</p>
                     </div>
                     <div class="px-8 max-lg:pt-10 max-lg:pb-12 pt-4 pb-5 sm:px-10">
@@ -382,7 +444,7 @@
                 <circle cx="512" cy="512" r="512" fill="url(#759c1415-0410-454c-8f7c-9a820de03641)" fill-opacity="0.7" />
                 <defs>
                     <radialGradient id="759c1415-0410-454c-8f7c-9a820de03641">
-                        <stop stop-color="#7775D6" />
+                        <stop offset="0" stop-color="#7775D6" />
                         <stop offset="1" stop-color="#E935C1" />
                     </radialGradient>
                 </defs>
@@ -462,8 +524,92 @@
 }
 
 <script>
-    // Script per migliorare l'esperienza utente
+    function filterSalons(category) {
+        const cardContainers = document.querySelectorAll('#salonsGrid > a'); // Tutti i link che contengono le card
+        const buttons = document.querySelectorAll('.filter-btn');
+        const grid = document.getElementById('salonsGrid');
+
+        // Reset active button
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Rimuovi messaggio "nessun risultato" se presente
+        const noResults = document.getElementById('noResultsMessage');
+        if (noResults) {
+            noResults.remove();
+        }
+
+        let visibleCount = 0;
+
+        cardContainers.forEach((container, index) => {
+            const card = container.querySelector('.salon-card');
+            const cardCategory = card?.getAttribute('data-category');
+
+            // Reset animazioni
+            container.classList.remove('opacity-0', 'translate-y-5');
+
+            if (category === 'tutti' || cardCategory === category) {
+                // Mostra la card
+                container.classList.remove('hidden');
+                container.style.display = 'block';
+                visibleCount++;
+
+                // Animazione di entrata con Tailwind
+                container.classList.add('opacity-0', 'translate-y-5');
+
+                setTimeout(() => {
+                    container.classList.add('transition-all', 'duration-300');
+                    container.classList.remove('opacity-0', 'translate-y-5');
+                }, index * 50);
+            } else {
+                // Nascondi la card
+                container.classList.add('hidden');
+                container.style.display = 'none';
+            }
+        });
+
+        console.log(`Filtro applicato: ${category}, Card visibili: ${visibleCount}`);
+
+        // Mostra messaggio se nessun risultato
+        if (visibleCount === 0) {
+            const noResultsElement = document.createElement('div');
+            noResultsElement.id = 'noResultsMessage';
+            noResultsElement.className = 'w-full flex justify-center py-12';
+            noResultsElement.innerHTML = `
+                <div class="text-center text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-search text-4xl mb-4 block"></i>
+                    <p class="text-lg font-medium mb-2">Nessun salone trovato per questa categoria</p>
+                    <p class="text-sm">Prova con una categoria diversa</p>
+                </div>
+            `;
+            grid.appendChild(noResultsElement);
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        // Animazione iniziale con Tailwind
+        const cardContainers = document.querySelectorAll('#salonsGrid > a');
+
+        if (cardContainers.length > 0) {
+            cardContainers.forEach((container, index) => {
+                container.classList.add('opacity-0', 'translate-y-5');
+
+                setTimeout(() => {
+                    container.classList.add('transition-all', 'duration-500');
+                    container.classList.remove('opacity-0', 'translate-y-5');
+                }, index * 100);
+            });
+        }
+
+        // Gestione skeleton cards
+        const skeletonCards = document.querySelectorAll('.skeleton-card');
+        if (skeletonCards.length > 0) {
+            setTimeout(() => {
+                location.reload();
+            }, 5000);
+        }
+
+        // Form handling
         const searchForm = document.getElementById('homeSearchForm');
         const serviceInput = document.getElementById('service');
         const locationInput = document.getElementById('location');
@@ -471,13 +617,12 @@
 
         // Auto-suggest per servizi
         let searchTimeout;
-        serviceInput.addEventListener('input', function() {
+        serviceInput?.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             const query = this.value.trim();
 
             if (query.length >= 2) {
                 searchTimeout = setTimeout(() => {
-                    // Chiamata per suggerimenti servizi
                     fetch(`/Search/Suggestions?q=${encodeURIComponent(query)}&limit=5`)
                         .then(response => response.json())
                         .then(data => {
@@ -488,23 +633,21 @@
             }
         });
 
-        // Geolocalizzazione per il campo location
-        if ("geolocation" in navigator) {
+        // Geolocalizzazione
+        if ("geolocation" in navigator && locationInput) {
             const geoButton = document.createElement('button');
             geoButton.type = 'button';
-            geoButton.className = 'absolute right-2 top-1/2 transform -translate-y-1/2 text-purple-600 hover:text-purple-700';
+            geoButton.className = 'absolute right-2 top-1/2 transform -translate-y-1/2 text-purple-600 hover:text-purple-700 transition-colors';
             geoButton.innerHTML = '<i class="fas fa-location-arrow"></i>';
             geoButton.title = 'Usa la mia posizione';
 
-            locationInput.parentElement.style.position = 'relative';
+            locationInput.parentElement.classList.add('relative');
             locationInput.parentElement.appendChild(geoButton);
 
             geoButton.addEventListener('click', function() {
                 this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
                 navigator.geolocation.getCurrentPosition(
                     function(position) {
-                        // Geocoding inverso (richiederebbe un servizio)
                         locationInput.value = 'Posizione corrente';
                         geoButton.innerHTML = '<i class="fas fa-check text-green-600"></i>';
                         setTimeout(() => {
@@ -522,9 +665,9 @@
         }
 
         // Validazione form
-        searchForm.addEventListener('submit', function(e) {
-            const service = serviceInput.value.trim();
-            const location = locationInput.value.trim();
+        searchForm?.addEventListener('submit', function(e) {
+            const service = serviceInput?.value.trim();
+            const location = locationInput?.value.trim();
 
             if (!service && !location) {
                 e.preventDefault();
@@ -533,8 +676,8 @@
             }
         });
 
-        // Imposta data di default a domani
-        if (!dateInput.value) {
+        // Data di default
+        if (dateInput && !dateInput.value) {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             dateInput.value = tomorrow.toISOString().split('T')[0];
@@ -542,7 +685,6 @@
     });
 
     function showSuggestions(suggestions, inputElement) {
-        // Rimuovi suggerimenti esistenti
         const existingSuggestions = document.getElementById('serviceSuggestions');
         if (existingSuggestions) {
             existingSuggestions.remove();
@@ -550,20 +692,19 @@
 
         if (suggestions.length === 0) return;
 
-        // Crea container suggerimenti
         const suggestionsContainer = document.createElement('div');
         suggestionsContainer.id = 'serviceSuggestions';
-        suggestionsContainer.className = 'absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto';
+        suggestionsContainer.className = 'absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto';
 
         suggestions.forEach(suggestion => {
             const suggestionItem = document.createElement('div');
-            suggestionItem.className = 'p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0';
+            suggestionItem.className = 'p-3 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-b-0 transition-colors';
             suggestionItem.innerHTML = `
                 <div class="flex items-center">
-                    <i class="fas ${suggestion.tipo === 'salone' ? 'fa-store' : 'fa-cut'} text-gray-400 mr-3"></i>
+                    <i class="fas ${suggestion.tipo === 'salone' ? 'fa-store' : 'fa-cut'} text-gray-400 dark:text-gray-500 mr-3"></i>
                     <div>
-                        <div class="font-medium text-gray-900">${suggestion.nome}</div>
-                        <div class="text-sm text-gray-500">${suggestion.location}</div>
+                        <div class="font-medium text-gray-900 dark:text-white">${suggestion.nome}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">${suggestion.location}</div>
                     </div>
                 </div>
             `;
@@ -576,11 +717,9 @@
             suggestionsContainer.appendChild(suggestionItem);
         });
 
-        // Posiziona i suggerimenti
-        inputElement.parentElement.style.position = 'relative';
+        inputElement.parentElement.classList.add('relative');
         inputElement.parentElement.appendChild(suggestionsContainer);
 
-        // Chiudi suggerimenti quando si clicca fuori
         document.addEventListener('click', function closeHandler(e) {
             if (!inputElement.contains(e.target) && !suggestionsContainer.contains(e.target)) {
                 suggestionsContainer.remove();
@@ -588,94 +727,4 @@
             }
         });
     }
-</script>
-
-<script>
-    // Funzione per filtrare i saloni per categoria
-        function filterSalons(category) {
-        const cards = document.querySelectorAll('.salon-card:not(.skeleton-card)');
-        const buttons = document.querySelectorAll('.filter-btn');
-
-        // Reset active button
-        buttons.forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
-
-        cards.forEach((card, index) => {
-            const cardCategory = card.getAttribute('data-category');
-
-            // Reset degli stili inline che potrebbero essere stati applicati dalle animazioni
-            card.style.display = '';
-            card.style.opacity = '';
-            card.style.transform = '';
-            card.style.transition = '';
-
-            if (category === 'tutti' || cardCategory === category || cardCategory === 'generale') {
-                card.classList.remove('hidden');
-
-                // Animazione di entrata
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-
-                setTimeout(() => {
-                    card.style.transition = 'all 0.3s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 50); // Ridotto il delay per una animazione più fluida
-            } else {
-                card.classList.add('hidden');
-            }
-        });
-
-        // Verifica se ci sono risultati
-        const visibleCards = Array.from(cards).filter(card => !card.classList.contains('hidden'));
-        const grid = document.getElementById('salonsGrid');
-
-        if (visibleCards.length === 0) {
-            // Mostra messaggio "nessun risultato"
-            if (!document.getElementById('noResultsMessage')) {
-                const noResults = document.createElement('div');
-                noResults.id = 'noResultsMessage';
-                noResults.className = 'col-span-full text-center py-12';
-                noResults.innerHTML = `
-                    <div class="text-gray-400 dark:text-gray-500">
-                        <i class="fas fa-search text-4xl mb-4"></i>
-                        <p class="text-lg font-medium">Nessun salone trovato per questa categoria</p>
-                        <p class="text-sm">Prova con una categoria diversa</p>
-                    </div>
-                `;
-                grid.appendChild(noResults);
-            }
-        } else {
-            // Rimuovi messaggio "nessun risultato" se presente
-            const noResults = document.getElementById('noResultsMessage');
-            if (noResults) {
-                noResults.remove();
-            }
-        }
-    }
-
-    // Animazione di entrata per le card al caricamento
-    document.addEventListener('DOMContentLoaded', function() {
-        const cards = document.querySelectorAll('.salon-card:not(.skeleton-card)');
-
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-
-            setTimeout(() => {
-                card.style.transition = 'all 0.6s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-
-        // Se ci sono skeleton cards, prova a ricaricare i dati dopo 2 secondi
-        const skeletonCards = document.querySelectorAll('.skeleton-card');
-        if (skeletonCards.length > 0) {
-            setTimeout(() => {
-                // Ricarica la pagina o fai una chiamata AJAX per ottenere i dati
-                location.reload();
-            }, 5000);
-        }
-    });
 </script>
