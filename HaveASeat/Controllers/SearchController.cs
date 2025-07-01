@@ -2,6 +2,7 @@
 using HaveASeat.Models;
 using HaveASeat.ViewModels;
 using HaveASeat.Utilities.Dto;
+using HaveASeat.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +14,13 @@ namespace HaveASeat.Controllers
 	{
 		private readonly ApplicationDbContext _context;
 		private readonly ILogger<SearchController> _logger;
+		private readonly ISlotService _slotService;
 
-		public SearchController(ApplicationDbContext context, ILogger<SearchController> logger)
+		public SearchController(ApplicationDbContext context, ILogger<SearchController> logger, ISlotService slotService)
 		{
 			_context = context;
 			_logger = logger;
+			_slotService = slotService;
 		}
 
 		[HttpGet]
@@ -92,7 +95,7 @@ namespace HaveASeat.Controllers
 				"rating" => query.OrderByDescending(s => s.Recensioni.Any() ? s.Recensioni.Average(r => r.Voto) : 0)
 								.ThenByDescending(s => s.Recensioni.Count),
 
-				"distance" => query.OrderBy(s => s.Nome), // TODO: Implementare calcolo distanza se necessario
+				"distance" => query.OrderBy(s => s.Nome),
 
 				"price_low" => query.OrderBy(s => s.Servizi.Any() ? s.Servizi.Min(serv => serv.PrezzoEffettivo) : 999999),
 
@@ -198,6 +201,196 @@ namespace HaveASeat.Controllers
 				_logger.LogError(ex, "Errore nel caricamento prenotazioni utente {UserId}", userId);
 				return View("Error");
 			}
+		}
+
+		// NUOVO METODO: Ottieni slot disponibili con il nuovo sistema
+		[HttpGet]
+		public async Task<IActionResult> GetAvailableSlots(Guid saloneId, DateTime data, Guid? dipendenteId = null, Guid? servizioId = null)
+		{
+			try
+			{
+				_logger.LogInformation($"Getting available slots for salone {saloneId}, data {data:yyyy-MM-dd}, dipendente {dipendenteId}, servizio {servizioId}");
+
+				var availableSlots = await _slotService.GetAvailableSlotsAsync(saloneId, data, dipendenteId, servizioId);
+
+				return Json(new { success = true, slots = availableSlots });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore nel caricamento slot per salone {SaloneId}", saloneId);
+				return Json(new { success = false, message = "Errore nel caricamento degli orari" });
+			}
+		}
+
+		// METODO AGGIORNATO: CreateBooking con gestione degli slot dinamici
+		[HttpPost]
+		public async Task<IActionResult> CreateBooking([FromBody] CreateBookingDto request)
+		{
+			if (!ModelState.IsValid)
+			{
+				return Json(new { success = false, message = "Dati non validi" });
+			}
+
+			try
+			{
+				// Validazione business logic
+				var validationResult = await ValidateBookingRequest(request);
+				if (!validationResult.IsValid)
+				{
+					return Json(new { success = false, message = validationResult.ErrorMessage });
+				}
+
+				// Gestione utente
+				var cliente = await GetOrCreateCustomer(request);
+				if (cliente == null)
+				{
+					return Json(new { success = false, message = "Errore nella gestione dei dati utente" });
+				}
+
+				// Ottieni informazioni del servizio per calcolare orari
+				var servizio = await _context.Servizio
+					.FirstOrDefaultAsync(s => s.ServizioId == request.ServizioId);
+
+				if (servizio == null)
+				{
+					return Json(new { success = false, message = "Servizio non trovato" });
+				}
+
+				// Parse degli orari dalla stringa (formato "HH:mm - HH:mm")
+				var timeSlots = request.TimeSlot.Split(" - ");
+				if (timeSlots.Length != 2 ||
+					!TimeSpan.TryParse(timeSlots[0], out var oraInizio) ||
+					!TimeSpan.TryParse(timeSlots[1], out var oraFine))
+				{
+					return Json(new { success = false, message = "Formato orario non valido" });
+				}
+
+				// NUOVA VALIDAZIONE: Verifica disponibilità con il nuovo sistema
+				var isSlotAvailable = await _slotService.ValidateSlotBookingAsync(
+					request.SaloneId,
+					request.Data,
+					oraInizio,
+					oraFine,
+					request.DipendenteId);
+
+				if (!isSlotAvailable)
+				{
+					return Json(new { success = false, message = "Lo slot selezionato non è più disponibile" });
+				}
+
+				// Trova o crea un slot corrispondente nel database
+				var slot = await FindOrCreateSlot(request.SaloneId, oraInizio, oraFine);
+
+				// Creazione appuntamento
+				var appuntamento = new Appuntamento
+				{
+					AppuntamentoId = Guid.NewGuid(),
+					SaloneId = request.SaloneId,
+					ApplicationUserId = cliente.Id,
+					DipendenteId = request.DipendenteId,
+					ServizioId = request.ServizioId,
+					SlotId = slot.SlotId,
+					Data = request.Data,
+					Note = request.Note ?? "",
+					Stato = HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato
+				};
+
+				_context.Appuntamento.Add(appuntamento);
+				await _context.SaveChangesAsync();
+
+				return Json(new
+				{
+					success = true,
+					message = "Prenotazione confermata con successo!",
+					appuntamentoId = appuntamento.AppuntamentoId,
+					redirectUrl = Url.Action("BookingConfirmation", new { id = appuntamento.AppuntamentoId })
+				});
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore durante la creazione della prenotazione");
+				return Json(new { success = false, message = "Errore interno del server" });
+			}
+		}
+
+		[HttpGet]
+		public async Task<IActionResult> BookingConfirmation(Guid id)
+		{
+			try
+			{
+				var appuntamento = await _context.Appuntamento
+					.Include(a => a.Salone)
+					.Include(a => a.Servizio)
+					.Include(a => a.Dipendente)
+						.ThenInclude(d => d.ApplicationUser)
+					.Include(a => a.ApplicationUser)
+					.Include(a => a.Slot)
+					.FirstOrDefaultAsync(a => a.AppuntamentoId == id);
+
+				if (appuntamento == null)
+				{
+					return NotFound("Prenotazione non trovata");
+				}
+
+				var viewModel = new BookingConfirmationViewModel
+				{
+					AppuntamentoId = appuntamento.AppuntamentoId,
+					NomeSalone = appuntamento.Salone.Nome,
+					IndirizzoSalone = $"{appuntamento.Salone.Indirizzo}, {appuntamento.Salone.Citta}",
+					TelefonoSalone = appuntamento.Salone.Telefono,
+					NomeServizio = appuntamento.Servizio?.Nome ?? "Servizio non specificato",
+					DataAppuntamento = appuntamento.Data,
+					OrarioAppuntamento = $"{appuntamento.OraInizio:HH\\:mm} - {appuntamento.OraFine:HH\\:mm}",
+					NomeDipendente = appuntamento.Dipendente != null ?
+						$"{appuntamento.Dipendente.ApplicationUser.Nome} {appuntamento.Dipendente.ApplicationUser.Cognome}" : null,
+					PrezzoTotale = appuntamento.Servizio?.PrezzoEffettivo ?? 0,
+					Note = appuntamento.Note,
+					IsGuestBooking = !User.Identity.IsAuthenticated,
+					EmailConferma = appuntamento.ApplicationUser.Email
+				};
+
+				return View(viewModel);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore nel caricamento conferma prenotazione {AppuntamentoId}", id);
+				return View("Error");
+			}
+		}
+
+		#region Helper Methods
+
+		private async Task<Slot> FindOrCreateSlot(Guid saloneId, TimeSpan oraInizio, TimeSpan oraFine)
+		{
+			// Cerca uno slot esistente che corrisponda esattamente
+			var existingSlot = await _context.Slot
+				.FirstOrDefaultAsync(s => s.SaloneId == saloneId &&
+										s.OraInizio == oraInizio &&
+										s.OraFine == oraFine);
+
+			if (existingSlot != null)
+			{
+				return existingSlot;
+			}
+
+			// Crea un nuovo slot se non esiste
+			var newSlot = new Slot
+			{
+				SlotId = Guid.NewGuid(),
+				SaloneId = saloneId,
+				OraInizio = oraInizio,
+				OraFine = oraFine,
+				GiorniSettimana = "0,1,2,3,4,5,6", // Tutti i giorni per default
+				Capacita = 1, // Default capacity
+				IsAttivo = true,
+				Note = "Auto-generated slot"
+			};
+
+			_context.Slot.Add(newSlot);
+			await _context.SaveChangesAsync();
+
+			_logger.LogInformation($"Created new slot {oraInizio}-{oraFine} for salone {saloneId}");
+			return newSlot;
 		}
 
 		private IQueryable<Salone> ApplyFilters(IQueryable<Salone> query, SearchFilterDto filters)
@@ -313,20 +506,20 @@ namespace HaveASeat.Controllers
 			if (servizio == null)
 				return ValidationResult.Fail("Servizio non disponibile per questo salone");
 
-			// Verifica slot
-			var slot = await _context.Slot.FindAsync(request.SlotId);
-			if (slot == null || slot.SaloneId != request.SaloneId)
-				return ValidationResult.Fail("Slot non valido");
+			// Verifica dipendente se specificato
+			if (request.DipendenteId.HasValue)
+			{
+				var dipendente = await _context.Dipendente
+					.Include(d => d.ServiziOfferti)
+					.FirstOrDefaultAsync(d => d.DipendenteId == request.DipendenteId.Value && d.SaloneId == request.SaloneId);
 
-			// Verifica disponibilità
-			var slotOccupato = await _context.Appuntamento
-				.AnyAsync(a => a.Data.Date == request.Data.Date &&
-							  a.SlotId == request.SlotId &&
-							  a.Stato != HaveASeat.Utilities.Enum.StatoAppuntamento.Annullato &&
-							  (!request.DipendenteId.HasValue || a.DipendenteId == request.DipendenteId));
+				if (dipendente == null)
+					return ValidationResult.Fail("Dipendente non trovato");
 
-			if (slotOccupato)
-				return ValidationResult.Fail("Lo slot selezionato non è più disponibile");
+				// Verifica che il dipendente offra il servizio richiesto
+				if (!dipendente.ServiziOfferti.Any(so => so.ServizioId == request.ServizioId))
+					return ValidationResult.Fail("Il dipendente selezionato non offre questo servizio");
+			}
 
 			return ValidationResult.Success();
 		}
@@ -368,70 +561,6 @@ namespace HaveASeat.Controllers
 			_context.Users.Add(newUser);
 			await _context.SaveChangesAsync();
 			return newUser;
-		}
-
-		private async Task<Appuntamento> CreateAppointment(CreateBookingDto request, string userId)
-		{
-			var appuntamento = new Appuntamento
-			{
-				AppuntamentoId = Guid.NewGuid(),
-				SaloneId = request.SaloneId,
-				ApplicationUserId = userId,
-				SlotId = request.SlotId,
-				DipendenteId = request.DipendenteId,
-				ServizioId = request.ServizioId,
-				Data = request.Data,
-				Note = request.Note ?? "",
-				Stato = HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato
-			};
-
-			_context.Appuntamento.Add(appuntamento);
-			await _context.SaveChangesAsync();
-			return appuntamento;
-		}
-
-		private async Task<List<object>> GetAvailableSlotsForDate(Guid saloneId, DateTime data, Guid? dipendenteId, Guid? servizioId)
-		{
-			var salone = await _context.Salone
-				.Include(s => s.Slots)
-				.Include(s => s.Orari)
-				.FirstOrDefaultAsync(s => s.SaloneId == saloneId);
-
-			if (salone == null) return new List<object>();
-
-			var dayOfWeek = data.DayOfWeek;
-			var orarioSalone = salone.Orari.FirstOrDefault(o => o.Giorno == dayOfWeek);
-
-			if (orarioSalone == null || orarioSalone.IsDayOff)
-				return new List<object>();
-
-			var dayNumber = (int)dayOfWeek;
-			var slotsDisponibili = salone.Slots
-				.Where(s => s.IsAttivo && s.GiorniSettimana.Contains(dayNumber.ToString()))
-				.Where(s => s.OraInizio >= orarioSalone.Apertura && s.OraFine <= orarioSalone.Chiusura)
-				.OrderBy(s => s.OraInizio)
-				.ToList();
-
-			var appuntamentiEsistenti = await _context.Appuntamento
-				.Where(a => a.SaloneId == saloneId &&
-						   a.Data.Date == data.Date &&
-						   a.Stato != HaveASeat.Utilities.Enum.StatoAppuntamento.Annullato)
-				.Where(a => !dipendenteId.HasValue || a.DipendenteId == dipendenteId)
-				.ToListAsync();
-
-			return slotsDisponibili
-				.Where(slot => !appuntamentiEsistenti.Any(a => a.SlotId == slot.SlotId))
-				.Select(slot => new {
-					slotId = slot.SlotId,
-					oraInizio = slot.OraInizio.ToString(@"HH\:mm"),
-					oraFine = slot.OraFine.ToString(@"HH\:mm"),
-					display = $"{slot.OraInizio:HH\\:mm} - {slot.OraFine:HH\\:mm}",
-					disponibile = true,
-					postiLiberi = Math.Max(0, slot.Capacita - appuntamentiEsistenti.Count(a => a.SlotId == slot.SlotId)),
-					capacita = slot.Capacita
-				})
-				.Cast<object>()
-				.ToList();
 		}
 
 		private async Task<List<object>> GetSearchSuggestions(string query, int limit)
@@ -479,7 +608,7 @@ namespace HaveASeat.Controllers
 				TelefonoSalone = appuntamento.Salone.Telefono,
 				NomeServizio = appuntamento.Servizio?.Nome ?? "Servizio non specificato",
 				DataAppuntamento = appuntamento.Data,
-				OrarioAppuntamento = $"{appuntamento.Slot.OraInizio:HH\\:mm} - {appuntamento.Slot.OraFine:HH\\:mm}",
+				OrarioAppuntamento = $"{appuntamento.OraInizio:HH\\:mm} - {appuntamento.OraFine:HH\\:mm}",
 				NomeDipendente = appuntamento.Dipendente != null ?
 					$"{appuntamento.Dipendente.ApplicationUser.Nome} {appuntamento.Dipendente.ApplicationUser.Cognome}" : null,
 				Prezzo = appuntamento.Servizio?.PrezzoEffettivo ?? 0,
@@ -490,235 +619,260 @@ namespace HaveASeat.Controllers
 			};
 		}
 
-		[HttpGet]
-		public async Task<IActionResult> GetAvailableSlots(Guid saloneId, DateTime data, Guid? dipendenteId = null, Guid? servizioId = null)
+		#endregion
+
+		// Metodo UpdateBooking corretto per il SearchController
+		// Sostituisci il metodo esistente con questa versione corretta
+
+		public async Task<BookingResponseDto> UpdateBookingAsync(UpdateBookingDto request, string userId)
 		{
+			using var transaction = await _context.Database.BeginTransactionAsync();
+
 			try
 			{
-				var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+				var appuntamento = await _context.Appuntamento
+					.Include(a => a.Salone)
+					.Include(a => a.Slot)
+					.Include(a => a.Servizio)
+					.FirstOrDefaultAsync(a => a.AppuntamentoId == request.AppuntamentoId &&
+											a.ApplicationUserId == userId);
 
-				var salone = await _context.Salone
-					.Include(s => s.Slots)
-					.Include(s => s.Orari)
-					.Include(s => s.Dipendenti)
-						.ThenInclude(d => d.Orari)
-					.Include(s => s.Dipendenti)
-						.ThenInclude(d => d.ServiziOfferti)
-					.Include(s => s.SaloneAbbonamenti)
-						.ThenInclude(sa => sa.Abbonamento)
-					.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.Stato == HaveASeat.Utilities.Enum.Stato.Attivo);
-
-				if (salone == null)
-					return Json(new { success = false, message = "Salone non trovato" });
-
-				// Verifica se il salone ha l'opzione scelta dipendente
-				var hasStaffSelection = salone.SaloneAbbonamenti.Any(sa =>
-					sa.Abbonamento.Nome.Contains("Pro") || sa.Abbonamento.Nome.Contains("Business"));
-
-				var dayOfWeek = data.DayOfWeek;
-				var availableSlots = new List<object>();
-
-				if (hasStaffSelection && dipendenteId.HasValue)
+				if (appuntamento == null)
 				{
-					// Logica per salone con scelta dipendente
-					var dipendente = salone.Dipendenti.FirstOrDefault(d => d.DipendenteId == dipendenteId.Value);
-					if (dipendente == null)
-						return Json(new { success = false, message = "Dipendente non trovato" });
-
-					// Verifica che il dipendente offra il servizio richiesto
-					if (servizioId.HasValue && !dipendente.ServiziOfferti.Any(so => so.ServizioId == servizioId.Value))
-						return Json(new { success = false, message = "Il dipendente selezionato non offre questo servizio" });
-
-					// Orari del dipendente per il giorno richiesto
-					var orarioDipendente = dipendente.Orari.FirstOrDefault(o => o.Giorno == dayOfWeek);
-
-					if (orarioDipendente == null || orarioDipendente.IsDayOff)
-						return Json(new { success = true, slots = new List<object>() });
-
-					// Genera slot basati sull'orario del dipendente
-					availableSlots = GenerateAvailableSlots(
-						salone,
-						data,
-						orarioDipendente.Apertura,
-						orarioDipendente.Chiusura,
-						dipendenteId,
-						servizioId
-					);
-				}
-				else
-				{
-					// Logica per salone senza scelta dipendente - usa orari del salone
-					var orarioSalone = salone.Orari.FirstOrDefault(o => o.Giorno == dayOfWeek);
-
-					if (orarioSalone == null || orarioSalone.IsDayOff)
-						return Json(new { success = true, slots = new List<object>() });
-
-					// Se è specificato un dipendente ma il salone non ha l'opzione, ignora il dipendente
-					availableSlots = GenerateAvailableSlots(
-						salone,
-						data,
-						orarioSalone.Apertura,
-						orarioSalone.Chiusura,
-						null, // Non consideriamo il dipendente specifico
-						servizioId
-					);
-				}
-
-				return Json(new { success = true, slots = availableSlots });
-			}
-			catch (Exception ex)
-			{
-				_logger.LogError(ex, "Errore nel caricamento slot per salone {SaloneId}", saloneId);
-				return Json(new { success = false, message = "Errore nel caricamento degli orari" });
-			}
-		}
-
-		private List<object> GenerateAvailableSlots(
-			Salone salone,
-			DateTime data,
-			TimeSpan apertura,
-			TimeSpan chiusura,
-			Guid? dipendenteId,
-			Guid? servizioId)
-		{
-			var slots = new List<object>();
-			var slotDuration = TimeSpan.FromMinutes(30); // Slot da 30 minuti
-
-			// Ottieni la durata del servizio se specificato
-			var servizio = servizioId.HasValue ?
-				_context.Servizio.FirstOrDefault(s => s.ServizioId == servizioId.Value) : null;
-
-			var serviceDuration = servizio?.Durata ?? 30; // Default 30 minuti
-			var serviceTimeSpan = TimeSpan.FromMinutes((double)serviceDuration);
-
-			// Genera slot ogni 30 minuti nell'orario di lavoro
-			var currentTime = apertura;
-
-			while (currentTime.Add(serviceTimeSpan) <= chiusura)
-			{
-				var slotStart = currentTime;
-				var slotEnd = currentTime.Add(serviceTimeSpan);
-
-				// Verifica se lo slot è già occupato
-				var isOccupied = _context.Appuntamento.Any(a =>
-					a.SaloneId == salone.SaloneId &&
-					a.Data.Date == data.Date &&
-					a.Stato != HaveASeat.Utilities.Enum.StatoAppuntamento.Annullato &&
-					(dipendenteId == null || a.DipendenteId == dipendenteId) &&
-					(
-						// L'appuntamento esistente si sovrappone con il nostro slot
-						(a.OraInizio.TimeOfDay < slotEnd && a.OraFine.TimeOfDay > slotStart)
-					));
-
-				if (!isOccupied)
-				{
-					slots.Add(new
+					return new BookingResponseDto
 					{
-						slotId = Guid.NewGuid(), // Generiamo un ID temporaneo per lo slot
-						oraInizio = slotStart.ToString(@"HH\:mm"),
-						oraFine = slotEnd.ToString(@"HH\:mm"),
-						display = $"{slotStart:HH\\:mm} - {slotEnd:HH\\:mm}",
-						disponibile = true,
-						durata = serviceDuration
-					});
+						Success = false,
+						Message = "Prenotazione non trovata"
+					};
 				}
 
-				currentTime = currentTime.Add(slotDuration);
-			}
-
-			return slots;
-		}
-
-		// Aggiorna anche il metodo CreateBooking per gestire meglio gli orari
-		[HttpPost]
-		public async Task<IActionResult> CreateBooking([FromBody] CreateBookingDto request)
-		{
-			if (!ModelState.IsValid)
-			{
-				return Json(new { success = false, message = "Dati non validi" });
-			}
-
-			try
-			{
-				// Validazione business logic
-				var validationResult = await ValidateBookingRequest(request);
-				if (!validationResult.IsValid)
+				// Verifica se è modificabile
+				if (appuntamento.Data <= DateTime.Now.AddHours(24))
 				{
-					return Json(new { success = false, message = validationResult.ErrorMessage });
+					return new BookingResponseDto
+					{
+						Success = false,
+						Message = "Non è possibile modificare la prenotazione con meno di 24 ore di anticipo"
+					};
 				}
 
-				// Gestione utente
-				var cliente = await GetOrCreateCustomer(request);
-				if (cliente == null)
+				bool hasChanges = false;
+
+				// Gestione cambio data
+				if (request.NuovaData.HasValue && request.NuovaData.Value.Date != appuntamento.Data.Date)
 				{
-					return Json(new { success = false, message = "Errore nella gestione dei dati utente" });
+					appuntamento.Data = request.NuovaData.Value;
+					hasChanges = true;
 				}
 
-				// Ottieni informazioni del servizio per calcolare orari
-				var servizio = await _context.Servizio
-					.FirstOrDefaultAsync(s => s.ServizioId == request.ServizioId);
-
-				if (servizio == null)
+				// Gestione cambio orario (CORRETTO)
+				if (!string.IsNullOrEmpty(request.NuovoTimeSlot) && request.NuovoTimeSlot != $"{appuntamento.Slot.OraInizio:HH\\:mm} - {appuntamento.Slot.OraFine:HH\\:mm}")
 				{
-					return Json(new { success = false, message = "Servizio non trovato" });
+					// Parse del nuovo slot temporale
+					var timeSlots = request.NuovoTimeSlot.Split(" - ");
+					if (timeSlots.Length == 2 &&
+						TimeSpan.TryParse(timeSlots[0], out var nuovaOraInizio) &&
+						TimeSpan.TryParse(timeSlots[1], out var nuovaOraFine))
+					{
+						// Verifica disponibilità del nuovo slot
+						var dataVerifica = request.NuovaData ?? appuntamento.Data;
+						var isSlotAvailable = await _slotService.ValidateSlotBookingAsync(
+							appuntamento.SaloneId,
+							dataVerifica,
+							nuovaOraInizio,
+							nuovaOraFine,
+							request.NuovoDipendenteId ?? appuntamento.DipendenteId);
+
+						if (!isSlotAvailable)
+						{
+							return new BookingResponseDto
+							{
+								Success = false,
+								Message = "Il nuovo orario selezionato non è disponibile"
+							};
+						}
+
+						// Trova o crea il nuovo slot
+						var nuovoSlot = await FindOrCreateSlot(appuntamento.SaloneId, nuovaOraInizio, nuovaOraFine);
+						appuntamento.SlotId = nuovoSlot.SlotId;
+						hasChanges = true;
+					}
+					else
+					{
+						return new BookingResponseDto
+						{
+							Success = false,
+							Message = "Formato orario non valido"
+						};
+					}
 				}
 
-				// Parse degli orari dalla stringa (formato "HH:mm - HH:mm")
-				var timeSlots = request.TimeSlot.Split(" - ");
-				if (timeSlots.Length != 2 ||
-					!TimeSpan.TryParse(timeSlots[0], out var oraInizio) ||
-					!TimeSpan.TryParse(timeSlots[1], out var oraFine))
+				// Gestione cambio dipendente
+				if (request.NuovoDipendenteId.HasValue && request.NuovoDipendenteId.Value != appuntamento.DipendenteId)
 				{
-					return Json(new { success = false, message = "Formato orario non valido" });
+					// Verifica che il nuovo dipendente esista e offra il servizio
+					var dipendente = await _context.Dipendente
+						.Include(d => d.ServiziOfferti)
+						.FirstOrDefaultAsync(d => d.DipendenteId == request.NuovoDipendenteId.Value &&
+												d.SaloneId == appuntamento.SaloneId);
+
+					if (dipendente == null)
+					{
+						return new BookingResponseDto
+						{
+							Success = false,
+							Message = "Dipendente non trovato"
+						};
+					}
+
+					if (appuntamento.ServizioId.HasValue &&
+						!dipendente.ServiziOfferti.Any(so => so.ServizioId == appuntamento.ServizioId.Value))
+					{
+						return new BookingResponseDto
+						{
+							Success = false,
+							Message = "Il dipendente selezionato non offre questo servizio"
+						};
+					}
+
+					appuntamento.DipendenteId = request.NuovoDipendenteId.Value;
+					hasChanges = true;
 				}
 
-				// Verifica disponibilità finale
-				var slotOccupato = await _context.Appuntamento
-					.AnyAsync(a => a.SaloneId == request.SaloneId &&
-								  a.Data.Date == request.Data.Date &&
-								  a.Stato != HaveASeat.Utilities.Enum.StatoAppuntamento.Annullato &&
-								  (request.DipendenteId == null || a.DipendenteId == request.DipendenteId) &&
-								  (a.OraInizio.TimeOfDay < oraFine && a.OraFine.TimeOfDay > oraInizio));
-
-				if (slotOccupato)
+				// Gestione cambio servizio
+				if (request.NuovoServizioId.HasValue && request.NuovoServizioId.Value != appuntamento.ServizioId)
 				{
-					return Json(new { success = false, message = "Lo slot selezionato non è più disponibile" });
+					var nuovoServizio = await _context.Servizio
+						.FirstOrDefaultAsync(s => s.ServizioId == request.NuovoServizioId.Value &&
+												s.SaloneId == appuntamento.SaloneId);
+
+					if (nuovoServizio == null)
+					{
+						return new BookingResponseDto
+						{
+							Success = false,
+							Message = "Servizio non trovato"
+						};
+					}
+
+					// Verifica che il dipendente (se presente) offra il nuovo servizio
+					if (appuntamento.DipendenteId.HasValue)
+					{
+						var dipendenteOffre = await _context.DipendenteServizio
+							.AnyAsync(ds => ds.DipendenteId == appuntamento.DipendenteId.Value &&
+										   ds.ServizioId == request.NuovoServizioId.Value);
+
+						if (!dipendenteOffre)
+						{
+							return new BookingResponseDto
+							{
+								Success = false,
+								Message = "Il dipendente corrente non offre il nuovo servizio selezionato"
+							};
+						}
+					}
+
+					appuntamento.ServizioId = request.NuovoServizioId.Value;
+					hasChanges = true;
+
+					// Se cambia servizio, potrebbe essere necessario aggiornare anche lo slot
+					// per riflettere la nuova durata
+					if (!string.IsNullOrEmpty(request.NuovoTimeSlot))
+					{
+						// Il nuovo slot è già stato gestito sopra
+					}
+					else if (nuovoServizio.Durata != appuntamento.Servizio?.Durata)
+					{
+						// Se la durata è cambiata ma non è stato specificato un nuovo orario,
+						// aggiorna automaticamente la fine dello slot
+						var nuovaDurata = TimeSpan.FromMinutes((double)nuovoServizio.Durata);
+						var nuovaOraFine = appuntamento.Slot.OraInizio.Add(nuovaDurata);
+
+						// Verifica che il nuovo orario sia disponibile
+						var isSlotAvailable = await _slotService.ValidateSlotBookingAsync(
+							appuntamento.SaloneId,
+							appuntamento.Data,
+							appuntamento.Slot.OraInizio,
+							nuovaOraFine,
+							appuntamento.DipendenteId);
+
+						if (!isSlotAvailable)
+						{
+							return new BookingResponseDto
+							{
+								Success = false,
+								Message = "Il nuovo servizio richiede più tempo di quello disponibile nell'orario corrente"
+							};
+						}
+
+						// Crea nuovo slot con la durata corretta
+						var nuovoSlot = await FindOrCreateSlot(appuntamento.SaloneId, appuntamento.Slot.OraInizio, nuovaOraFine);
+						appuntamento.SlotId = nuovoSlot.SlotId;
+						hasChanges = true;
+					}
 				}
 
-				// Creazione appuntamento
-				var appuntamento = new Appuntamento
+				// Gestione note
+				if (!string.IsNullOrEmpty(request.Note) && request.Note != appuntamento.Note)
 				{
-					AppuntamentoId = Guid.NewGuid(),
-					SaloneId = request.SaloneId,
-					Salone = _context.Salone.FirstOrDefault(x => x.SaloneId == request.SaloneId) ?? null,
-					ApplicationUserId = cliente.Id,
-					ApplicationUser = cliente,
-					Dipendente = _context.Dipendente.FirstOrDefault(x => x.DipendenteId == request.DipendenteId) ?? null,
-					ServizioId = request.ServizioId,
-					DipendenteId = request.DipendenteId,
-					Data = request.Data,
-					Servizio = servizio,
-					SlotId = request.SlotId,
-					Slot = _context.Slot.FirstOrDefault(x => x.SlotId == request.SlotId) ?? null,
-					Note = request.Note ?? "",
-					Stato = HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato
+					appuntamento.Note = request.Note;
+					hasChanges = true;
+				}
+
+				if (hasChanges)
+				{
+					await _context.SaveChangesAsync();
+					await transaction.CommitAsync();
+
+					// Invia notifica se richiesto
+					if (request.InviaNotifica)
+					{
+						_ = Task.Run(async () =>
+						{
+							try
+							{
+								var notifica = new BookingNotificationDto
+								{
+									AppuntamentoId = appuntamento.AppuntamentoId,
+									TipoNotifica = "modifica",
+									EmailDestinatario = appuntamento.ApplicationUser.Email,
+									Messaggio = "La tua prenotazione è stata modificata con successo"
+								};
+
+								// Assumendo che il BookingService abbia un metodo per inviare notifiche
+								// await _bookingService.SendBookingNotificationAsync(notifica);
+							}
+							catch (Exception ex)
+							{
+								_logger.LogError(ex, "Errore invio notifica modifica prenotazione {AppuntamentoId}", appuntamento.AppuntamentoId);
+							}
+						});
+					}
+
+					return new BookingResponseDto
+					{
+						Success = true,
+						Message = "Prenotazione modificata con successo",
+						AppuntamentoId = appuntamento.AppuntamentoId
+					};
+				}
+
+				return new BookingResponseDto
+				{
+					Success = false,
+					Message = "Nessuna modifica da applicare"
 				};
-
-				_context.Appuntamento.Add(appuntamento);
-				await _context.SaveChangesAsync();
-
-				return Json(new
-				{
-					success = true,
-					message = "Prenotazione confermata con successo!",
-					appuntamentoId = appuntamento.AppuntamentoId,
-					redirectUrl = Url.Action("BookingConfirmation", new { id = appuntamento.AppuntamentoId })
-				});
 			}
 			catch (Exception ex)
 			{
-				_logger.LogError(ex, "Errore durante la creazione della prenotazione");
-				return Json(new { success = false, message = "Errore interno del server" });
+				await transaction.RollbackAsync();
+				_logger.LogError(ex, "Errore modifica prenotazione {AppuntamentoId}", request.AppuntamentoId);
+
+				return new BookingResponseDto
+				{
+					Success = false,
+					Message = "Errore durante la modifica della prenotazione"
+				};
 			}
 		}
 	}

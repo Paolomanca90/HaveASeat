@@ -158,7 +158,7 @@ namespace HaveASeat.Services
 				}
 
 				// Verifica disponibilità finale (double-check per race conditions)
-				if (!await IsSlotAvailableAsync(request.SaloneId, request.SlotId, request.Data, request.DipendenteId))
+				if (!await IsSlotAvailableAsync(request.SaloneId, request.SlotId.Value, request.Data, request.DipendenteId))
 				{
 					return new BookingResponseDto
 					{
@@ -173,7 +173,7 @@ namespace HaveASeat.Services
 					AppuntamentoId = Guid.NewGuid(),
 					SaloneId = request.SaloneId,
 					ApplicationUserId = cliente.Id,
-					SlotId = request.SlotId,
+					SlotId = request.SlotId.Value,
 					DipendenteId = request.DipendenteId,
 					ServizioId = request.ServizioId,
 					Data = request.Data,
@@ -370,6 +370,9 @@ namespace HaveASeat.Services
 			}
 		}
 
+		// Correzione per il metodo UpdateBookingAsync nel BookingService
+		// Sostituisci il metodo esistente con questa versione
+
 		public async Task<BookingResponseDto> UpdateBookingAsync(UpdateBookingDto request, string userId)
 		{
 			using var transaction = await _context.Database.BeginTransactionAsync();
@@ -378,6 +381,9 @@ namespace HaveASeat.Services
 			{
 				var appuntamento = await _context.Appuntamento
 					.Include(a => a.Salone)
+					.Include(a => a.Slot)
+					.Include(a => a.Servizio)
+					.Include(a => a.ApplicationUser)
 					.FirstOrDefaultAsync(a => a.AppuntamentoId == request.AppuntamentoId &&
 											a.ApplicationUserId == userId);
 
@@ -400,38 +406,110 @@ namespace HaveASeat.Services
 					};
 				}
 
-				// Applica modifiche
 				bool hasChanges = false;
 
-				if (request.NuovaData.HasValue && request.NuovaData.Value != appuntamento.Data)
+				// Applica modifiche data
+				if (request.NuovaData.HasValue && request.NuovaData.Value.Date != appuntamento.Data.Date)
 				{
 					appuntamento.Data = request.NuovaData.Value;
 					hasChanges = true;
 				}
 
-				if (request.NuovoSlotId.HasValue && request.NuovoSlotId.Value != appuntamento.SlotId)
+				// Applica modifiche orario (CORRETTO - usa NuovoTimeSlot)
+				if (!string.IsNullOrEmpty(request.NuovoTimeSlot))
 				{
-					// Verifica disponibilità nuovo slot
-					if (!await IsSlotAvailableAsync(appuntamento.SaloneId, request.NuovoSlotId.Value,
-												   request.NuovaData ?? appuntamento.Data, request.NuovoDipendenteId))
+					var timeSlots = request.NuovoTimeSlot.Split(" - ");
+					if (timeSlots.Length == 2 &&
+						TimeSpan.TryParse(timeSlots[0], out var nuovaOraInizio) &&
+						TimeSpan.TryParse(timeSlots[1], out var nuovaOraFine))
+					{
+						var dataVerifica = request.NuovaData ?? appuntamento.Data;
+
+						// Verifica disponibilità nuovo slot usando ISlotService se disponibile
+						// Oppure logica di verifica manuale
+						var isAvailable = await IsSlotAvailableForUpdate(
+							appuntamento.SaloneId,
+							dataVerifica,
+							nuovaOraInizio,
+							nuovaOraFine,
+							request.NuovoDipendenteId ?? appuntamento.DipendenteId,
+							appuntamento.AppuntamentoId);
+
+						if (!isAvailable)
+						{
+							return new BookingResponseDto
+							{
+								Success = false,
+								Message = "Il nuovo orario selezionato non è disponibile"
+							};
+						}
+
+						// Trova o crea nuovo slot
+						var nuovoSlot = await FindOrCreateSlotForBooking(appuntamento.SaloneId, nuovaOraInizio, nuovaOraFine);
+						appuntamento.SlotId = nuovoSlot.SlotId;
+						hasChanges = true;
+					}
+					else
 					{
 						return new BookingResponseDto
 						{
 							Success = false,
-							Message = "Il nuovo orario selezionato non è disponibile"
+							Message = "Formato orario non valido"
+						};
+					}
+				}
+
+				// Applica modifiche dipendente
+				if (request.NuovoDipendenteId.HasValue && request.NuovoDipendenteId.Value != appuntamento.DipendenteId)
+				{
+					// Verifica che il dipendente esista e offra il servizio
+					var dipendente = await _context.Dipendente
+						.Include(d => d.ServiziOfferti)
+						.FirstOrDefaultAsync(d => d.DipendenteId == request.NuovoDipendenteId.Value);
+
+					if (dipendente == null)
+					{
+						return new BookingResponseDto
+						{
+							Success = false,
+							Message = "Dipendente non trovato"
 						};
 					}
 
-					appuntamento.SlotId = request.NuovoSlotId.Value;
-					hasChanges = true;
-				}
+					if (appuntamento.ServizioId.HasValue &&
+						!dipendente.ServiziOfferti.Any(so => so.ServizioId == appuntamento.ServizioId.Value))
+					{
+						return new BookingResponseDto
+						{
+							Success = false,
+							Message = "Il dipendente selezionato non offre questo servizio"
+						};
+					}
 
-				if (request.NuovoDipendenteId.HasValue && request.NuovoDipendenteId.Value != appuntamento.DipendenteId)
-				{
 					appuntamento.DipendenteId = request.NuovoDipendenteId.Value;
 					hasChanges = true;
 				}
 
+				// Applica modifiche servizio
+				if (request.NuovoServizioId.HasValue && request.NuovoServizioId.Value != appuntamento.ServizioId)
+				{
+					var nuovoServizio = await _context.Servizio
+						.FirstOrDefaultAsync(s => s.ServizioId == request.NuovoServizioId.Value);
+
+					if (nuovoServizio == null)
+					{
+						return new BookingResponseDto
+						{
+							Success = false,
+							Message = "Servizio non trovato"
+						};
+					}
+
+					appuntamento.ServizioId = request.NuovoServizioId.Value;
+					hasChanges = true;
+				}
+
+				// Applica modifiche note
 				if (!string.IsNullOrEmpty(request.Note) && request.Note != appuntamento.Note)
 				{
 					appuntamento.Note = request.Note;
@@ -442,6 +520,22 @@ namespace HaveASeat.Services
 				{
 					await _context.SaveChangesAsync();
 					await transaction.CommitAsync();
+
+					// Invia notifica se richiesto
+					if (request.InviaNotifica)
+					{
+						_ = Task.Run(async () =>
+						{
+							try
+							{
+								await SendUpdateNotification(appuntamento);
+							}
+							catch (Exception ex)
+							{
+								_logger.LogError(ex, "Errore invio notifica modifica prenotazione {AppuntamentoId}", appuntamento.AppuntamentoId);
+							}
+						});
+					}
 
 					return new BookingResponseDto
 					{
@@ -468,6 +562,86 @@ namespace HaveASeat.Services
 					Message = "Errore durante la modifica della prenotazione"
 				};
 			}
+		}
+
+		// Helper methods per il BookingService
+		private async Task<bool> IsSlotAvailableForUpdate(Guid saloneId, DateTime data, TimeSpan oraInizio, TimeSpan oraFine, Guid? dipendenteId, Guid excludeAppuntamentoId)
+		{
+			var conflictingAppointments = await _context.Appuntamento
+				.Include(a => a.Slot)
+				.Where(a => a.SaloneId == saloneId &&
+						   a.Data.Date == data.Date &&
+						   a.AppuntamentoId != excludeAppuntamentoId &&
+						   a.Stato != HaveASeat.Utilities.Enum.StatoAppuntamento.Annullato)
+				.Where(a => !dipendenteId.HasValue || a.DipendenteId == dipendenteId)
+				.ToListAsync();
+
+			foreach (var appointment in conflictingAppointments)
+			{
+				var existingStart = appointment.OraInizio.TimeOfDay;
+				var existingEnd = appointment.OraFine.TimeOfDay;
+
+				// Controlla sovrapposizione
+				if (oraInizio < existingEnd && oraFine > existingStart)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		private async Task<Slot> FindOrCreateSlotForBooking(Guid saloneId, TimeSpan oraInizio, TimeSpan oraFine)
+		{
+			// Cerca slot esistente
+			var existingSlot = await _context.Slot
+				.FirstOrDefaultAsync(s => s.SaloneId == saloneId &&
+										s.OraInizio == oraInizio &&
+										s.OraFine == oraFine);
+
+			if (existingSlot != null)
+			{
+				return existingSlot;
+			}
+
+			// Crea nuovo slot
+			var newSlot = new Slot
+			{
+				SlotId = Guid.NewGuid(),
+				SaloneId = saloneId,
+				OraInizio = oraInizio,
+				OraFine = oraFine,
+				GiorniSettimana = "0,1,2,3,4,5,6",
+				Capacita = 1,
+				IsAttivo = true,
+				Note = "Auto-generated for booking update"
+			};
+
+			_context.Slot.Add(newSlot);
+			await _context.SaveChangesAsync();
+
+			return newSlot;
+		}
+
+		private async Task SendUpdateNotification(Appuntamento appuntamento)
+		{
+			var notification = new BookingNotificationDto
+			{
+				AppuntamentoId = appuntamento.AppuntamentoId,
+				EmailDestinatario = appuntamento.ApplicationUser.Email,
+				TipoNotifica = "modifica",
+				Messaggio = "La tua prenotazione è stata modificata con successo",
+				InviaEmail = true,
+				ParametriTemplate = new Dictionary<string, string>
+				{
+					["NomeSalone"] = appuntamento.Salone.Nome,
+					["DataAppuntamento"] = appuntamento.Data.ToString("dd/MM/yyyy"),
+					["OrarioAppuntamento"] = $"{appuntamento.OraInizio:HH:mm} - {appuntamento.OraFine:HH:mm}",
+					["ServizioNome"] = appuntamento.Servizio?.Nome ?? "Servizio"
+				}
+			};
+
+			await SendBookingNotificationAsync(notification);
 		}
 
 		public async Task<bool> AddReviewAsync(AddReviewDto request, string userId)

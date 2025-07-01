@@ -100,6 +100,52 @@
             .gallery-item:hover {
                 transform: scale(1.05);
             }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .step {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+            .step.active {
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+            .step.completed {
+                background-color: #10b981;
+                color: white;
+            }
+
+            .step.inactive {
+                background-color: #e5e7eb;
+                color: #6b7280;
+            }
+
+        .staff-card {
+            transition: all 0.3s ease;
+        }
+
+            .staff-card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            }
+
+            .staff-card.selected {
+                border-color: var(--primary-color);
+                background-color: rgba(124, 58, 237, 0.05);
+            }
     </style>
 }
 
@@ -256,7 +302,8 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         @foreach (var dipendente in Model.DipendenteDisponibile)
                         {
-                            <div class="flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-salon-primary transition-colors">
+                            <div class="staff-card flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-salon-primary transition-colors cursor-pointer"
+                                 onclick="selectStaff('@dipendente.DipendenteId', '@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome')">
                                 <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                                     @if (!string.IsNullOrEmpty(dipendente.ApplicationUser.ImmagineUser))
                                     {
@@ -281,10 +328,10 @@
                                     }
                                     @if (Model.MostraSceltaDipendente)
                                     {
-                                        <button onclick="selectStaff('@dipendente.DipendenteId', '@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome')"
-                                                class="text-sm salon-primary hover:underline mt-1">
-                                            Prenota con @dipendente.ApplicationUser.Nome
-                                        </button>
+                                        <p class="text-sm salon-primary mt-1">
+                                            <i class="fas fa-hand-pointer mr-1"></i>
+                                            Clicca per selezionare
+                                        </p>
                                     }
                                 </div>
                             </div>
@@ -361,12 +408,80 @@
                     <div class="bg-salon-primary text-white p-6">
                         <h3 class="text-xl font-bold mb-2">Prenota Appuntamento</h3>
                         <p class="opacity-90">Scegli il servizio e prenota subito</p>
+
+                        <!-- Step Indicator -->
+                        <div class="step-indicator mt-4">
+                            <div class="step active" id="step-indicator-1">1</div>
+                            <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
+                            @if (Model.MostraSceltaDipendente)
+                            {
+                                <div class="step inactive" id="step-indicator-2">2</div>
+                                <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
+                                <div class="step inactive" id="step-indicator-3">3</div>
+                                <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
+                                <div class="step inactive" id="step-indicator-4">4</div>
+                            }
+                            else
+                            {
+                                <div class="step inactive" id="step-indicator-2">2</div>
+                                <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
+                                <div class="step inactive" id="step-indicator-3">3</div>
+                            }
+                        </div>
+                        <div class="text-sm mt-2 opacity-80" id="step-description">
+                            Seleziona il servizio desiderato
+                        </div>
                     </div>
 
                     <div class="p-6" id="bookingWidget">
+                        <!-- Step 1: Servizio già selezionato tramite le card -->
+                        <div id="step1" class="booking-step">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">1. Servizio selezionato</h4>
+                            <div id="selectedServiceDisplay" class="hidden bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h5 class="font-medium text-green-800 dark:text-green-200" id="selectedServiceName"></h5>
+                                        <p class="text-sm text-green-600 dark:text-green-300">
+                                            <span id="selectedServiceDuration"></span> minuti - €<span id="selectedServicePrice"></span>
+                                        </p>
+                                    </div>
+                                    <button onclick="clearServiceSelection()" class="text-green-600 hover:text-green-800">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                Clicca su "Prenota questo servizio" su uno dei servizi qui sopra per iniziare.
+                            </p>
+                        </div>
+
+                        <!-- Step 2: Selezione Staff (solo se abilitato) -->
+                        @if (Model.MostraSceltaDipendente)
+                        {
+                            <div id="step2" class="booking-step hidden">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-4">2. Scegli il professionista</h4>
+                                <div id="selectedStaffDisplay" class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <h5 class="font-medium text-blue-800 dark:text-blue-200" id="selectedStaffName"></h5>
+                                            <p class="text-sm text-blue-600 dark:text-blue-300">Professionista selezionato</p>
+                                        </div>
+                                        <button onclick="clearStaffSelection()" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm">
+                                    Clicca su uno dei professionisti nella sezione "Il Nostro Team" per selezionarlo.
+                                </p>
+                            </div>
+                        }
+
                         <!-- Step 3: Selezione Data e Ora -->
                         <div id="step3" class="booking-step hidden">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">3. Scegli data e orario</h4>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">
+                                @(Model.MostraSceltaDipendente ? "3" : "2"). Scegli data e orario
+                            </h4>
 
                             <div class="mb-4">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data</label>
@@ -383,11 +498,18 @@
                                     <!-- Slots will be loaded here -->
                                 </div>
                             </div>
+
+                            <div id="slotsLoading" class="hidden text-center py-4">
+                                <i class="fas fa-spinner fa-spin text-purple-600 mr-2"></i>
+                                <span class="text-gray-600 dark:text-gray-400">Caricamento orari...</span>
+                            </div>
                         </div>
 
                         <!-- Step 4: Dati Cliente -->
                         <div id="step4" class="booking-step hidden">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">4. I tuoi dati</h4>
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">
+                                @(Model.MostraSceltaDipendente ? "4" : "3"). I tuoi dati
+                            </h4>
 
                             @if (User.Identity.IsAuthenticated)
                             {
@@ -579,8 +701,6 @@
 
 @section Scripts {
     <script>
-                // JavaScript per la gestione migliorata della prenotazione nella view Details
-
         // Stato della prenotazione
         let bookingState = {
             currentStep: 1,
@@ -594,20 +714,31 @@
             selectedDate: '',
             selectedTimeSlot: null,
             slotTime: '',
-            showStaffSelection: @Model.MostraSceltaDipendente.ToString().ToLower()
+            showStaffSelection: @Model.MostraSceltaDipendente.ToString().ToLower(),
+            maxSteps: '@Model.MostraSceltaDipendente' == 'True' ? 4 : 3
         };
 
         // Inizializzazione
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Booking widget initialized with state:', bookingState);
             updateStepVisibility();
             updateButtons();
+            updateStepIndicator();
 
-            // Debug: Log dello stato iniziale
-            console.log('Booking state initialized:', bookingState);
+            // Imposta data minima a domani
+            const dateInput = document.getElementById('bookingDate');
+            if (dateInput) {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                dateInput.min = tomorrow.toISOString().split('T')[0];
+                dateInput.value = tomorrow.toISOString().split('T')[0];
+            }
         });
 
         // Selezione servizio
         function selectService(servizioId, serviceName, price, duration) {
+            console.log('Selecting service:', { servizioId, serviceName, price, duration });
+
             bookingState.servizioId = servizioId;
             bookingState.serviceName = serviceName;
             bookingState.servicePrice = price;
@@ -616,22 +747,69 @@
             // Reset selezioni successive
             bookingState.selectedTimeSlot = null;
             bookingState.slotTime = '';
+            bookingState.selectedDate = '';
 
             // Evidenzia il servizio selezionato
             document.querySelectorAll('.service-card').forEach(el => {
                 el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
             });
 
-            event.target.closest('.service-card').classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            const serviceCard = event.target.closest('.service-card');
+            if (serviceCard) {
+                serviceCard.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            }
 
-            console.log('Service selected:', { servizioId, serviceName, price, duration });
+            // Mostra il servizio selezionato
+            showSelectedService();
 
+            // Aggiorna lo step e i pulsanti
+            bookingState.currentStep = 1;
+            updateStepVisibility();
             updateButtons();
+            updateStepIndicator();
             updateSummary();
+
+            // Scroll al widget di prenotazione
+            document.getElementById('prenota').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Mostra il servizio selezionato
+        function showSelectedService() {
+            const display = document.getElementById('selectedServiceDisplay');
+            const nameEl = document.getElementById('selectedServiceName');
+            const priceEl = document.getElementById('selectedServicePrice');
+            const durationEl = document.getElementById('selectedServiceDuration');
+
+            if (display && nameEl && priceEl && durationEl) {
+                nameEl.textContent = bookingState.serviceName;
+                priceEl.textContent = bookingState.servicePrice.toFixed(2);
+                durationEl.textContent = bookingState.serviceDuration;
+                display.classList.remove('hidden');
+            }
+        }
+
+        // Rimuovi selezione servizio
+        function clearServiceSelection() {
+            bookingState.servizioId = null;
+            bookingState.serviceName = '';
+            bookingState.servicePrice = 0;
+            bookingState.serviceDuration = 0;
+            bookingState.currentStep = 1;
+
+            document.getElementById('selectedServiceDisplay').classList.add('hidden');
+            document.querySelectorAll('.service-card').forEach(el => {
+                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            });
+
+            updateStepVisibility();
+            updateButtons();
+            updateStepIndicator();
         }
 
         // Selezione staff
         function selectStaff(dipendenteId, staffName) {
+            console.log('Selecting staff:', { dipendenteId, staffName });
+
             bookingState.dipendenteId = dipendenteId;
             bookingState.staffName = staffName;
 
@@ -639,18 +817,60 @@
             bookingState.selectedTimeSlot = null;
             bookingState.slotTime = '';
 
+            // Evidenzia il staff selezionato
+            document.querySelectorAll('.staff-card').forEach(el => {
+                el.classList.remove('selected', 'border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            });
+
+            const staffCard = event.target.closest('.staff-card');
+            if (staffCard) {
+                staffCard.classList.add('selected', 'border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            }
+
+            // Mostra il staff selezionato
+            showSelectedStaff();
+
             // Ricarica gli slot se la data è già selezionata
             if (bookingState.selectedDate) {
                 loadAvailableSlots();
             }
 
-            console.log('Staff selected:', { dipendenteId, staffName });
-
             updateButtons();
+            updateStepIndicator();
             updateSummary();
         }
 
-        // Caricamento slot disponibili
+        // Mostra il staff selezionato
+        function showSelectedStaff() {
+            const display = document.getElementById('selectedStaffDisplay');
+            const nameEl = document.getElementById('selectedStaffName');
+
+            if (display && nameEl && bookingState.staffName) {
+                nameEl.textContent = bookingState.staffName;
+                display.classList.remove('hidden');
+            }
+        }
+
+        // Rimuovi selezione staff
+        function clearStaffSelection() {
+            bookingState.dipendenteId = null;
+            bookingState.staffName = '';
+
+            const display = document.getElementById('selectedStaffDisplay');
+            if (display) {
+                display.classList.add('hidden');
+            }
+
+            document.querySelectorAll('.staff-card').forEach(el => {
+                el.classList.remove('selected', 'border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            });
+
+            updateButtons();
+            updateStepIndicator();
+            updateSummary();
+        }
+
+        // Caricamento slot disponibili con il nuovo sistema
         function loadAvailableSlots() {
             const date = document.getElementById('bookingDate').value;
             if (!date) return;
@@ -668,12 +888,17 @@
 
             const slotsContainer = document.getElementById('slotsContainer');
             const slotsGrid = document.getElementById('availableSlots');
+            const loadingIndicator = document.getElementById('slotsLoading');
 
             // Mostra loading
-            slotsGrid.innerHTML = '<div class="col-span-2 text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Caricamento orari...</div>';
-            slotsContainer.classList.remove('hidden');
+            if (loadingIndicator) {
+                loadingIndicator.classList.remove('hidden');
+            }
+            if (slotsContainer) {
+                slotsContainer.classList.add('hidden');
+            }
 
-            // Costruisci URL con tutti i parametri
+            // Costruisci URL con tutti i parametri necessari
             let url = `/Search/GetAvailableSlots?saloneId=${bookingState.saloneId}&data=${date}`;
 
             if (bookingState.servizioId) {
@@ -695,6 +920,11 @@
                 .then(data => {
                     console.log('Slots response:', data);
 
+                    // Nascondi loading
+                    if (loadingIndicator) {
+                        loadingIndicator.classList.add('hidden');
+                    }
+
                     if (data.success && data.slots && data.slots.length > 0) {
                         slotsGrid.innerHTML = data.slots.map(slot => `
                             <button onclick="selectSlot('${slot.slotId}', '${slot.display}')"
@@ -702,9 +932,11 @@
                                     data-slot-id="${slot.slotId}"
                                     data-time="${slot.display}">
                                 <div class="font-medium">${slot.display}</div>
-                                ${slot.durata ? `<div class="text-xs text-gray-500 mt-1">${slot.durata} min</div>` : ''}
+                                <div class="text-xs text-gray-500 mt-1">${slot.serviceDurationMinutes || bookingState.serviceDuration} min</div>
                             </button>
                         `).join('');
+
+                        slotsContainer.classList.remove('hidden');
                     } else {
                         slotsGrid.innerHTML = `
                             <div class="col-span-2 text-center py-8">
@@ -715,10 +947,17 @@
                                 </div>
                             </div>
                         `;
+                        slotsContainer.classList.remove('hidden');
                     }
                 })
                 .catch(error => {
                     console.error('Errore caricamento slot:', error);
+
+                    // Nascondi loading
+                    if (loadingIndicator) {
+                        loadingIndicator.classList.add('hidden');
+                    }
+
                     slotsGrid.innerHTML = `
                         <div class="col-span-2 text-center py-8">
                             <i class="fas fa-exclamation-triangle text-4xl text-red-300 mb-3"></i>
@@ -728,6 +967,7 @@
                             </div>
                         </div>
                     `;
+                    slotsContainer.classList.remove('hidden');
                 });
         }
 
@@ -741,11 +981,17 @@
             // Evidenzia lo slot selezionato
             document.querySelectorAll('.slot-option').forEach(el => {
                 el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+                el.classList.add('border-gray-300', 'dark:border-gray-600');
             });
 
-            event.target.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            const selectedSlot = event.target.closest('.slot-option');
+            if (selectedSlot) {
+                selectedSlot.classList.remove('border-gray-300', 'dark:border-gray-600');
+                selectedSlot.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            }
 
             updateButtons();
+            updateStepIndicator();
             updateSummary();
         }
 
@@ -767,6 +1013,8 @@
 
             updateStepVisibility();
             updateButtons();
+            updateStepIndicator();
+            updateStepDescription();
         }
 
         function prevStep() {
@@ -781,6 +1029,8 @@
 
             updateStepVisibility();
             updateButtons();
+            updateStepIndicator();
+            updateStepDescription();
         }
 
         // Verifica se si può procedere
@@ -829,22 +1079,61 @@
         function updateStepVisibility() {
             console.log('Updating step visibility. Current step:', bookingState.currentStep);
 
-            document.querySelectorAll('.booking-step').forEach((step, index) => {
-                const stepNumber = index + 1;
-
-                if (stepNumber === 2 && !bookingState.showStaffSelection) {
-                    step.classList.add('hidden');
-                } else if (stepNumber === bookingState.currentStep) {
-                    step.classList.remove('hidden');
-                } else {
-                    step.classList.add('hidden');
-                }
+            document.querySelectorAll('.booking-step').forEach(step => {
+                step.classList.add('hidden');
             });
 
+            // Mostra sempre lo step 1 (selezione servizio)
+            const step1 = document.getElementById('step1');
+            if (step1) step1.classList.remove('hidden');
+
+            // Mostra step corrente se diverso da 1
+            if (bookingState.currentStep > 1) {
+                const currentStepEl = document.getElementById('step' + bookingState.currentStep);
+                if (currentStepEl) {
+                    currentStepEl.classList.remove('hidden');
+                }
+            }
+
             // Mostra il riepilogo se siamo oltre lo step iniziale
-            const summaryVisible = bookingState.currentStep > 1 ||
-                                  (bookingState.currentStep === 1 && !bookingState.showStaffSelection);
-            document.getElementById('bookingSummary').classList.toggle('hidden', !summaryVisible);
+            const summaryVisible = bookingState.currentStep > 1 && bookingState.servizioId;
+            const summaryEl = document.getElementById('bookingSummary');
+            if (summaryEl) {
+                summaryEl.classList.toggle('hidden', !summaryVisible);
+            }
+        }
+
+        // Aggiorna gli indicatori di step
+        function updateStepIndicator() {
+            const stepElements = document.querySelectorAll('[id^="step-indicator-"]');
+
+            stepElements.forEach((stepEl, index) => {
+                const stepNumber = index + 1;
+                stepEl.classList.remove('active', 'completed', 'inactive');
+
+                if (stepNumber < bookingState.currentStep || (stepNumber === bookingState.currentStep && canProceed())) {
+                    stepEl.classList.add('completed');
+                } else if (stepNumber === bookingState.currentStep) {
+                    stepEl.classList.add('active');
+                } else {
+                    stepEl.classList.add('inactive');
+                }
+            });
+        }
+
+        // Aggiorna la descrizione dello step
+        function updateStepDescription() {
+            const descriptionEl = document.getElementById('step-description');
+            if (!descriptionEl) return;
+
+            const descriptions = {
+                1: 'Seleziona il servizio desiderato',
+                2: bookingState.showStaffSelection ? 'Scegli il tuo professionista' : 'Seleziona data e orario',
+                3: bookingState.showStaffSelection ? 'Seleziona data e orario' : 'Inserisci i tuoi dati',
+                4: 'Inserisci i tuoi dati'
+            };
+
+            descriptionEl.textContent = descriptions[bookingState.currentStep] || '';
         }
 
         // Aggiorna i pulsanti
@@ -862,10 +1151,9 @@
             continueBtn.disabled = !canContinue;
 
             // Determina se siamo all'ultimo step
-            const maxStep = bookingState.showStaffSelection ? 4 : 3;
-            const isLastStep = bookingState.currentStep >= maxStep;
+            const isLastStep = bookingState.currentStep >= bookingState.maxSteps;
 
-            console.log('Button state:', { canContinue, isLastStep, currentStep: bookingState.currentStep, maxStep });
+            console.log('Button state:', { canContinue, isLastStep, currentStep: bookingState.currentStep, maxSteps: bookingState.maxSteps });
 
             continueBtn.classList.toggle('hidden', isLastStep);
             confirmBtn.classList.toggle('hidden', !isLastStep || !canContinue);
@@ -876,9 +1164,10 @@
                 continueBtn.innerHTML = bookingState.showStaffSelection ?
                     '<i class="fas fa-arrow-right mr-2"></i>Scegli Professionista' :
                     '<i class="fas fa-arrow-right mr-2"></i>Scegli Data e Ora';
-            } else if (bookingState.currentStep === 2) {
+            } else if (bookingState.currentStep === 2 && bookingState.showStaffSelection) {
                 continueBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>Scegli Data e Ora';
-            } else if (bookingState.currentStep === 3) {
+            } else if ((bookingState.currentStep === 2 && !bookingState.showStaffSelection) ||
+                       (bookingState.currentStep === 3 && bookingState.showStaffSelection)) {
                 continueBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>I tuoi Dati';
             }
         }
@@ -932,7 +1221,7 @@
                 servizioId: bookingState.servizioId,
                 dipendenteId: bookingState.dipendenteId,
                 data: bookingState.selectedDate,
-                timeSlot: bookingState.slotTime, // Invia il formato "HH:mm - HH:mm"
+                timeSlot: bookingState.slotTime, // Formato "HH:mm - HH:mm"
                 note: document.getElementById('bookingNotes')?.value || ''
             };
 
@@ -1024,31 +1313,50 @@
             });
         }
 
-        // Inizializza il widget di prenotazione quando la pagina è caricata
-        document.addEventListener('DOMContentLoaded', function() {
-            // Mostra il primo step
-            updateStepVisibility();
-            updateButtons();
+        // Funzioni per la galleria
+        function openGallery(imageSrc) {
+            const modal = document.getElementById('galleryModal');
+            const image = document.getElementById('galleryImage');
+            if (modal && image) {
+                image.src = imageSrc;
+                modal.classList.remove('hidden');
+            }
+        }
 
+        function closeGallery() {
+            const modal = document.getElementById('galleryModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        // Indicazioni stradali
+        function getDirections() {
+            const address = encodeURIComponent('@Model.Salone.Indirizzo, @Model.Salone.Citta');
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`, '_blank');
+        }
+
+        // Event listeners per migliorare l'esperienza utente
+        document.addEventListener('DOMContentLoaded', function() {
             // Auto-scroll al widget se c'è l'hash #prenota
             if (window.location.hash === '#prenota') {
-                document.getElementById('prenota')?.scrollIntoView({ behavior: 'smooth' });
+                setTimeout(() => {
+                    document.getElementById('prenota')?.scrollIntoView({ behavior: 'smooth' });
+                }, 500);
             }
 
-            // Imposta data minima a domani
-            const dateInput = document.getElementById('bookingDate');
-            if (dateInput) {
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                dateInput.min = tomorrow.toISOString().split('T')[0];
-
-                // Se non c'è una data selezionata, imposta domani come default
-                if (!dateInput.value) {
-                    dateInput.value = tomorrow.toISOString().split('T')[0];
+            // Listener per input nei dati cliente (se guest)
+            const customerInputs = ['customerName', 'customerSurname', 'customerEmail', 'customerPhone'];
+            customerInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', () => {
+                        updateButtons();
+                    });
                 }
-            }
+            });
 
-            console.log('Booking widget initialized');
+            console.log('Booking widget fully initialized');
         });
     </script>
 }
