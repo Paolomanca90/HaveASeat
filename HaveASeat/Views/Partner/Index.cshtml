@@ -144,7 +144,7 @@ else
                 <span class="text-sm text-gray-500 dark:text-gray-400 mt-2">Staff totale</span>
             </div>
         </div>
-        <div class="stat-card dark:bg-gray-800">
+        <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showServiziModal()">
             <div class="stat-card-header">
                 <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Servizi</div>
                 <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
@@ -155,7 +155,59 @@ else
             <div class="stat-card-change change-neutral">
                 <span class="text-sm text-gray-500 dark:text-gray-400 mt-2">Servizi totali attivi</span>
             </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <i class="fas fa-hand-pointer"></i> Clicca per dettagli
+            </div>
         </div>
+        <!---->
+        <!-- Aggiungi questo modale dopo il modale delle promozioni -->
+        <div id="serviziModal" class="modal">
+            <div class="modal-box w-11/12 max-w-4xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-xl flex items-center dark:text-neutral-50">
+                        <i class="fas fa-cut text-purple-500 mr-2"></i>
+                        Servizi Disponibili
+                    </h3>
+                    <button class="btn btn-sm btn-circle btn-ghost dark:text-neutral-50" onclick="closeServiziModal()">✕</button>
+                </div>
+
+                <!-- Riepilogo statistiche -->
+                <div id="serviziStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Verrà popolato dinamicamente -->
+                </div>
+
+                <!-- Filtri -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="btn btn-sm btn-outline" onclick="filterServizi('tutti')">
+                        <i class="fas fa-list mr-1"></i> Tutti
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="filterServizi('promo')">
+                        <i class="fas fa-tags mr-1"></i> In Promozione
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="filterServizi('no-staff')">
+                        <i class="fas fa-user-slash mr-1"></i> Senza Staff
+                    </button>
+                </div>
+
+                <div id="serviziContent" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Il contenuto verrà caricato dinamicamente -->
+                    <div class="flex justify-center items-center h-32">
+                        <span class="loading loading-spinner loading-lg"></span>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button class="btn btn-outline dark:text-gray-400" onclick="closeServiziModal()">Chiudi</button>
+                    <button class="btn btn-primary bg-purple-600" onclick="window.location.href='@Url.Action("Servizi", "Partner")'">
+                        <i class="fas fa-plus mr-2"></i>Gestisci Servizi
+                    </button>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button onclick="closeServiziModal()">close</button>
+            </form>
+        </div>
+        <!---->
         <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showPromozioniModal()">
             <div class="stat-card-header">
                 <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Promozioni Attive</div>
@@ -616,6 +668,7 @@ else
         initializeChart();
          if (currentSaloneId) {
         checkPromozioniInScadenza();
+            checkServiziSenzaStaff();
     }
 
         // Event listener per il cambio sede
@@ -1193,3 +1246,244 @@ else
         }, 5000);
     }
 </script>
+<script>
+    let serviziData = null;
+
+      function showServiziModal() {
+          const modal = document.getElementById('serviziModal');
+          modal.classList.add('modal-open');
+
+          // Carica i servizi
+          loadServiziAttivi();
+      }
+
+      function closeServiziModal() {
+          const modal = document.getElementById('serviziModal');
+          modal.classList.remove('modal-open');
+      }
+
+      function loadServiziAttivi() {
+          const content = document.getElementById('serviziContent');
+          const stats = document.getElementById('serviziStats');
+
+          // Mostra loading
+          content.innerHTML = `
+              <div class="flex justify-center items-center h-32">
+                  <span class="loading loading-spinner loading-lg"></span>
+              </div>
+          `;
+          stats.innerHTML = '';
+
+          fetch(`/Partner/GetServiziAttivi?saloneId=${currentSaloneId}`)
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      serviziData = data;
+                      displayServiziStats(data);
+                      displayServizi(data.servizi);
+                  } else {
+                      content.innerHTML = '<div class="alert alert-error">Errore nel caricamento dei servizi</div>';
+                  }
+              })
+              .catch(error => {
+                  console.error('Errore:', error);
+                  content.innerHTML = '<div class="alert alert-error">Errore di connessione</div>';
+              });
+      }
+
+      function displayServiziStats(data) {
+          const stats = document.getElementById('serviziStats');
+
+          stats.innerHTML = `
+              <div class="stat bg-base-100 shadow rounded-lg">
+                  <div class="stat-figure text-purple-600">
+                      <i class="fas fa-list text-2xl"></i>
+                  </div>
+                  <div class="stat-title">Totale Servizi</div>
+                  <div class="stat-value text-purple-600">${data.totaleServizi}</div>
+              </div>
+              <div class="stat bg-base-100 shadow rounded-lg">
+                  <div class="stat-figure text-orange-600">
+                      <i class="fas fa-tags text-2xl"></i>
+                  </div>
+                  <div class="stat-title">In Promozione</div>
+                  <div class="stat-value text-orange-600">${data.serviziInPromozione}</div>
+              </div>
+              <div class="stat bg-base-100 shadow rounded-lg">
+                  <div class="stat-figure text-green-600">
+                      <i class="fas fa-euro-sign text-2xl"></i>
+                  </div>
+                  <div class="stat-title">Prezzo Medio</div>
+                  <div class="stat-value text-green-600">€${data.prezzoMedio}</div>
+              </div>
+          `;
+      }
+
+      function displayServizi(servizi, filter = 'tutti') {
+          const content = document.getElementById('serviziContent');
+
+          if (servizi.length === 0) {
+              content.innerHTML = `
+                  <div class="text-center py-8">
+                      <i class="fas fa-cut text-purple-500 text-5xl mb-4"></i>
+                      <p class="text-gray-500 text-lg">Nessun servizio disponibile</p>
+                  </div>
+              `;
+              return;
+          }
+
+          // Filtra i servizi se necessario
+          let serviziFiltrati = servizi;
+          if (filter === 'promo') {
+              serviziFiltrati = servizi.filter(s => s.isPromotion);
+          } else if (filter === 'no-staff') {
+              serviziFiltrati = servizi.filter(s => s.numeroDipendenti === 0);
+          }
+
+          if (serviziFiltrati.length === 0) {
+              content.innerHTML = `
+                  <div class="text-center py-8">
+                      <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
+                      <p class="text-gray-500">Nessun servizio trovato per questo filtro</p>
+                  </div>
+              `;
+              return;
+          }
+
+          let html = '<div class="space-y-3">';
+
+          serviziFiltrati.forEach(servizio => {
+              const hasStaff = servizio.numeroDipendenti > 0;
+              const staffNames = servizio.dipendentiAssegnati
+                  .map(d => `${d.nome} ${d.cognome}`)
+                  .join(', ');
+
+              html += `
+                  <div class="card bg-base-100 shadow-lg border border-base-200 hover:shadow-xl transition-shadow">
+                      <div class="card-body">
+                          <div class="flex justify-between items-start">
+                              <div class="flex-1">
+                                  <div class="flex items-center gap-2 mb-2">
+                                      <h4 class="card-title text-lg">${servizio.nome}</h4>
+                                      ${servizio.isPromotion ?
+                                          '<span class="badge badge-warning badge-sm"><i class="fas fa-tag mr-1"></i>Promo</span>' :
+                                          ''}
+                                      ${!hasStaff ?
+                                          '<span class="badge badge-error badge-sm"><i class="fas fa-user-slash mr-1"></i>No Staff</span>' :
+                                          ''}
+                                  </div>
+
+                                  <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                      ${servizio.descrizione || 'Nessuna descrizione disponibile'}
+                                  </p>
+
+                                  <div class="flex flex-wrap gap-4 text-sm">
+                                      <div>
+                                          <span class="text-gray-500">Durata:</span>
+                                          <span class="font-medium">${servizio.durata} min</span>
+                                      </div>
+                                      <div>
+                                          <span class="text-gray-500">Prezzo:</span>
+                                          ${servizio.isPromotion ?
+                                              `<span class="line-through text-gray-400">€${servizio.prezzo.toFixed(2)}</span>
+                                               <span class="font-bold text-success ml-1">€${servizio.prezzoEffettivo.toFixed(2)}</span>
+                                               <span class="badge badge-success badge-sm ml-1">-${servizio.percentualeSconto}%</span>` :
+                                              `<span class="font-medium">€${servizio.prezzo.toFixed(2)}</span>`
+                                          }
+                                      </div>
+                                  </div>
+
+                                  ${hasStaff ? `
+                                      <div class="mt-3 pt-3 border-t border-base-200">
+                                          <div class="flex items-center text-sm">
+                                              <i class="fas fa-users text-gray-500 mr-2"></i>
+                                              <span class="text-gray-500">Staff assegnato:</span>
+                                              <span class="ml-2 font-medium">${staffNames}</span>
+                                              <span class="badge badge-info badge-sm ml-2">${servizio.numeroDipendenti}</span>
+                                          </div>
+                                      </div>
+                                  ` : `
+                                      <div class="mt-3 pt-3 border-t border-base-200">
+                                          <div class="alert alert-warning py-2">
+                                              <i class="fas fa-exclamation-triangle text-sm"></i>
+                                              <span class="text-sm">Nessun dipendente assegnato a questo servizio</span>
+                                          </div>
+                                      </div>
+                                  `}
+                              </div>
+
+                              <div class="flex flex-col gap-2">
+                                  <button class="btn btn-sm btn-ghost" onclick="editServizio('${servizio.servizioId}')">
+                                      <i class="fas fa-edit"></i>
+                                  </button>
+                                  <button class="btn btn-sm btn-ghost text-error" onclick="deleteServizio('${servizio.servizioId}')">
+                                      <i class="fas fa-trash"></i>
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              `;
+          });
+
+          html += '</div>';
+          content.innerHTML = html;
+      }
+
+      function filterServizi(filter) {
+          if (serviziData && serviziData.servizi) {
+              displayServizi(serviziData.servizi, filter);
+
+              // Aggiorna stile bottoni
+              document.querySelectorAll('#serviziModal .btn-outline').forEach(btn => {
+                  btn.classList.remove('btn-active');
+              });
+              event.target.classList.add('btn-active');
+          }
+      }
+
+      function editServizio(id) {
+          window.location.href = `/Partner/EditServizio/${id}`;
+      }
+
+      function deleteServizio(id) {
+          // Implementa la logica di cancellazione
+          console.log('Elimina servizio:', id);
+      }
+
+      // Aggiungi anche un controllo all'avvio per i servizi senza staff
+      function checkServiziSenzaStaff() {
+          fetch(`/Partner/GetServiziAttivi?saloneId=${currentSaloneId}`)
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      const serviziSenzaStaff = data.servizi.filter(s => s.numeroDipendenti === 0).length;
+                      if (serviziSenzaStaff > 0) {
+                          // Mostra una notifica toast
+                          showNotificaServiziSenzaStaff(serviziSenzaStaff);
+                      }
+                  }
+              });
+      }
+
+      function showNotificaServiziSenzaStaff(numero) {
+          const toast = document.createElement('div');
+          toast.className = 'toast toast-top toast-end';
+          toast.innerHTML = `
+              <div class="alert alert-info shadow-lg">
+                  <div>
+                      <i class="fas fa-info-circle"></i>
+                      <span>${numero} servizi senza staff assegnato</span>
+                  </div>
+                  <button class="btn btn-sm btn-ghost" onclick="showServiziModal(); this.parentElement.parentElement.remove();">
+                      Visualizza
+                  </button>
+              </div>
+          `;
+
+          document.body.appendChild(toast);
+
+          setTimeout(() => {
+              toast.remove();
+          }, 5000);
+      }</script>
