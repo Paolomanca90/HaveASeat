@@ -1,7 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
-
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"/>
+</head>
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
@@ -24,7 +26,7 @@
 else
 {
         <div class="dropdown dropdown-bottom dropdown-end">
-            <div tabindex="0" role="button" class="btn m-1">Menu</div>
+            <div tabindex="0" role="button" class="btn m-1"> <i class="fas fa-user text-[#7C3AED]"></i>Accedi</div>
             <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
                 <li class="nav-item">
                     <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Registrati</a>

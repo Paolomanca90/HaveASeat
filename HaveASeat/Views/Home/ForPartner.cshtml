@@ -3,6 +3,11 @@
 @{
     ViewData["Title"] = "Partner Dashboard";
 }
+<style>
+    html{
+        scroll-behavior:smooth;
+    }
+</style>
 
 <!-- Hero Section -->
 <section class="w-full bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-200 dark:to-purple-300 py-16 md:py-24">
@@ -19,9 +24,9 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button class="bg-purple-600 hover:bg-purple-700 text-white border-none rounded-full px-8 py-3 transition-colors">
+                    <a href="#pricing" class="bg-purple-600 hover:bg-purple-700 text-white border-none rounded-full px-8 py-3 transition-colors">
                         Inizia la Prova Gratuita
-                    </button>
+                    </a>
                     <button class="border border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white rounded-full px-8 py-3 transition-colors">
                         Richiedi una Demo
                     </button>
@@ -82,69 +87,69 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- Feature 1 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-700 dark:text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold mb-3 dark:text-gray-800">Agenda Intelligente</h3>
-                <p class="text-gray-600">Gestisci il tuo calendario con facilità. Ottimizza i tuoi appuntamenti e monitora la disponibilità in tempo reale.</p>
+                <h3 class="text-xl font-semibold mb-3 dark:text-gray-400">Agenda Intelligente</h3>
+                <p class="text-gray-600 dark:text-gray-300">Gestisci il tuo calendario con facilità. Ottimizza i tuoi appuntamenti e monitora la disponibilità in tempo reale.</p>
             </div>
 
             <!-- Feature 2 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold mb-3 dark:text-gray-800">Gestione Pagamenti</h3>
-                <p class="text-gray-600">Accetta pagamenti online, gestisci depositi e crea report finanziari dettagliati per il tuo business.</p>
+                <h3 class="text-xl font-semibold mb-3 dark:text-gray-400">Gestione Pagamenti</h3>
+                <p class="text-gray-600 dark:text-gray-300">Accetta pagamenti online, gestisci depositi e crea report finanziari dettagliati per il tuo business.</p>
             </div>
 
             <!-- Feature 3 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold mb-3 dark:text-gray-800">Notifiche Automatiche</h3>
-                <p class="text-gray-600">Riduci i no-show con promemoria automatici via SMS ed email per i tuoi clienti.</p>
+                <h3 class="text-xl font-semibold mb-3 dark:text-gray-400">Notifiche Automatiche</h3>
+                <p class="text-gray-600 dark:text-gray-300">Riduci i no-show con promemoria automatici via SMS ed email per i tuoi clienti.</p>
             </div>
 
             <!-- Feature 4 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold mb-3 dark:text-gray-800">Gestione Clienti</h3>
-                <p class="text-gray-600">Database completo dei clienti con cronologia degli appuntamenti, preferenze e possibilità di segmentazione.</p>
+                <h3 class="text-xl font-semibold mb-3 dark:text-gray-400">Gestione Clienti</h3>
+                <p class="text-gray-600 dark:text-gray-300">Database completo dei clienti con cronologia degli appuntamenti, preferenze e possibilità di segmentazione.</p>
             </div>
 
             <!-- Feature 5 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold mb-3 dark:text-gray-800">Analisi e Reportistica</h3>
-                <p class="text-gray-600">Dashboard intuitiva con metriche chiave per monitorare la crescita e ottimizzare il tuo business.</p>
+                <h3 class="text-xl font-semibold mb-3 dark:text-gray-400">Analisi e Reportistica</h3>
+                <p class="text-gray-600 dark:text-gray-300">Dashboard intuitiva con metriche chiave per monitorare la crescita e ottimizzare il tuo business.</p>
             </div>
 
             <!-- Feature 6 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center mb-6">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold mb-3 dark:text-gray-800">Marketing Integrato</h3>
-                <p class="text-gray-600">Strumenti per campagne email, programmi fedeltà e promozioni per attirare nuovi clienti e fidelizzare quelli esistenti.</p>
+                <h3 class="text-xl font-semibold mb-3 dark:text-gray-400">Marketing Integrato</h3>
+                <p class="text-gray-600 dark:text-gray-300">Strumenti per campagne email, programmi fedeltà e promozioni per attirare nuovi clienti e fidelizzare quelli esistenti.</p>
             </div>
         </div>
     </div>
@@ -226,15 +231,15 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- Testimonial 1 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="flex items-center mb-4">
                     <img src="https://images.unsplash.com/photo-1701615004837-40d8573b6652?q=80&w=2385&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="User" class="w-12 h-12 rounded-full mr-4">
                     <div>
                         <h4 class="font-semibold">Laura Bianchi</h4>
-                        <p class="text-sm text-gray-600">Salone Bellezza Pura, Milano</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Salone Bellezza Pura, Milano</p>
                     </div>
                 </div>
-                <p class="text-gray-600 italic">"Da quando utilizziamo BeautyBook, le prenotazioni sono aumentate del 40% e abbiamo ridotto drasticamente i no-show. L'interfaccia è intuitiva e il supporto clienti è sempre disponibile."</p>
+                <p class="text-gray-600 italic dark:text-gray-300">"Da quando utilizziamo BeautyBook, le prenotazioni sono aumentate del 40% e abbiamo ridotto drasticamente i no-show. L'interfaccia è intuitiva e il supporto clienti è sempre disponibile."</p>
                 <div class="flex mt-4 text-yellow-400">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -255,15 +260,15 @@
             </div>
 
             <!-- Testimonial 2 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="flex items-center mb-4">
                     <img src="https://images.unsplash.com/photo-1520763185298-1b434c919102?q=80&w=2664&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="User" class="w-12 h-12 rounded-full mr-4">
                     <div>
                         <h4 class="font-semibold">Laura Bianchi</h4>
-                        <p class="text-sm text-gray-600">Salone Bellezza Pura, Milano</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Salone Bellezza Pura, Milano</p>
                     </div>
                 </div>
-                <p class="text-gray-600 italic">"Da quando utilizziamo BeautyBook, le prenotazioni sono aumentate del 40% e abbiamo ridotto drasticamente i no-show. L'interfaccia è intuitiva e il supporto clienti è sempre disponibile."</p>
+                <p class="text-gray-600 italic dark:text-gray-300">"Da quando utilizziamo BeautyBook, le prenotazioni sono aumentate del 40% e abbiamo ridotto drasticamente i no-show. L'interfaccia è intuitiva e il supporto clienti è sempre disponibile."</p>
                 <div class="flex mt-4 text-yellow-400">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -284,15 +289,15 @@
             </div>
 
             <!-- Testimonial 3 -->
-            <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
                 <div class="flex items-center mb-4">
                     <img src="https://images.unsplash.com/photo-1506956191951-7a88da4435e5?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="User" class="w-12 h-12 rounded-full mr-4">
                     <div>
                         <h4 class="font-semibold">Giulia Verdi</h4>
-                        <p class="text-sm text-gray-600">Centro Estetico Serenity, Firenze</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Centro Estetico Serenity, Firenze</p>
                     </div>
                 </div>
-                <p class="text-gray-600 italic">"La parte che preferisco di BeautyBook è la possibilità di far prenotare i clienti 24/7. Mi sveglio la mattina e trovo già nuovi appuntamenti. Il sistema di marketing automatizzato è fantastico."</p>
+                <p class="text-gray-600 italic dark:text-gray-300">"La parte che preferisco di BeautyBook è la possibilità di far prenotare i clienti 24/7. Mi sveglio la mattina e trovo già nuovi appuntamenti. Il sistema di marketing automatizzato è fantastico."</p>
                 <div class="flex mt-4 text-yellow-400">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -325,13 +330,13 @@
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <!-- Piano Base -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+            <div class="bg-white dark:bg-gray-800/80 rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
                 <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Base</h3>
-                    <p class="text-gray-600 mb-4">Ideale per saloni piccoli</p>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-300 mb-2">Base</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">Ideale per saloni piccoli</p>
                     <div class="flex items-end">
-                        <span class="text-4xl font-bold text-gray-800">€9,99</span>
-                        <span class="text-gray-600 ml-2">/mese</span>
+                        <span class="text-4xl font-bold text-gray-800 dark:text-purple-300">€9,99</span>
+                        <span class="text-gray-600 dark:text-purple-300 ml-2">/mese</span>
                     </div>
                 </div>
                 <div class="p-6 flex flex-col flex-grow">
@@ -340,25 +345,25 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Prenotazione online base</span>
+                            <span class="text-gray-600 dark:text-gray-300">Prenotazione online base</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Notifiche email</span>
+                            <span class="text-gray-600 dark:text-gray-300">Notifiche email</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Fino a 2 operatori</span>
+                            <span class="text-gray-600 dark:text-gray-300">Fino a 2 operatori</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Profilo base sulla piattaforma</span>
+                            <span class="text-gray-600 dark:text-gray-300">Profilo base sulla piattaforma</span>
                         </li>
                     </ul>
                     <button class="btn btn-outline border border-purple-600 hover:bg-purple-600 text-purple-600 hover:text-white w-full rounded-full mt-8" onclick="scegli('@SubscriptionsConstants.Basic.ToString()')">Prova gratis 14 giorni</button>
@@ -366,14 +371,14 @@
             </div>
 
             <!-- Piano Pro -->
-            <div class="bg-white rounded-lg shadow-lg border-2 border-purple-600 transform scale-105 overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border-2 border-purple-600 transform scale-105 overflow-hidden">
                 <div class="bg-purple-600 text-white text-center py-2 text-sm font-semibold uppercase">il più acquistato</div>
                 <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Pro</h3>
-                    <p class="text-gray-600 mb-4">Perfetto per saloni in crescita</p>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-300 mb-2">Pro</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">Perfetto per saloni in crescita</p>
                     <div class="flex items-end">
-                        <span class="text-4xl font-bold text-gray-800">€29,99</span>
-                        <span class="text-gray-600 ml-2">/mese</span>
+                        <span class="text-4xl font-bold text-gray-800 dark:text-purple-300">€29,99</span>
+                        <span class="text-gray-600 dark:text-purple-300 ml-2">/mese</span>
                     </div>
                 </div>
                 <div class="p-6">
@@ -382,31 +387,31 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Prenotazioni online con scelta operatore</span>
+                            <span class="text-gray-600 dark:text-gray-300">Prenotazioni online con scelta operatore</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Reminder automatici clienti (30 per operatore al mese)</span>
+                            <span class="text-gray-600 dark:text-gray-300">Reminder automatici clienti (30 per operatore al mese)</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Fino a 5 operatori</span>
+                            <span class="text-gray-600 dark:text-gray-300">Fino a 5 operatori</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Statistiche base (clienti, appuntamenti, servizi)</span>
+                            <span class="text-gray-600 dark:text-gray-300">Statistiche base (clienti, appuntamenti, servizi)</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Personalizzazione branding</span>
+                            <span class="text-gray-600 dark:text-gray-300">Personalizzazione branding</span>
                         </li>
                     </ul>
                     <button class="btn btn-primary bg-purple-600 hover:bg-purple-700 border-none w-full rounded-full mt-8 text-white" onclick="scegli('@SubscriptionsConstants.Pro.ToString()')">Prova gratis 14 giorni</button>
@@ -414,13 +419,13 @@
             </div>
 
             <!-- Piano Business -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300 flex flex-col h-full">
                 <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Business</h3>
-                    <p class="text-gray-600 mb-4">Per grandi saloni</p>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-300 mb-2">Business</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-4">Per grandi saloni</p>
                     <div class="flex items-end">
-                        <span class="text-4xl font-bold text-gray-800">€59,99</span>
-                        <span class="text-gray-600 ml-2">/mese</span>
+                        <span class="text-4xl font-bold text-gray-800 dark:text-purple-300">€59,99</span>
+                        <span class="text-gray-600 dark:text-purple-300 ml-2">/mese</span>
                     </div>
                 </div>
                 <div class="p-6 flex flex-col flex-grow">
@@ -429,37 +434,37 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Tutto del piano Pro</span>
+                            <span class="text-gray-600 dark:text-gray-300">Tutto del piano Pro</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Possibilità di iscrizione newsletter</span>
+                            <span class="text-gray-600 dark:text-gray-300">Possibilità di iscrizione newsletter</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Reminder automatici clienti (50 per operatore al mese)</span>
+                            <span class="text-gray-600 dark:text-gray-300">Reminder automatici clienti (50 per operatore al mese)</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Pagamento online</span>
+                            <span class="text-gray-600 dark:text-gray-300">Pagamento online</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Supporto prioritario</span>
+                            <span class="text-gray-600 dark:text-gray-300">Supporto prioritario</span>
                         </li>
                         <li class="flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-3" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                             </svg>
-                            <span class="text-gray-600">Fino a 10 operatori</span>
+                            <span class="text-gray-600 dark:text-gray-300">Fino a 10 operatori</span>
                         </li>
                     </ul>
                     <button class="btn btn-outline border border-purple-600 hover:bg-purple-600 text-purple-600 hover:text-white w-full rounded-full mt-8" onclick="scegli('@SubscriptionsConstants.Business.ToString()')">Prova gratis 14 giorni</button>
