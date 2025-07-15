@@ -191,18 +191,28 @@ else
                     <div id="promo-fields" class="@(!Model.IsPromotion ? "hidden" : "") space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="form-control">
-                                <label asp-for="DataInizioPromozione" class="label">
-                                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">Data Inizio</span>
+                                <label asp-for="PrezzoPromozione" class="label">
+                                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">Prezzo Promozionale (€) *</span>
                                 </label>
-                                <input asp-for="DataInizioPromozione"
-                                       type="date"
-                                       class="input input-bordered w-full focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:bg-gray-700 dark:text-gray-100" />
-                                <span asp-validation-for="DataInizioPromozione" class="label-text-alt text-error mt-1"></span>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">€</span>
+                                    <input asp-for="PrezzoPromozione"
+                                           type="number"
+                                           step="0.01"
+                                           min="0"
+                                           class="input input-bordered w-full pl-8 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:bg-gray-700 dark:text-gray-100"
+                                           placeholder="0.00" />
+                                </div>
+                                <span asp-validation-for="PrezzoPromozione" class="label-text-alt text-error mt-1"></span>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Deve essere inferiore al prezzo standard
+                                </p>
                             </div>
 
                             <div class="form-control">
                                 <label asp-for="DataFinePromozione" class="label">
-                                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">Data Fine</span>
+                                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">Data Fine *</span>
                                 </label>
                                 <input asp-for="DataFinePromozione"
                                        type="date"
@@ -211,6 +221,35 @@ else
                             </div>
                         </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="form-control">
+                                <label asp-for="DataInizioPromozione" class="label">
+                                    <span class="label-text font-medium text-gray-700 dark:text-gray-300">Data Inizio</span>
+                                </label>
+                                <input asp-for="DataInizioPromozione"
+                                       type="date"
+                                       class="input input-bordered w-full focus:border-orange-500 focus:ring-2 focus:ring-orange-200 dark:bg-gray-700 dark:text-gray-100" />
+                                <span asp-validation-for="DataInizioPromozione" class="label-text-alt text-error mt-1"></span>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Lascia vuoto per iniziare immediatamente
+                                </p>
+                            </div>
+
+                            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                                <div class="flex items-start space-x-2">
+                                    <i class="fas fa-percentage text-yellow-500 mt-0.5"></i>
+                                    <div>
+                                        <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">Risparmio</p>
+                                        <p class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                            <span id="discount-percentage">0%</span> di sconto
+                                        </p>
+                                        <p class="text-xs text-yellow-600 dark:text-yellow-400">
+                                            Risparmio: €<span id="discount-amount">0.00</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
                             <div class="flex items-start space-x-3">
                                 <i class="fas fa-info-circle text-orange-500 mt-0.5"></i>
@@ -223,7 +262,6 @@ else
                                 </div>
                             </div>
                         </div>
-                    </div>
                 </div>
 
                 <!-- Servizi Suggeriti -->
@@ -301,8 +339,29 @@ else
                 futureDate.setDate(futureDate.getDate() + 30);
                 endDate.value = futureDate.toISOString().split('T')[0];
             }
+             // Calcola lo sconto se i prezzi sono già inseriti
+             calculateDiscount();
         } else {
             promoFields.classList.add('hidden');
+             // Reset calcolo sconto
+            document.getElementById('discount-percentage').textContent = '0%';
+            document.getElementById('discount-amount').textContent = '0.00';
+        }
+    }
+     // Calcola e mostra lo sconto
+    function calculateDiscount() {
+        const prezzoStandard = parseFloat(document.querySelector('input[name="Prezzo"]').value) || 0;
+        const prezzoPromo = parseFloat(document.querySelector('input[name="PrezzoPromozione"]').value) || 0;
+
+        if (prezzoStandard > 0 && prezzoPromo > 0 && prezzoPromo < prezzoStandard) {
+            const discount = prezzoStandard - prezzoPromo;
+            const discountPercentage = ((discount / prezzoStandard) * 100).toFixed(0);
+
+            document.getElementById('discount-percentage').textContent = discountPercentage + '%';
+            document.getElementById('discount-amount').textContent = discount.toFixed(2);
+        } else {
+            document.getElementById('discount-percentage').textContent = '0%';
+            document.getElementById('discount-amount').textContent = '0.00';
         }
     }
 
@@ -337,19 +396,52 @@ else
             durata.classList.remove('border-red-500');
         }
 
-        // Validazione date promozione se attivata
+         // Validazione date promozione se attivata
         const isPromotion = document.querySelector('input[name="IsPromotion"]').checked;
         if (isPromotion) {
-            const startDate = document.querySelector('input[name="DataInizioPromozione"]');
+            const prezzoPromo = document.querySelector('input[name="PrezzoPromozione"]');
             const endDate = document.querySelector('input[name="DataFinePromozione"]');
 
-            if (startDate.value && endDate.value && new Date(startDate.value) >= new Date(endDate.value)) {
+            // Validazione prezzo promozionale
+            if (!prezzoPromo.value || parseFloat(prezzoPromo.value) <= 0) {
+                isValid = false;
+                prezzoPromo.classList.add('border-red-500');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Prezzo promozionale mancante',
+                    text: 'Inserisci un prezzo promozionale valido.',
+                    confirmButtonColor: '#3B82F6'
+                });
+            } else if (parseFloat(prezzoPromo.value) >= parseFloat(prezzo.value)) {
+                isValid = false;
+                prezzoPromo.classList.add('border-red-500');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Prezzo promozionale non valido',
+                    text: 'Il prezzo promozionale deve essere inferiore al prezzo standard.',
+                    confirmButtonColor: '#3B82F6'
+                });
+            } else {
+                prezzoPromo.classList.remove('border-red-500');
+            }
+
+            // Validazione data fine
+            if (!endDate.value) {
                 isValid = false;
                 endDate.classList.add('border-red-500');
                 Swal.fire({
                     icon: 'error',
-                    title: 'Date non valide',
-                    text: 'La data di fine promozione deve essere successiva alla data di inizio.',
+                    title: 'Data fine mancante',
+                    text: 'Inserisci una data di fine promozione.',
+                    confirmButtonColor: '#3B82F6'
+                });
+            } else if (new Date(endDate.value) <= new Date()) {
+                isValid = false;
+                endDate.classList.add('border-red-500');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Data non valida',
+                    text: 'La data di fine promozione deve essere futura.',
                     confirmButtonColor: '#3B82F6'
                 });
             } else {
@@ -431,17 +523,35 @@ else
         });
 
         // Validazione in tempo reale
-        ['Nome', 'Prezzo', 'Durata'].forEach(fieldName => {
+        ['Nome', 'Prezzo', 'Durata', 'PrezzoPromozione'].forEach(fieldName => {
             const field = document.querySelector(`input[name="${fieldName}"]`);
             if (field) {
                 field.addEventListener('input', function() {
                     this.classList.remove('border-red-500');
+
+                    // Calcola lo sconto quando cambia il prezzo o il prezzo promozionale
+                    if (fieldName === 'Prezzo' || fieldName === 'PrezzoPromozione') {
+                        calculateDiscount();
+                    }
                 });
             }
         });
 
+        // Event listener per il calcolo dello sconto
+        const prezzoInput = document.querySelector('input[name="Prezzo"]');
+        const prezzoPromoInput = document.querySelector('input[name="PrezzoPromozione"]');
+
+        if (prezzoInput) {
+            prezzoInput.addEventListener('change', calculateDiscount);
+        }
+
+        if (prezzoPromoInput) {
+            prezzoPromoInput.addEventListener('change', calculateDiscount);
+        }
+
         // Inizializza le date di promozione se già selezionata
         togglePromoFields();
+        calculateDiscount();
     });
 </script>
 

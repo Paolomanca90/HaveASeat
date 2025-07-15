@@ -131,8 +131,29 @@ namespace HaveASeat.Controllers
 			{
 				ModelState.AddModelError("Durata", "La durata deve essere maggiore di zero.");
 			}
+            // Validazione promozione
+            if (servizio.IsPromotion)
+            {
+                if (servizio.PrezzoPromozione <= 0)
+                {
+                    ModelState.AddModelError("PrezzoPromozione", "Il prezzo promozionale deve essere maggiore di zero.");
+                }
+                else if (servizio.PrezzoPromozione >= servizio.Prezzo)
+                {
+                    ModelState.AddModelError("PrezzoPromozione", "Il prezzo promozionale deve essere inferiore al prezzo standard.");
+                }
 
-			if (ModelState.IsValid)
+                if (servizio.DataFinePromozione <= DateTime.Now)
+                {
+                    ModelState.AddModelError("DataFinePromozione", "La data di fine promozione deve essere futura.");
+                }
+            }
+            else
+            {
+                // Se la promozione non è attiva, azzera il prezzo promozionale
+                servizio.PrezzoPromozione = 0;
+            }
+            if (ModelState.IsValid)
 			{
 				servizio.ServizioId = Guid.NewGuid();
 				servizio.SaloneId = saloneId;

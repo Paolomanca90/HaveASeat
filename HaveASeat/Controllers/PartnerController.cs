@@ -932,6 +932,7 @@ namespace HaveASeat.Controllers
 				SDI = model.SDI,
 				ApplicationUserId = userId,
 				ApplicationUser = user,
+				Stato = Stato.Attivo
 			};
 
 			_context.Salone.Add(salone);
