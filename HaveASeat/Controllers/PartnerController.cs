@@ -299,13 +299,13 @@ namespace HaveASeat.Controllers
 		{
 			// Simulazione dati - in produzione questi dovrebbero venire dal database
 			viewModel.TopServizi = new List<TopServizioViewModel>
-	{
-		new TopServizioViewModel { Nome = "Taglio e Piega", NumeroPrenotazioni = 34, IncassoTotale = 1360 },
-		new TopServizioViewModel { Nome = "Colorazione Capelli", NumeroPrenotazioni = 28, IncassoTotale = 2240 },
-		new TopServizioViewModel { Nome = "Manicure", NumeroPrenotazioni = 21, IncassoTotale = 840 },
-		new TopServizioViewModel { Nome = "Trattamento Viso", NumeroPrenotazioni = 15, IncassoTotale = 1050 },
-		new TopServizioViewModel { Nome = "Massaggio Rilassante", NumeroPrenotazioni = 12, IncassoTotale = 960 }
-	};
+			{
+				new TopServizioViewModel { Nome = "Taglio e Piega", NumeroPrenotazioni = 34, IncassoTotale = 1360 },
+				new TopServizioViewModel { Nome = "Colorazione Capelli", NumeroPrenotazioni = 28, IncassoTotale = 2240 },
+				new TopServizioViewModel { Nome = "Manicure", NumeroPrenotazioni = 21, IncassoTotale = 840 },
+				new TopServizioViewModel { Nome = "Trattamento Viso", NumeroPrenotazioni = 15, IncassoTotale = 1050 },
+				new TopServizioViewModel { Nome = "Massaggio Rilassante", NumeroPrenotazioni = 12, IncassoTotale = 960 }
+			};
 		}
 
 		private async Task LoadAppuntamentiOggi(DashboardViewModel viewModel)
@@ -653,6 +653,8 @@ namespace HaveASeat.Controllers
 					var selectedPianoId = TempData["SelectedPianoId"].ToString();
 					checkPiano = new PianoSelezionato
 					{
+						ApplicationUserId = userId,
+						PianoSelezionatoId = Guid.NewGuid(),
 						AbbonamentoId = Guid.Parse(selectedPianoId)
 					};
 				}
@@ -931,8 +933,7 @@ namespace HaveASeat.Controllers
 				RagioneSociale = model.RagioneSociale,
 				SDI = model.SDI,
 				ApplicationUserId = userId,
-				ApplicationUser = user,
-				Stato = Stato.Attivo
+				ApplicationUser = user
 			};
 
 			_context.Salone.Add(salone);

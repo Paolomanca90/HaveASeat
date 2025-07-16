@@ -1,9 +1,11 @@
+using DocumentFormat.OpenXml.Spreadsheet;
 using HaveASeat.Data;
 using HaveASeat.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Session;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using System.Security.Claims;
 
 namespace HaveASeat.Controllers
 {
@@ -130,11 +132,25 @@ namespace HaveASeat.Controllers
         }
 
         [HttpPost]
-		public IActionResult SelectPlan(string id)
+		public async Task<IActionResult> SelectPlan(string id)
 		{
 			TempData["SelectedPianoId"] = id;
-            var piano = _context.Abbonamento.Find(Guid.Parse(id));
-			return Json(new { success = true, redirectUrl = "/Auth/NewPartner", selectedPlan = piano }); 
+            var abbonamento = _context.Abbonamento.Find(Guid.Parse(id));
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var user = _context.Users.Find(userId);
+			if (user == null)
+				return BadRequest();
+
+			var piano = new PianoSelezionato
+			{
+				PianoSelezionatoId = Guid.NewGuid(),
+				AbbonamentoId = Guid.Parse(id),
+				ApplicationUserId = user.Id,
+				Confermato = false,
+			};
+			_context.Add(piano);
+			await _context.SaveChangesAsync();
+			return Json(new { success = true, redirectUrl = "/Auth/NewPartner", selectedPlan = abbonamento }); 
 		}
 
 		public IActionResult Privacy()
