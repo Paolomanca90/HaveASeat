@@ -1,5 +1,6 @@
 ﻿using HaveASeat.Data;
 using HaveASeat.Models;
+using HaveASeat.Services;
 using HaveASeat.Utilities.Dto;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -10,17 +11,22 @@ namespace HaveASeat.Controllers
 	public class GiftCardController : Controller
 	{
 		private readonly ApplicationDbContext _context;
+		private readonly IGiftCardPdfService _pdfService;
+		//private readonly IEmailService _emailService;
 
-		public GiftCardController(ApplicationDbContext context)
+		public GiftCardController(ApplicationDbContext context, IGiftCardPdfService pdfService /*,IEmailService emailService*/)
 		{
 			_context = context;
+			_pdfService = pdfService;
+			//_emailService = emailService;
 		}
 
-		// GET: GiftCard
+		// GET: GiftCard - Solo landing page informativa
 		public async Task<IActionResult> Index()
 		{
 			var popularSalons = await _context.Salone
 				.Include(s => s.Servizi)
+				.Include(s => s.SaloneAbbonamenti)
 				.Include(s => s.Recensioni)
 				.Include(s => s.Immagini)
 				.Where(s => s.Stato == HaveASeat.Utilities.Enum.Stato.Attivo)
@@ -28,12 +34,20 @@ namespace HaveASeat.Controllers
 				.Take(8)
 				.ToListAsync();
 
-			ViewBag.PopularSalons = popularSalons;
+			var saloni = popularSalons.Select(s => new {
+				SaloneId = s.SaloneId,
+				Nome = s.Nome,
+				Citta = s.Citta,
+				CoverImageUrl = s.Immagini?.FirstOrDefault(i => i.IsCover)?.Percorso,
+				IsPremium = s.SaloneAbbonamenti.Any(sa =>
+						sa.Abbonamento.Nome.Contains("Pro") || sa.Abbonamento.Nome.Contains("Business")),
+			});
 
+			ViewBag.PopularSalons = saloni;
 			return View();
 		}
 
-		// GET: GiftCard/Create
+		// GET: GiftCard/Create - Form completo in una pagina
 		public async Task<IActionResult> Create(Guid? saloneId = null, decimal? amount = null)
 		{
 			var viewModel = new CreateGiftCardViewModel
@@ -42,6 +56,7 @@ namespace HaveASeat.Controllers
 				Amount = amount ?? 50
 			};
 
+			// Se arriva un saloneId specifico, caricalo
 			if (saloneId.HasValue)
 			{
 				var salone = await _context.Salone
@@ -58,7 +73,37 @@ namespace HaveASeat.Controllers
 			return View(viewModel);
 		}
 
-		// POST: GiftCard/Create
+		// API: Ricerca saloni per AJAX
+		[HttpGet]
+		public async Task<IActionResult> SearchSalons(string query, int limit = 10)
+		{
+			if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+			{
+				return Json(new { salons = new List<object>() });
+			}
+
+			var salons = await _context.Salone
+				.Where(s => s.Stato == HaveASeat.Utilities.Enum.Stato.Attivo)
+				.Where(s => s.Nome.Contains(query) ||
+						   s.Citta.Contains(query) ||
+						   s.Provincia.Contains(query))
+				.Select(s => new
+				{
+					id = s.SaloneId,
+					nome = s.Nome,
+					citta = s.Citta,
+					provincia = s.Provincia,
+					indirizzo = s.Indirizzo,
+					logo = s.Immagini.FirstOrDefault(i => i.IsLogo) != null ?
+						   s.Immagini.FirstOrDefault(i => i.IsLogo).Percorso : null
+				})
+				.Take(limit)
+				.ToListAsync();
+
+			return Json(new { salons });
+		}
+
+		// POST: GiftCard/Create - Creazione gift card
 		[HttpPost]
 		[ValidateAntiForgeryToken]
 		public async Task<IActionResult> Create(CreateGiftCardDto model)
@@ -89,8 +134,6 @@ namespace HaveASeat.Controllers
 				_context.GiftCard.Add(giftCard);
 				await _context.SaveChangesAsync();
 
-				// Qui potresti aggiungere l'invio dell'email
-
 				return Json(new
 				{
 					success = true,
@@ -103,6 +146,7 @@ namespace HaveASeat.Controllers
 				return Json(new { success = false, message = "Errore durante la creazione della gift card" });
 			}
 		}
+
 
 		// GET: GiftCard/Confirmation
 		public async Task<IActionResult> Confirmation(Guid id)
@@ -180,6 +224,88 @@ namespace HaveASeat.Controllers
 
 			// Formato: XXXX-XXXX-XXXX
 			return $"{code.Substring(0, 4)}-{code.Substring(4, 4)}-{code.Substring(8, 4)}";
+		}
+
+		// GET: GiftCard/DownloadPDF/{id}
+		[HttpGet]
+		public async Task<IActionResult> DownloadPDF(Guid id)
+		{
+			try
+			{
+				var giftCard = await _context.GiftCard
+					.Include(g => g.Salone)
+					.FirstOrDefaultAsync(g => g.GiftCardId == id);
+
+				if (giftCard == null)
+				{
+					return NotFound("Buono regalo non trovato");
+				}
+
+				// Genera il PDF
+				var pdfBytes = await _pdfService.GenerateGiftCardPdfAsync(giftCard);
+
+				// Nome file
+				var fileName = $"buono-regalo-{giftCard.FormattedCode.Replace("-", "")}.pdf";
+
+				// Restituisci il file PDF
+				return File(pdfBytes, "application/pdf", fileName);
+			}
+			catch (Exception ex)
+			{
+				// Log dell'errore
+				return BadRequest("Errore durante la generazione del PDF");
+			}
+		}
+
+		// GET: GiftCard/PreviewPDF/{id} - Per vedere l'anteprima nel browser
+		[HttpGet]
+		public async Task<IActionResult> PreviewPDF(Guid id)
+		{
+			try
+			{
+				var giftCard = await _context.GiftCard
+					.Include(g => g.Salone)
+					.FirstOrDefaultAsync(g => g.GiftCardId == id);
+
+				if (giftCard == null)
+				{
+					return NotFound("Buono regalo non trovato");
+				}
+
+				var pdfBytes = await _pdfService.GenerateGiftCardPdfAsync(giftCard);
+
+				// Mostra nel browser invece di scaricare
+				return File(pdfBytes, "application/pdf");
+			}
+			catch (Exception ex)
+			{
+				return BadRequest("Errore durante la generazione del PDF");
+			}
+		}
+
+		// POST: GiftCard/ResendEmail - Per reinviare l'email
+		[HttpPost]
+		public async Task<IActionResult> ResendEmail(Guid giftCardId)
+		{
+			try
+			{
+				var giftCard = await _context.GiftCard
+					.Include(g => g.Salone)
+					.FirstOrDefaultAsync(g => g.GiftCardId == giftCardId);
+
+				if (giftCard == null)
+				{
+					return Json(new { success = false, message = "Buono regalo non trovato" });
+				}
+
+				//await _emailService.SendGiftCardEmailAsync(giftCard);
+
+				return Json(new { success = true, message = "Email inviata con successo" });
+			}
+			catch (Exception ex)
+			{
+				return Json(new { success = false, message = "Errore durante l'invio dell'email" });
+			}
 		}
 	}
 

@@ -23,6 +23,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISlotService, SlotService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IGiftCardPdfService, GiftCardPdfService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {

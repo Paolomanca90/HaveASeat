@@ -106,7 +106,7 @@
                 <div class="success-animation inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
                     <i class="fas fa-check text-3xl text-green-600"></i>
                 </div>
-                <h1 class="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <h1 class="text-4xl md:text-5xl font-bold pb-5 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                     🎉 Buono Regalo Creato!
                 </h1>
                 <p class="text-xl text-gray-600 dark:text-gray-300">
@@ -118,7 +118,7 @@
 
                 <!-- Gift Card Display -->
                 <div class="space-y-6">
-                    <div class="text-center">
+                    <div>
                         <h2 class="text-2xl font-bold mb-4 dark:text-white">Il tuo buono regalo</h2>
 
                         <!-- Final Gift Card -->
@@ -142,11 +142,13 @@
                                 <div class="text-sm opacity-75">Per: @Model.RecipientName</div>
                             </div>
 
-                            <div class="absolute bottom-6 left-6 right-6 relative z-10">
-                                <div class="text-xs opacity-75 mb-1">Valido fino al</div>
-                                <div class="text-sm font-medium">@Model.ExpiryDate.ToString("dd/MM/yyyy")</div>
+                            <div class="absolute bottom-0 relative z-10 mt-2">
+                                <div class="flex justify-between">
+                                    <div class="text-xs opacity-75 mb-1">Valido fino al</div>
+                                    <div class="text-sm font-medium">@Model.ExpiryDate.ToString("dd/MM/yyyy")</div>
+                                </div>
                                 <div class="mt-2 text-sm font-mono tracking-wider">
-                                    @Model.FormattedCode
+                                    @Model.Code
                                 </div>
                             </div>
                         </div>
@@ -169,40 +171,8 @@
                     </div>
                 </div>
 
-                <!-- Order Details & Next Steps -->
+                <!-- Next Steps -->
                 <div class="space-y-6">
-
-                    <!-- Order Summary -->
-                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
-                        <h3 class="text-xl font-bold mb-4 dark:text-white">
-                            <i class="fas fa-receipt text-purple-600 mr-2"></i>
-                            Dettagli ordine
-                        </h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600 dark:text-gray-400">Codice buono:</span>
-                                <span class="font-mono font-semibold dark:text-white">@Model.FormattedCode</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600 dark:text-gray-400">Importo:</span>
-                                <span class="font-semibold text-lg text-purple-600">€@Model.Amount</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600 dark:text-gray-400">Destinatario:</span>
-                                <span class="font-semibold dark:text-white">@Model.RecipientName</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600 dark:text-gray-400">Valido fino al:</span>
-                                <span class="font-semibold dark:text-white">@Model.ExpiryDate.ToString("dd/MM/yyyy")</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600 dark:text-gray-400">Tipo:</span>
-                                <span class="font-semibold dark:text-white">
-                                    @(Model.SaloneId.HasValue ? "Salone specifico" : "Universale")
-                                </span>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- What's Next -->
                     <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6">
@@ -388,16 +358,54 @@
             }
 
             function generatePDF() {
-                // Implementa la generazione PDF del buono regalo
+                // Mostra loading
                 showAlert('Generazione PDF in corso...', 'success');
 
-                // Simulazione - in produzione, chiamare l'endpoint per generare il PDF
-                setTimeout(() => {
+                // Disabilita il bottone temporaneamente
+                const pdfBtn = $('.download-btn:contains("Scarica")');
+                const originalText = pdfBtn.html();
+                pdfBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Generazione...');
+
+                // Chiama l'endpoint per generare il PDF
+                fetch('/GiftCard/DownloadPDF/@Model.GiftCardId', {
+                    method: 'GET',
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Crea un URL temporaneo per il blob
+                    const url = window.URL.createObjectURL(blob);
+
+                    // Crea un link temporaneo per il download
                     const link = document.createElement('a');
-                    link.href = '/GiftCard/DownloadPDF/@Model.GiftCardId';
-                    link.download = 'buono-regalo-@Model.FormattedCode' + '.pdf';
+                    link.href = url;
+                    link.download = 'buono-regalo-@(Model.Code).pdf';
+
+                    // Aggiungi al DOM, clicca e rimuovi
+                    document.body.appendChild(link);
                     link.click();
-                }, 1000);
+                    document.body.removeChild(link);
+
+                    // Pulisci l'URL temporaneo
+                    window.URL.revokeObjectURL(url);
+
+                    showAlert('PDF scaricato con successo!', 'success');
+                })
+                .catch(error => {
+                    console.error('Errore download PDF:', error);
+                    showAlert('Errore durante il download del PDF: ' + error.message, 'error');
+                })
+                .finally(() => {
+                    // Ripristina il bottone
+                    pdfBtn.prop('disabled', false).html(originalText);
+                });
             }
 
             function resendEmail() {
