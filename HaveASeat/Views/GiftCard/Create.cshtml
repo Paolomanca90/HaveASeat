@@ -1,0 +1,809 @@
+﻿@model HaveASeat.Controllers.CreateGiftCardViewModel
+@{
+    ViewData["Title"] = "Crea Buono Regalo";
+}
+
+@section Styles {
+    <style>
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+        
+        .step-indicator.active {
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: white;
+            transform: scale(1.1);
+        }
+        
+        .step-indicator.completed {
+            background: #10b981;
+            color: white;
+        }
+        
+        .gift-card-designer {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gift-card-designer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+            opacity: 0.3;
+        }
+
+        .form-step {
+            transition: all 0.5s ease;
+        }
+        
+        .form-step.hidden {
+            opacity: 0;
+            transform: translateX(20px);
+            display: none;
+        }
+        
+        .design-option {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .design-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .design-option.selected {
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124,58,237,0.2);
+        }
+
+        .amount-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+        }
+        
+        .amount-btn {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .amount-btn:hover {
+            border-color: #7c3aed;
+            transform: translateY(-2px);
+        }
+        
+        .amount-btn.selected {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            color: white;
+            transform: translateY(-2px);
+        }
+    </style>
+}
+
+<!-- Progress Indicator -->
+<div class="bg-white dark:bg-gray-800 shadow-sm">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-center max-w-4xl mx-auto">
+            <div class="flex items-center space-x-4">
+                <!-- Step 1 -->
+                <div class="flex items-center">
+                    <div class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-sm font-semibold active" id="step1">
+                        1
+                    </div>
+                    <span class="ml-2 text-sm font-medium dark:text-white">Importo & Tipo</span>
+                </div>
+                
+                <div class="w-12 h-0.5 bg-gray-300"></div>
+                
+                <!-- Step 2 -->
+                <div class="flex items-center">
+                    <div class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-sm font-semibold" id="step2">
+                        2
+                    </div>
+                    <span class="ml-2 text-sm font-medium dark:text-white">Personalizza</span>
+                </div>
+                
+                <div class="w-12 h-0.5 bg-gray-300"></div>
+                
+                <!-- Step 3 -->
+                <div class="flex items-center">
+                    <div class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-sm font-semibold" id="step3">
+                        3
+                    </div>
+                    <span class="ml-2 text-sm font-medium dark:text-white">Destinatario</span>
+                </div>
+                
+                <div class="w-12 h-0.5 bg-gray-300"></div>
+                
+                <!-- Step 4 -->
+                <div class="flex items-center">
+                    <div class="step-indicator w-10 h-10 rounded-full border-2 border-gray-300 flex items-center justify-center text-sm font-semibold" id="step4">
+                        4
+                    </div>
+                    <span class="ml-2 text-sm font-medium dark:text-white">Pagamento</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+    <div class="container mx-auto px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold mb-4 dark:text-white">Crea il tuo buono regalo</h1>
+                <p class="text-xl text-gray-600 dark:text-gray-300">Personalizza ogni dettaglio per un regalo indimenticabile</p>
+            </div>
+
+            <form id="giftCardForm" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Form Steps -->
+                <div class="space-y-8">
+                    <!-- Step 1: Amount & Type -->
+                    <div class="form-step bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg" id="stepContent1">
+                        <h2 class="text-2xl font-bold mb-6 dark:text-white">
+                            <i class="fas fa-euro-sign text-purple-600 mr-3"></i>
+                            Scegli importo e tipo
+                        </h2>
+                        
+                        <!-- Predefined Amounts -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Importi popolari
+                            </label>
+                            <div class="amount-selector">
+                                <div class="amount-btn" data-amount="25">
+                                    <div class="text-lg font-bold">€25</div>
+                                    <div class="text-xs text-gray-500">Trattamento base</div>
+                                </div>
+                                <div class="amount-btn selected" data-amount="50">
+                                    <div class="text-lg font-bold">€50</div>
+                                    <div class="text-xs">Più popolare</div>
+                                </div>
+                                <div class="amount-btn" data-amount="75">
+                                    <div class="text-lg font-bold">€75</div>
+                                    <div class="text-xs text-gray-500">Trattamento premium</div>
+                                </div>
+                                <div class="amount-btn" data-amount="100">
+                                    <div class="text-lg font-bold">€100</div>
+                                    <div class="text-xs text-gray-500">Giornata di relax</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Amount -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Importo personalizzato (€10 - €1000)
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">€</span>
+                                <input type="number" id="customAmount" min="10" max="1000" 
+                                       class="w-full pl-8 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                              focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+
+                        <!-- Gift Card Type -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Tipo di buono regalo
+                            </label>
+                            <div class="space-y-3">
+                                <label class="flex items-start p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-purple-300 dark:bg-gray-700">
+                                    <input type="radio" name="giftCardType" value="generic" checked class="mt-1 mr-3">
+                                    <div class="flex-1">
+                                        <div class="font-medium dark:text-white">🌟 Buono universale</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300">Valido in tutti i saloni partner della rete HaveASeat</div>
+                                        <div class="text-xs text-green-600 mt-1">✓ Massima flessibilità • ✓ Oltre 10.000 saloni</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="flex items-start p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-purple-300 dark:bg-gray-700">
+                                    <input type="radio" name="giftCardType" value="specific" class="mt-1 mr-3">
+                                    <div class="flex-1">
+                                        <div class="font-medium dark:text-white">🎯 Salone specifico</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300">Valido solo nel salone che preferisci</div>
+                                        <div class="text-xs text-blue-600 mt-1">✓ Regalo mirato • ✓ Supporti il tuo salone preferito</div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Salon Selection (Hidden by default) -->
+                        <div id="salonSelection" class="mb-6 hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Seleziona il salone
+                            </label>
+                            @if (Model.SelectedSalone != null)
+                            {
+                                <div class="border-2 border-purple-200 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20">
+                                    <div class="flex items-center">
+                                        <div class="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white mr-3">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-medium dark:text-white">@Model.SelectedSalone.Nome</div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-300">@Model.SelectedSalone.Citta, @Model.SelectedSalone.Provincia</div>
+                                        </div>
+                                    </div>
+                                    <input type="hidden" id="selectedSalonId" value="@Model.SelectedSalone.SaloneId">
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="relative">
+                                    <input type="text" id="salonSearch" placeholder="Cerca il salone..."
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                  focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                                    <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                </div>
+                                <div id="salonResults" class="mt-2 hidden"></div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Design Customization -->
+                    <div class="form-step bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hidden" id="stepContent2">
+                        <h2 class="text-2xl font-bold mb-6 dark:text-white">
+                            <i class="fas fa-palette text-purple-600 mr-3"></i>
+                            Personalizza il design
+                        </h2>
+                        
+                        <!-- Design Templates -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Scegli il design
+                            </label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="design-option border-2 border-gray-200 rounded-lg p-4 selected" data-design="elegant">
+                                    <div class="h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg mb-2"></div>
+                                    <div class="text-sm font-medium text-center dark:text-white">Elegante</div>
+                                </div>
+                                <div class="design-option border-2 border-gray-200 rounded-lg p-4" data-design="ocean">
+                                    <div class="h-24 bg-gradient-to-br from-blue-500 to-teal-500 rounded-lg mb-2"></div>
+                                    <div class="text-sm font-medium text-center dark:text-white">Oceano</div>
+                                </div>
+                                <div class="design-option border-2 border-gray-200 rounded-lg p-4" data-design="sunset">
+                                    <div class="h-24 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg mb-2"></div>
+                                    <div class="text-sm font-medium text-center dark:text-white">Tramonto</div>
+                                </div>
+                                <div class="design-option border-2 border-gray-200 rounded-lg p-4" data-design="forest">
+                                    <div class="h-24 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg mb-2"></div>
+                                    <div class="text-sm font-medium text-center dark:text-white">Natura</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Message -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Messaggio personalizzato (opzionale)
+                            </label>
+                            <textarea id="personalMessage" rows="4" maxlength="250" 
+                                      placeholder="Scrivi un messaggio speciale per accompagnare il tuo regalo..."
+                                      class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                             focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white"></textarea>
+                            <div class="text-xs text-gray-500 text-right mt-1">
+                                <span id="messageCounter">0</span>/250 caratteri
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Recipient Details -->
+                    <div class="form-step bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hidden" id="stepContent3">
+                        <h2 class="text-2xl font-bold mb-6 dark:text-white">
+                            <i class="fas fa-user-friends text-purple-600 mr-3"></i>
+                            Destinatario del regalo
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Recipient Info -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold dark:text-white">👤 Chi riceverà il regalo?</h3>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Nome completo *
+                                    </label>
+                                    <input type="text" id="recipientName" required
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                  focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Email destinatario *
+                                    </label>
+                                    <input type="email" id="recipientEmail" required
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                  focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                                    <div class="text-xs text-gray-500 mt-1">Il buono verrà inviato a questo indirizzo</div>
+                                </div>
+                            </div>
+
+                            <!-- Sender Info -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold dark:text-white">📝 I tuoi dati</h3>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Il tuo nome *
+                                    </label>
+                                    <input type="text" id="senderName" required
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                  focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        La tua email *
+                                    </label>
+                                    <input type="email" id="senderEmail" required
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
+                                                  focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white">
+                                    <div class="text-xs text-gray-500 mt-1">Per la ricevuta e comunicazioni importanti</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Options -->
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold mb-4 dark:text-white">📅 Quando inviare il buono?</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-purple-300">
+                                    <input type="radio" name="deliveryTime" value="immediate" checked class="mr-3">
+                                    <div>
+                                        <div class="font-medium dark:text-white">📧 Invia subito</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300">Il buono verrà inviato immediatamente dopo l'acquisto</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="flex items-center p-3 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-purple-300">
+                                    <input type="radio" name="deliveryTime" value="scheduled" class="mr-3">
+                                    <div class="flex-1">
+                                        <div class="font-medium dark:text-white">📅 Programma invio</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-300">Scegli quando inviare il buono</div>
+                                        <div class="mt-2 hidden" id="scheduledDate">
+                                            <input type="date" id="deliveryDate" min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                                                   class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white">
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Payment -->
+                    <div class="form-step bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hidden" id="stepContent4">
+                        <h2 class="text-2xl font-bold mb-6 dark:text-white">
+                            <i class="fas fa-credit-card text-purple-600 mr-3"></i>
+                            Riepilogo e pagamento
+                        </h2>
+                        
+                        <!-- Order Summary -->
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 mb-6">
+                            <h3 class="text-lg font-semibold mb-4 dark:text-white">📋 Riepilogo ordine</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="dark:text-gray-300">Importo buono regalo:</span>
+                                    <span class="font-semibold dark:text-white" id="summaryAmount">€50</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="dark:text-gray-300">Commissione servizio:</span>
+                                    <span class="font-semibold dark:text-white">€0</span>
+                                </div>
+                                <div class="border-t pt-3 flex justify-between text-lg font-bold">
+                                    <span class="dark:text-white">Totale:</span>
+                                    <span class="text-purple-600" id="summaryTotal">€50</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold mb-4 dark:text-white">💳 Metodo di pagamento</h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-purple-300">
+                                    <input type="radio" name="paymentMethod" value="card" checked class="mr-3">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-credit-card text-blue-600 text-xl mr-3"></i>
+                                        <div>
+                                            <div class="font-medium dark:text-white">Carta di credito/debito</div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-300">Visa, Mastercard, American Express</div>
+                                        </div>
+                                    </div>
+                                </label>
+                                
+                                <label class="flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer hover:border-purple-300">
+                                    <input type="radio" name="paymentMethod" value="paypal" class="mr-3">
+                                    <div class="flex items-center">
+                                        <i class="fab fa-paypal text-blue-800 text-xl mr-3"></i>
+                                        <div>
+                                            <div class="font-medium dark:text-white">PayPal</div>
+                                            <div class="text-sm text-gray-600 dark:text-gray-300">Paga in modo sicuro con PayPal</div>
+                                        </div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="mb-6">
+                            <label class="flex items-start">
+                                <input type="checkbox" id="acceptTerms" required class="mt-1 mr-3">
+                                <div class="text-sm text-gray-600 dark:text-gray-300">
+                                    Accetto i <a href="#" class="text-purple-600 hover:underline">termini e condizioni</a> 
+                                    e la <a href="#" class="text-purple-600 hover:underline">privacy policy</a>. 
+                                    Il buono regalo è valido per 12 mesi dalla data di acquisto.
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between">
+                        <button type="button" id="prevBtn" class="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:border-gray-400 transition-colors hidden">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Indietro
+                        </button>
+                        
+                        <div class="flex gap-3">
+                            <button type="button" id="nextBtn" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                                Continua
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                            
+                            <button type="submit" id="submitBtn" class="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors hidden">
+                                <i class="fas fa-check mr-2"></i>
+                                Completa acquisto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Preview -->
+                <div class="lg:sticky lg:top-8">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg">
+                        <h3 class="text-xl font-semibold mb-4 text-center dark:text-white">
+                            <i class="fas fa-eye mr-2"></i>
+                            Anteprima dal vivo
+                        </h3>
+                        
+                        <div class="flex justify-center mb-6">
+                            <div id="giftCardPreview" class="gift-card-designer w-80 h-48 p-6 text-white relative">
+                                <div class="flex justify-between items-start mb-4 relative z-10">
+                                    <div class="text-sm font-medium opacity-90">BUONO REGALO</div>
+                                    <div class="text-right">
+                                        <div id="previewAmount" class="text-3xl font-bold">€50</div>
+                                        <div class="text-xs opacity-75">HAVEASEAT</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="relative z-10">
+                                    <div id="previewMessage" class="text-sm mb-2 italic opacity-90 hidden"></div>
+                                    <div id="previewSalon" class="text-sm font-medium">Valido in tutti i saloni partner</div>
+                                    <div id="previewRecipient" class="text-sm opacity-75 mt-1"></div>
+                                </div>
+                                
+                                <div class="absolute bottom-0 left-6 right-6 relative z-10">
+                                    <div class="text-xs opacity-75 mb-1">Valido fino al</div>
+                                    <div class="text-sm font-medium">@DateTime.Now.AddYears(1).ToString("dd/MM/yyyy")</div>
+                                    <div class="mt-2 text-xs font-mono tracking-wider opacity-75">
+                                        XXXX-XXXX-XXXX
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Details -->
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Tipo:</span>
+                                <span id="previewType" class="font-medium dark:text-white">Universale</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Design:</span>
+                                <span id="previewDesign" class="font-medium dark:text-white">Elegante</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600 dark:text-gray-400">Invio:</span>
+                                <span id="previewDelivery" class="font-medium dark:text-white">Immediato</span>
+                            </div>
+                        </div>
+
+                        <!-- Tips -->
+                        <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 dark:text-blue-300 mb-2">
+                                <i class="fas fa-lightbulb mr-2"></i>
+                                Suggerimento
+                            </h4>
+                            <p class="text-sm text-blue-700 dark:text-blue-300">
+                                I buoni regalo sono il regalo perfetto per ogni occasione! 
+                                Validi per 12 mesi e utilizzabili per qualsiasi servizio.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let currentStep = 1;
+            let selectedAmount = @Model.Amount;
+            let selectedDesign = 'elegant';
+            let selectedSalonId = @Json.Serialize(Model.SaloneId);
+
+            // Initialize form
+            updatePreview();
+            updateStepIndicator();
+
+            // Amount selection
+            $('.amount-btn').click(function() {
+                $('.amount-btn').removeClass('selected');
+                $(this).addClass('selected');
+                selectedAmount = $(this).data('amount');
+                $('#customAmount').val('');
+                updatePreview();
+            });
+
+            // Custom amount
+            $('#customAmount').on('input', function() {
+                const customValue = parseFloat($(this).val());
+                if (customValue >= 10 && customValue <= 1000) {
+                    $('.amount-btn').removeClass('selected');
+                    selectedAmount = customValue;
+                    updatePreview();
+                }
+            });
+
+            // Gift card type
+            $('input[name="giftCardType"]').change(function() {
+                if ($(this).val() === 'specific') {
+                    $('#salonSelection').removeClass('hidden');
+                } else {
+                    $('#salonSelection').addClass('hidden');
+                    selectedSalonId = null;
+                }
+                updatePreview();
+            });
+
+            // Design selection
+            $('.design-option').click(function() {
+                $('.design-option').removeClass('selected');
+                $(this).addClass('selected');
+                selectedDesign = $(this).data('design');
+                updateGiftCardDesign();
+                updatePreview();
+            });
+
+            // Personal message
+            $('#personalMessage').on('input', function() {
+                const message = $(this).val();
+                $('#messageCounter').text(message.length);
+                updatePreview();
+            });
+
+            // Form fields for preview
+            $('#recipientName, #recipientEmail, #senderName, #senderEmail').on('input', updatePreview);
+
+            // Delivery time
+            $('input[name="deliveryTime"]').change(function() {
+                if ($(this).val() === 'scheduled') {
+                    $('#scheduledDate').removeClass('hidden');
+                } else {
+                    $('#scheduledDate').addClass('hidden');
+                }
+                updatePreview();
+            });
+
+            // Navigation
+            $('#nextBtn').click(function() {
+                if (validateCurrentStep()) {
+                    if (currentStep < 4) {
+                        currentStep++;
+                        showStep(currentStep);
+                        updateStepIndicator();
+                    }
+                }
+            });
+
+            $('#prevBtn').click(function() {
+                if (currentStep > 1) {
+                    currentStep--;
+                    showStep(currentStep);
+                    updateStepIndicator();
+                }
+            });
+
+            // Form submission
+            $('#giftCardForm').submit(function(e) {
+                e.preventDefault();
+                
+                if (!validateCurrentStep()) {
+                    return;
+                }
+
+                const formData = {
+                    Amount: selectedAmount,
+                    SaloneId: selectedSalonId,
+                    RecipientName: $('#recipientName').val(),
+                    RecipientEmail: $('#recipientEmail').val(),
+                    SenderName: $('#senderName').val(),
+                    SenderEmail: $('#senderEmail').val(),
+                    Message: $('#personalMessage').val()
+                };
+
+                // Show loading
+                $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Elaborazione...');
+
+                $.ajax({
+                    url: '/GiftCard/Create',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            showAlert('Buono regalo creato con successo!', 'success');
+                            setTimeout(() => {
+                                window.location.href = response.redirectUrl;
+                            }, 2000);
+                        } else {
+                            showAlert(response.message, 'error');
+                            $('#submitBtn').prop('disabled', false).html('<i class="fas fa-check mr-2"></i>Completa acquisto');
+                        }
+                    },
+                    error: function() {
+                        showAlert('Errore durante la creazione del buono regalo', 'error');
+                        $('#submitBtn').prop('disabled', false).html('<i class="fas fa-check mr-2"></i>Completa acquisto');
+                    }
+                });
+            });
+
+            function showStep(step) {
+                $('.form-step').addClass('hidden');
+                $(`#stepContent${step}`).removeClass('hidden');
+                
+                // Update navigation buttons
+                $('#prevBtn').toggleClass('hidden', step === 1);
+                $('#nextBtn').toggleClass('hidden', step === 4);
+                $('#submitBtn').toggleClass('hidden', step !== 4);
+            }
+
+            function updateStepIndicator() {
+                $('.step-indicator').removeClass('active completed');
+                
+                for (let i = 1; i <= 4; i++) {
+                    if (i < currentStep) {
+                        $(`#step${i}`).addClass('completed').html('<i class="fas fa-check"></i>');
+                    } else if (i === currentStep) {
+                        $(`#step${i}`).addClass('active').text(i);
+                    } else {
+                        $(`#step${i}`).text(i);
+                    }
+                }
+            }
+
+            function validateCurrentStep() {
+                switch (currentStep) {
+                    case 1:
+                        if (!selectedAmount || selectedAmount < 10 || selectedAmount > 1000) {
+                            showAlert('Seleziona un importo valido (€10 - €1000)', 'error');
+                            return false;
+                        }
+                        break;
+                    case 3:
+                        const recipientName = $('#recipientName').val().trim();
+                        const recipientEmail = $('#recipientEmail').val().trim();
+                        const senderName = $('#senderName').val().trim();
+                        const senderEmail = $('#senderEmail').val().trim();
+                        
+                        if (!recipientName || !recipientEmail || !senderName || !senderEmail) {
+                            showAlert('Compila tutti i campi obbligatori', 'error');
+                            return false;
+                        }
+                        
+                        if (!isValidEmail(recipientEmail) || !isValidEmail(senderEmail)) {
+                            showAlert('Inserisci indirizzi email validi', 'error');
+                            return false;
+                        }
+                        break;
+                    case 4:
+                        if (!$('#acceptTerms').is(':checked')) {
+                            showAlert('Accetta i termini e condizioni per continuare', 'error');
+                            return false;
+                        }
+                        break;
+                }
+                return true;
+            }
+
+            function updatePreview() {
+                // Update amount
+                $('#previewAmount').text(`€${selectedAmount}`);
+                $('#summaryAmount, #summaryTotal').text(`€${selectedAmount}`);
+
+                // Update type and salon
+                const isGeneric = $('input[name="giftCardType"]:checked').val() === 'generic';
+                $('#previewType').text(isGeneric ? 'Universale' : 'Salone specifico');
+                $('#previewSalon').text(isGeneric ? 'Valido in tutti i saloni partner' : 'Salone specifico selezionato');
+
+                // Update message
+                const message = $('#personalMessage').val();
+                if (message) {
+                    $('#previewMessage').text(`"${message}"`).removeClass('hidden');
+                } else {
+                    $('#previewMessage').addClass('hidden');
+                }
+
+                // Update recipient
+                const recipientName = $('#recipientName').val();
+                if (recipientName) {
+                    $('#previewRecipient').text(`Per: ${recipientName}`);
+                } else {
+                    $('#previewRecipient').text('');
+                }
+
+                // Update delivery
+                const isScheduled = $('input[name="deliveryTime"]:checked').val() === 'scheduled';
+                $('#previewDelivery').text(isScheduled ? 'Programmato' : 'Immediato');
+
+                // Update design
+                $('#previewDesign').text(selectedDesign.charAt(0).toUpperCase() + selectedDesign.slice(1));
+            }
+
+            function updateGiftCardDesign() {
+                const designs = {
+                    elegant: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    ocean: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+                    sunset: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    forest: 'linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%)'
+                };
+                
+                $('#giftCardPreview').css('background', designs[selectedDesign] || designs.elegant);
+            }
+
+            function isValidEmail(email) {
+                return /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(email);
+            }
+
+            function showAlert(message, type) {
+                const alertClass = type === 'success' ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200';
+                const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                
+                const alert = $(`
+                    <div class="fixed top-4 right-4 z-50 ${alertClass} border rounded-lg p-4 shadow-lg max-w-sm">
+                        <div class="flex items-center">
+                            <i class="fas ${icon} mr-2"></i>
+                            <span>${message}</span>
+                        </div>
+                    </div>
+                `);
+                
+                $('body').append(alert);
+                
+                setTimeout(() => {
+                    alert.fadeOut(() => alert.remove());
+                }, 5000);
+            }
+
+            // Initialize design
+            updateGiftCardDesign();
+        });
+    </script>
+}

@@ -137,19 +137,22 @@ namespace HaveASeat.Controllers
 			TempData["SelectedPianoId"] = id;
             var abbonamento = _context.Abbonamento.Find(Guid.Parse(id));
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var user = _context.Users.Find(userId);
-			if (user == null)
-				return BadRequest();
-
-			var piano = new PianoSelezionato
+			if(userId != null)
 			{
-				PianoSelezionatoId = Guid.NewGuid(),
-				AbbonamentoId = Guid.Parse(id),
-				ApplicationUserId = user.Id,
-				Confermato = false,
-			};
-			_context.Add(piano);
-			await _context.SaveChangesAsync();
+				var user = _context.Users.Find(userId);
+				if (user == null)
+					return BadRequest();
+
+				var piano = new PianoSelezionato
+				{
+					PianoSelezionatoId = Guid.NewGuid(),
+					AbbonamentoId = Guid.Parse(id),
+					ApplicationUserId = user.Id,
+					Confermato = false,
+				};
+				_context.Add(piano);
+				await _context.SaveChangesAsync();
+			}
 			return Json(new { success = true, redirectUrl = "/Auth/NewPartner", selectedPlan = abbonamento }); 
 		}
 

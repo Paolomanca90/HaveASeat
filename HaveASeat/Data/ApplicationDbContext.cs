@@ -28,6 +28,7 @@ namespace HaveASeat.Data
 		public DbSet<SaloneCategoria> SaloneCategoria { get; set; } 
 		public DbSet<PianoSelezionato> PianoSelezionato { get; set; }
 		public DbSet<SalonePersonalizzazione> SalonePersonalizzazione { get; set; }
+		public DbSet<GiftCard> GiftCard { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -240,6 +241,78 @@ namespace HaveASeat.Data
 
 				entity.Property(e => e.TiktokUrl)
 					  .HasMaxLength(500);
+			});
+
+			// NUOVE CONFIGURAZIONI per GiftCard
+			builder.Entity<GiftCard>(entity =>
+			{
+				entity.HasKey(e => e.GiftCardId);
+
+				// Proprietà obbligatorie
+				entity.Property(e => e.Code)
+					  .HasMaxLength(20)
+					  .IsRequired();
+
+				entity.Property(e => e.Amount)
+					  .HasColumnType("decimal(18, 2)")
+					  .IsRequired();
+
+				entity.Property(e => e.RecipientName)
+					  .HasMaxLength(100)
+					  .IsRequired();
+
+				entity.Property(e => e.RecipientEmail)
+					  .HasMaxLength(200)
+					  .IsRequired();
+
+				entity.Property(e => e.SenderName)
+					  .HasMaxLength(100)
+					  .IsRequired();
+
+				entity.Property(e => e.SenderEmail)
+					  .HasMaxLength(200)
+					  .IsRequired();
+
+				// Proprietà opzionali
+				entity.Property(e => e.Message)
+					  .HasMaxLength(500);
+
+				entity.Property(e => e.UsedByUserId)
+					  .HasMaxLength(450); // Lunghezza standard per IdentityUser Id
+
+				// Valori di default
+				entity.Property(e => e.IsUsed)
+					  .HasDefaultValue(false);
+
+				entity.Property(e => e.CreatedAt)
+					  .HasDefaultValueSql("GETDATE()");
+
+				// Indici per performance
+				entity.HasIndex(e => e.Code)
+					  .IsUnique()
+					  .HasDatabaseName("IX_GiftCard_Code");
+
+				entity.HasIndex(e => e.RecipientEmail)
+					  .HasDatabaseName("IX_GiftCard_RecipientEmail");
+
+				entity.HasIndex(e => e.ExpiryDate)
+					  .HasDatabaseName("IX_GiftCard_ExpiryDate");
+
+				entity.HasIndex(e => e.IsUsed)
+					  .HasDatabaseName("IX_GiftCard_IsUsed");
+
+				// Relazioni (opzionali)
+				entity.HasOne(e => e.Salone)
+					  .WithMany() // Un salone può avere molte gift card
+					  .HasForeignKey(e => e.SaloneId)
+					  .OnDelete(DeleteBehavior.NoAction) // Se il salone viene eliminato, il gift card diventa universale
+					  .IsRequired(false);
+
+				entity.HasOne(e => e.UsedByUser)
+					  .WithMany() // Un utente può utilizzare molte gift card
+					  .HasForeignKey(e => e.UsedByUserId)
+					  .OnDelete(DeleteBehavior.SetNull) // Se l'utente viene eliminato, mantieni la gift card
+					  .IsRequired(false);
 			});
 		}
     }
