@@ -112,7 +112,7 @@ namespace HaveASeat.Controllers
 			var appuntamentiQuery = _context.Appuntamento
 				.Include(a => a.Slot)
 				.Include(a => a.ApplicationUser)
-				.Where(a => a.SaloneId == viewModel.SelectedSaloneId && a.Stato != StatoAppuntamento.Annullato);
+				.Where(a => a.SaloneId == viewModel.SelectedSaloneId && a.Stato == StatoAppuntamento.Prenotato);
 
 			// Prenotazioni oggi
 			var prenotazioniOggi = await appuntamentiQuery
@@ -523,8 +523,52 @@ namespace HaveASeat.Controllers
 
             return File(fileBytes, contentType, fileName);
         }
+       
         [HttpGet]
-        public async Task<IActionResult> GetAppuntamentiByDateRange(Guid saloneId, DateTime startDate, DateTime endDate)
+        public async Task<IActionResult> Appuntamenti(Guid? saloneId = null)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            var viewModel = new AppuntamentiViewModel
+            {
+                SaloniUtente = new List<Salone>()
+            };
+
+            // Recupera tutti i saloni dell'utente
+            viewModel.SaloniUtente = await _context.Salone
+                .Where(s => s.ApplicationUserId == userId && s.Stato == Stato.Attivo)
+                .OrderBy(s => s.Nome)
+                .ToListAsync();
+
+            if (!viewModel.SaloniUtente.Any())
+            {
+                return RedirectToAction("Sedi");
+            }
+
+            // Determina quale salone visualizzare
+            if (saloneId.HasValue && viewModel.SaloniUtente.Any(s => s.SaloneId == saloneId.Value))
+            {
+                viewModel.SelectedSaloneId = saloneId.Value;
+            }
+            else
+            {
+                viewModel.SelectedSaloneId = viewModel.SaloniUtente.First().SaloneId;
+            }
+			ViewBag.Salonechevisualizzo = viewModel.SelectedSaloneId;
+
+            ViewBag.Saloni = viewModel.SaloniUtente;
+            ViewBag.HasMultipleSedi = viewModel.SaloniUtente.Count > 1;
+            ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
+
+            return View(viewModel);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAppuntamenti(Guid saloneId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
@@ -543,25 +587,19 @@ namespace HaveASeat.Controllers
 
             try
             {
-                // Imposta ore per includere tutto il giorno
-                startDate = startDate.Date;
-                endDate = endDate.Date.AddDays(1).AddSeconds(-1);
-
-                // Recupera appuntamenti nel range di date
+                // Recupera tutti gli appuntamenti del salone
                 var appuntamenti = await _context.Appuntamento
                     .Include(a => a.ApplicationUser)
                     .Include(a => a.Servizio)
                     .Include(a => a.Dipendente)
                         .ThenInclude(d => d.ApplicationUser)
                     .Include(a => a.Slot)
-                    .Where(a => a.SaloneId == saloneId &&
-                               a.Data >= startDate &&
-                               a.Data <= endDate)
+                    .Where(a => a.SaloneId == saloneId)
                     .OrderBy(a => a.Data)
                     .ThenBy(a => a.Slot.OraInizio)
                     .Select(a => new
                     {
-                        appuntamentoId = a.AppuntamentoId,
+                        id = a.AppuntamentoId,
                         data = a.Data,
                         orarioInizio = a.OraInizio.ToString("HH:mm"),
                         orarioFine = a.OraFine.ToString("HH:mm"),
@@ -583,7 +621,7 @@ namespace HaveASeat.Controllers
                 // Recupera servizi e dipendenti per i filtri
                 var servizi = await _context.Servizio
                     .Where(s => s.SaloneId == saloneId)
-                    .Select(s => new { id = s.ServizioId.ToString(), nome = s.Nome })
+                    .Select(s => new { id = s.ServizioId, nome = s.Nome })
                     .OrderBy(s => s.nome)
                     .ToListAsync();
 
@@ -592,7 +630,7 @@ namespace HaveASeat.Controllers
                     .Where(d => d.SaloneId == saloneId)
                     .Select(d => new
                     {
-                        id = d.DipendenteId.ToString(),
+                        id = d.DipendenteId,
                         nome = $"{d.ApplicationUser.Nome} {d.ApplicationUser.Cognome}"
                     })
                     .OrderBy(d => d.nome)
@@ -612,6 +650,51 @@ namespace HaveASeat.Controllers
             }
         }
 
+        
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateAppuntamentoStatus(Guid appointmentId, string newStatus)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Non autorizzato" });
+            }
+
+            var appuntamento = await _context.Appuntamento
+                .Include(a => a.Salone)
+                .FirstOrDefaultAsync(a => a.AppuntamentoId == appointmentId &&
+                                          a.Salone.ApplicationUserId == userId);
+
+            if (appuntamento == null)
+            {
+                return Json(new { success = false, message = "Appuntamento non trovato" });
+            }
+
+            try
+            {
+                // Converti lo stato
+                if (Enum.TryParse<StatoAppuntamento>(newStatus, out var nuovoStato))
+                {
+                    appuntamento.Stato = nuovoStato;
+                    await _context.SaveChangesAsync();
+
+                    return Json(new
+                    {
+                        success = true,
+                        message = "Stato aggiornato con successo"
+                    });
+                }
+                else
+                {
+                    return Json(new { success = false, message = "Stato non valido" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Errore durante l'aggiornamento: " + ex.Message });
+            }
+        }
         //[HttpGet]
         //public async Task<IActionResult> ExportAppuntamentiGiornalieri(
         //    Guid saloneId,
@@ -735,8 +818,6 @@ namespace HaveASeat.Controllers
 
         //    return File(fileBytes, contentType, fileName);
         //}
-
-        // Aggiungi anche questo metodo helper per ottenere le promozioni attive (se non esiste già)
         [HttpGet]
         public async Task<IActionResult> GetPromozioniAttive(Guid saloneId)
         {
