@@ -264,94 +264,119 @@ else
 
 <!-- Appointments Section -->
     <div class="section dark:bg-gray-800">
-    <div class="section-title">
-        <h2 class="dark:text-neutral-50">Prenotazioni di Oggi</h2>
-            <a class="dark:text-neutral-50" href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
-    </div>
-
-    <div class="tabs">
-            <div class="tab active" data-filter="tutti">Tutti</div>
-            <div class="tab" data-filter="confermati">Confermati</div>
-            <div class="tab" data-filter="inAttesa">In attesa</div>
-            <div class="tab" data-filter="cancellati">Cancellati</div>
-    </div>
-
-    <div class="card dark:bg-gray-800">
-        <div class="appointment-header">
-            <div class="appointment-date-filter">
-                    <button class="btn btn-outline dark:text-gray-500">
-                    <i class="fas fa-calendar"></i> Oggi
+        <div class="section-title">
+            <h2 class="dark:text-neutral-50">Gestione Appuntamenti</h2>
+            <div class="flex gap-2">
+                <button class="btn btn-sm btn-outline" onclick="showCalendarModal()">
+                    <i class="fas fa-calendar-alt"></i> Vista Calendario
                 </button>
+                <a class="dark:text-neutral-50" href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
             </div>
+        </div>
+
+        <!-- Filtri Data Rapidi -->
+        <div class="flex flex-wrap gap-2 mb-4">
+            <button class="btn btn-sm btn-primary" onclick="filterByDate('oggi')" id="btnOggi">
+                Oggi
+            </button>
+            <button class="btn btn-sm btn-outline" onclick="filterByDate('domani')" id="btnDomani">
+                Domani
+            </button>
+            <button class="btn btn-sm btn-outline" onclick="filterByDate('settimana')" id="btnSettimana">
+                Questa Settimana
+            </button>
+            <input type="date" id="customDate" class="input input-sm input-bordered dark:bg-gray-700"
+                   value="@DateTime.Today.ToString("yyyy-MM-dd")" onchange="filterByCustomDate(this.value)">
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-filter="tutti">Tutti <span class="badge badge-sm ml-1" id="countTutti">0</span></div>
+            <div class="tab" data-filter="prenotato">Confermati <span class="badge badge-sm badge-success ml-1" id="countConfermati">0</span></div>
+            <div class="tab" data-filter="inAttesa">In attesa <span class="badge badge-sm badge-warning ml-1" id="countAttesa">0</span></div>
+            <div class="tab" data-filter="annullato">Cancellati <span class="badge badge-sm badge-error ml-1" id="countCancellati">0</span></div>
+        </div>
+
+        <div class="card dark:bg-gray-800">
+            <div class="appointment-header">
+                <div class="appointment-date-filter">
+                    <span class="text-sm text-gray-600 dark:text-gray-400" id="currentDateLabel">
+                        Appuntamenti di oggi
+                    </span>
+                </div>
 
                 <div class="appointment-search dark:text-gray-200">
-                <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Cerca cliente o servizio..." id="searchAppointments">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Cerca cliente, servizio o dipendente..." id="searchAppointments">
+                </div>
+
+                <div class="appointment-actions">
+                    <button class="btn btn-outline dark:text-gray-500" onclick="toggleFilters()">
+                        <i class="fas fa-filter"></i> Filtri Avanzati
+                    </button>
+                    <button class="btn btn-outline dark:text-gray-500" onclick="exportAppointments()">
+                        <i class="fas fa-download"></i> Esporta
+                    </button>
+                </div>
             </div>
 
-            <div class="appointment-actions">
-                    <button class="btn btn-outline dark:text-gray-500">
-                    <i class="fas fa-filter"></i> Filtro
-                </button>
-            </div>
-        </div>
-
-        <div class="appointment-list">
-                @if (Model.AppuntamentiOggi.Any())
-                {
-                    <table class="appointment-table">
-                        <thead>
-                            <tr>
-                                <th>Cliente</th>
-                                <th>Servizio</th>
-                                <th>Operatore</th>
-                                <th>Orario</th>
-                                <th>Prezzo</th>
-                                <th>Stato</th>
-                                <th>Azioni</th>
-                            </tr>
-                </thead>
-                        <tbody id="appointmentsTableBody">
-                            @foreach (var appuntamento in Model.AppuntamentiOggi)
-                            {
-                                <tr data-stato="@appuntamento.Stato.ToLower()">
-                                    <td>
-                                        <div class="client-name">@appuntamento.NomeCliente</div>
-                                        <div class="client-info">@appuntamento.TelefonoCliente</div>
-                                    </td>
-                                    <td>@appuntamento.NomeServizio</td>
-                                    <td>@appuntamento.NomeDipendente</td>
-                                    <td>@appuntamento.OrarioInizio - @appuntamento.OrarioFine</td>
-                                    <td>€@appuntamento.Prezzo</td>
-                                    <td><span class="status @appuntamento.ClasseStato">@appuntamento.Stato</span></td>
-                                    <td>
-                                        <div class="appointment-actions-cell">
-                                            <button class="action-btn" onclick="editAppointment('@appuntamento.AppuntamentoId')">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="action-btn" onclick="sendMessage('@appuntamento.AppuntamentoId')">
-                                                <i class="fas fa-comment"></i>
-                                            </button>
-                                            <button class="action-btn" onclick="showAppointmentMenu('@appuntamento.AppuntamentoId')">
-                                                <i class="fas fa-ellipsis-v"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <div class="no-data-message">
-                        <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                        <p>Nessun appuntamento programmato per oggi</p>
+            <!-- Filtri Avanzati (nascosti di default) -->
+            <div id="advancedFilters" class="hidden p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="form-control">
+                        <label class="label text-sm">
+                            <span class="label-text dark:text-gray-300">Servizio</span>
+                        </label>
+                        <select id="filterServizio" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
+                            <option value="">Tutti i servizi</option>
+                            <!-- Popolato dinamicamente -->
+                        </select>
                     </div>
-                }
+                    <div class="form-control">
+                        <label class="label text-sm">
+                            <span class="label-text dark:text-gray-300">Dipendente</span>
+                        </label>
+                        <select id="filterDipendente" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
+                            <option value="">Tutti i dipendenti</option>
+                            <!-- Popolato dinamicamente -->
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label text-sm">
+                            <span class="label-text dark:text-gray-300">Orario</span>
+                        </label>
+                        <select id="filterOrario" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
+                            <option value="">Tutti gli orari</option>
+                            <option value="mattina">Mattina (8-12)</option>
+                            <option value="pomeriggio">Pomeriggio (12-17)</option>
+                            <option value="sera">Sera (17-20)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="appointment-list">
+                <div id="appointmentsContainer">
+                    <!-- Contenuto dinamico -->
+                </div>
+            </div>
         </div>
     </div>
-</div>
+
+    <!-- Modal Vista Calendario -->
+    <dialog id="calendarModal" class="modal">
+        <div class="modal-box w-11/12 max-w-4xl">
+            <h3 class="font-bold text-lg mb-4">Vista Calendario Appuntamenti</h3>
+            <div id="calendarView">
+                <!-- Calendar view sarà popolato dinamicamente -->
+            </div>
+            <div class="modal-action">
+                <button class="btn" onclick="document.getElementById('calendarModal').close()">Chiudi</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    </dialog>
 }
 
 
@@ -894,72 +919,72 @@ else
         });
     }
 
-    function updateAppointments(appuntamenti) {
-        const tbody = document.getElementById('appointmentsTableBody');
-        if (!tbody) return;
+    // function updateAppointments(appuntamenti) {
+    //     const tbody = document.getElementById('appointmentsTableBody');
+    //     if (!tbody) return;
 
-        if (appuntamenti.length === 0) {
-            tbody.closest('.appointment-list').innerHTML = `
-                <div class="no-data-message">
-                    <i class="fas fa-calendar-times fa-3x mb-3"></i>
-                    <p>Nessun appuntamento programmato per oggi</p>
-                </div>
-            `;
-            return;
-        }
+    //     if (appuntamenti.length === 0) {
+    //         tbody.closest('.appointment-list').innerHTML = `
+    //             <div class="no-data-message">
+    //                 <i class="fas fa-calendar-times fa-3x mb-3"></i>
+    //                 <p>Nessun appuntamento programmato per oggi</p>
+    //             </div>
+    //         `;
+    //         return;
+    //     }
 
-        tbody.innerHTML = '';
-        appuntamenti.forEach(app => {
-            tbody.innerHTML += `
-                <tr data-stato="${app.stato.toLowerCase()}">
-                    <td>
-                        <div class="client-name">${app.nomeCliente}</div>
-                        <div class="client-info">${app.telefonoCliente}</div>
-                    </td>
-                    <td>${app.nomeServizio}</td>
-                    <td>${app.nomeDipendente}</td>
-                    <td>${app.orarioInizio} - ${app.orarioFine}</td>
-                    <td>€${app.prezzo}</td>
-                    <td><span class="status ${app.classeStato}">${app.stato}</span></td>
-                    <td>
-                        <div class="appointment-actions-cell">
-                            <button class="action-btn" onclick="editAppointment('${app.appuntamentoId}')">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="action-btn" onclick="sendMessage('${app.appuntamentoId}')">
-                                <i class="fas fa-comment"></i>
-                            </button>
-                            <button class="action-btn" onclick="showAppointmentMenu('${app.appuntamentoId}')">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        });
-    }
+    //     tbody.innerHTML = '';
+    //     appuntamenti.forEach(app => {
+    //         tbody.innerHTML += `
+    //             <tr data-stato="${app.stato.toLowerCase()}">
+    //                 <td>
+    //                     <div class="client-name">${app.nomeCliente}</div>
+    //                     <div class="client-info">${app.telefonoCliente}</div>
+    //                 </td>
+    //                 <td>${app.nomeServizio}</td>
+    //                 <td>${app.nomeDipendente}</td>
+    //                 <td>${app.orarioInizio} - ${app.orarioFine}</td>
+    //                 <td>€${app.prezzo}</td>
+    //                 <td><span class="status ${app.classeStato}">${app.stato}</span></td>
+    //                 <td>
+    //                     <div class="appointment-actions-cell">
+    //                         <button class="action-btn" onclick="editAppointment('${app.appuntamentoId}')">
+    //                             <i class="fas fa-edit"></i>
+    //                         </button>
+    //                         <button class="action-btn" onclick="sendMessage('${app.appuntamentoId}')">
+    //                             <i class="fas fa-comment"></i>
+    //                         </button>
+    //                         <button class="action-btn" onclick="showAppointmentMenu('${app.appuntamentoId}')">
+    //                             <i class="fas fa-ellipsis-v"></i>
+    //                         </button>
+    //                     </div>
+    //                 </td>
+    //             </tr>
+    //         `;
+    //     });
+    // }
 
-    function filterAppointments(filter) {
-        const rows = document.querySelectorAll('#appointmentsTableBody tr');
-        rows.forEach(row => {
-            if (filter === 'tutti') {
-                row.style.display = '';
-            } else {
-                const stato = row.dataset.stato;
-                row.style.display = stato === filter.toLowerCase() ? '' : 'none';
-            }
-        });
-    }
+    // function filterAppointments(filter) {
+    //     const rows = document.querySelectorAll('#appointmentsTableBody tr');
+    //     rows.forEach(row => {
+    //         if (filter === 'tutti') {
+    //             row.style.display = '';
+    //         } else {
+    //             const stato = row.dataset.stato;
+    //             row.style.display = stato === filter.toLowerCase() ? '' : 'none';
+    //         }
+    //     });
+    // }
 
-    function searchAppointments(searchTerm) {
-        const rows = document.querySelectorAll('#appointmentsTableBody tr');
-        const term = searchTerm.toLowerCase();
+    // function searchAppointments(searchTerm) {
+    //     const rows = document.querySelectorAll('#appointmentsTableBody tr');
+    //     const term = searchTerm.toLowerCase();
 
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(term) ? '' : 'none';
-        });
-    }
+    //     rows.forEach(row => {
+    //         const text = row.textContent.toLowerCase();
+    //         row.style.display = text.includes(term) ? '' : 'none';
+    //     });
+    // }
 
     function showLoading() {
         document.querySelectorAll('.stat-card-value').forEach(el => {
@@ -1487,3 +1512,347 @@ else
               toast.remove();
           }, 5000);
       }</script>
+<script>
+    // Aggiungi queste funzioni al tuo script esistente
+
+    let allAppointments = [];
+    let currentDateFilter = 'oggi';
+    let currentDate = new Date();
+
+    // Funzione per caricare gli appuntamenti con filtro data
+    async function loadAppointmentsByDate(dateFilter = 'oggi', customDate = null) {
+        const saloneId = currentSaloneId || '@Model.SelectedSaloneId';
+
+        // Calcola le date in base al filtro
+        let startDate, endDate;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        switch(dateFilter) {
+            case 'oggi':
+                startDate = endDate = today;
+                document.getElementById('currentDateLabel').textContent = 'Appuntamenti di oggi';
+                break;
+            case 'domani':
+                startDate = endDate = new Date(today);
+                startDate.setDate(startDate.getDate() + 1);
+                document.getElementById('currentDateLabel').textContent = 'Appuntamenti di domani';
+                break;
+            case 'settimana':
+                startDate = new Date(today);
+                startDate.setDate(startDate.getDate() - startDate.getDay() + 1); // Lunedì
+                endDate = new Date(startDate);
+                endDate.setDate(endDate.getDate() + 6); // Domenica
+                document.getElementById('currentDateLabel').textContent = 'Appuntamenti della settimana';
+                break;
+            case 'custom':
+                startDate = endDate = new Date(customDate);
+                document.getElementById('currentDateLabel').textContent = `Appuntamenti del ${startDate.toLocaleDateString('it-IT')}`;
+                break;
+        }
+
+        try {
+            const response = await fetch(`/Partner/GetAppuntamentiByDateRange?saloneId=${saloneId}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`);
+            const data = await response.json();
+
+            if (data.success) {
+                allAppointments = data.appuntamenti;
+                populateFilters(data);
+                updateAppointmentsList(allAppointments);
+                updateCounts();
+            }
+        } catch (error) {
+            console.error('Errore nel caricamento:', error);
+        }
+    }
+
+    function filterByDate(type) {
+        currentDateFilter = type;
+
+        // Aggiorna stile bottoni
+        document.querySelectorAll('.btn[id^="btn"]').forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline');
+        });
+
+        if (type !== 'custom') {
+            document.getElementById('btn' + type.charAt(0).toUpperCase() + type.slice(1)).classList.remove('btn-outline');
+            document.getElementById('btn' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('btn-primary');
+        }
+
+        loadAppointmentsByDate(type);
+    }
+
+    function filterByCustomDate(date) {
+        currentDateFilter = 'custom';
+        document.querySelectorAll('.btn[id^="btn"]').forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline');
+        });
+        loadAppointmentsByDate('custom', date);
+    }
+
+    function populateFilters(data) {
+        // Popola filtro servizi
+        const servizioSelect = document.getElementById('filterServizio');
+        if (servizioSelect && data.servizi) {
+            servizioSelect.innerHTML = '<option value="">Tutti i servizi</option>';
+            data.servizi.forEach(servizio => {
+                servizioSelect.innerHTML += `<option value="${servizio.id}">${servizio.nome}</option>`;
+            });
+        }
+
+        // Popola filtro dipendenti
+        const dipendenteSelect = document.getElementById('filterDipendente');
+        if (dipendenteSelect && data.dipendenti) {
+            dipendenteSelect.innerHTML = '<option value="">Tutti i dipendenti</option>';
+            data.dipendenti.forEach(dipendente => {
+                dipendenteSelect.innerHTML += `<option value="${dipendente.id}">${dipendente.nome}</option>`;
+            });
+        }
+    }
+
+    function updateAppointmentsList(appointments) {
+        const container = document.getElementById('appointmentsContainer');
+
+        if (!appointments || appointments.length === 0) {
+            container.innerHTML = `
+                <div class="no-data-message">
+                    <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                    <p>Nessun appuntamento trovato per questa data</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Raggruppa per ora per una visualizzazione migliore
+        const appointmentsByHour = {};
+        appointments.forEach(app => {
+            const hour = app.orarioInizio.split(':')[0];
+            if (!appointmentsByHour[hour]) {
+                appointmentsByHour[hour] = [];
+            }
+            appointmentsByHour[hour].push(app);
+        });
+
+        let html = '<div class="space-y-4">';
+
+        Object.keys(appointmentsByHour).sort().forEach(hour => {
+            html += `
+                <div class="hour-group">
+                    <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                        <i class="far fa-clock mr-1"></i>${hour}:00
+                    </h4>
+                    <div class="space-y-2">
+            `;
+
+            appointmentsByHour[hour].forEach(app => {
+                html += createAppointmentCard(app);
+            });
+
+            html += '</div></div>';
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function createAppointmentCard(app) {
+        const statusClass = getStatusClass(app.stato);
+        const statusLabel = getStatusLabel(app.stato);
+
+        return `
+            <div class="appointment-item bg-white dark:bg-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+                 data-stato="${app.stato.toLowerCase()}"
+                 data-servizio="${app.servizioId || ''}"
+                 data-dipendente="${app.dipendenteId || ''}">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-semibold text-gray-900 dark:text-gray-100">
+                                ${app.orarioInizio} - ${app.orarioFine}
+                            </span>
+                            <span class="status-badge status-${statusClass} text-xs">
+                                ${statusLabel}
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            <i class="fas fa-user mr-1"></i> ${app.nomeCliente}
+                            ${app.telefonoCliente ? `<span class="ml-2"><i class="fas fa-phone mr-1"></i>${app.telefonoCliente}</span>` : ''}
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <i class="fas fa-cut mr-1"></i> ${app.nomeServizio}
+                            <span class="ml-2"><i class="fas fa-euro-sign mr-1"></i>€${app.prezzo}</span>
+                        </div>
+                        ${app.nomeDipendente ? `
+                            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                <i class="fas fa-user-tie mr-1"></i> ${app.nomeDipendente}
+                            </div>
+                        ` : ''}
+                        ${app.note ? `
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mt-2 italic">
+                                <i class="fas fa-sticky-note mr-1"></i> ${app.note}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="flex gap-1">
+                        <button class="btn btn-xs btn-ghost" onclick="viewAppointmentDetails('${app.appuntamentoId}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-xs btn-ghost" onclick="editAppointment('${app.appuntamentoId}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-xs btn-ghost" onclick="sendMessage('${app.appuntamentoId}')">
+                            <i class="fas fa-comment"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function toggleFilters() {
+        const filtersDiv = document.getElementById('advancedFilters');
+        filtersDiv.classList.toggle('hidden');
+    }
+
+    function applyFilters() {
+        const servizioFilter = document.getElementById('filterServizio').value;
+        const dipendenteFilter = document.getElementById('filterDipendente').value;
+        const orarioFilter = document.getElementById('filterOrario').value;
+        const searchTerm = document.getElementById('searchAppointments').value.toLowerCase();
+        const statoFilter = document.querySelector('.tab.active').dataset.filter;
+
+        let filteredAppointments = allAppointments;
+
+        // Applica filtri
+        if (servizioFilter) {
+            filteredAppointments = filteredAppointments.filter(app => app.servizioId === servizioFilter);
+        }
+
+        if (dipendenteFilter) {
+            filteredAppointments = filteredAppointments.filter(app => app.dipendenteId === dipendenteFilter);
+        }
+
+        if (orarioFilter) {
+            filteredAppointments = filteredAppointments.filter(app => {
+                const hour = parseInt(app.orarioInizio.split(':')[0]);
+                switch(orarioFilter) {
+                    case 'mattina': return hour >= 8 && hour < 12;
+                    case 'pomeriggio': return hour >= 12 && hour < 17;
+                    case 'sera': return hour >= 17 && hour <= 20;
+                    default: return true;
+                }
+            });
+        }
+
+        if (searchTerm) {
+            filteredAppointments = filteredAppointments.filter(app =>
+                app.nomeCliente.toLowerCase().includes(searchTerm) ||
+                app.nomeServizio.toLowerCase().includes(searchTerm) ||
+                (app.nomeDipendente && app.nomeDipendente.toLowerCase().includes(searchTerm)) ||
+                (app.telefonoCliente && app.telefonoCliente.includes(searchTerm))
+            );
+        }
+
+        if (statoFilter !== 'tutti') {
+            filteredAppointments = filteredAppointments.filter(app =>
+                app.stato.toLowerCase() === statoFilter.toLowerCase()
+            );
+        }
+
+        updateAppointmentsList(filteredAppointments);
+    }
+
+    function updateCounts() {
+        const counts = {
+            tutti: allAppointments.length,
+            confermati: allAppointments.filter(a => a.stato === 'Prenotato').length,
+            attesa: allAppointments.filter(a => a.stato === 'InAttesa').length,
+            cancellati: allAppointments.filter(a => a.stato === 'Annullato').length
+        };
+
+        document.getElementById('countTutti').textContent = counts.tutti;
+        document.getElementById('countConfermati').textContent = counts.confermati;
+        document.getElementById('countAttesa').textContent = counts.attesa;
+        document.getElementById('countCancellati').textContent = counts.cancellati;
+    }
+
+    function getStatusClass(stato) {
+        switch(stato) {
+            case 'Prenotato': return 'completed';
+            case 'InAttesa': return 'pending';
+            case 'Annullato': return 'cancelled';
+            default: return 'pending';
+        }
+    }
+
+    function getStatusLabel(stato) {
+        switch(stato) {
+            case 'Prenotato': return 'Confermato';
+            case 'InAttesa': return 'In Attesa';
+            case 'Annullato': return 'Cancellato';
+            default: return stato;
+        }
+    }
+
+    function showCalendarModal() {
+        const modal = document.getElementById('calendarModal');
+        // Qui puoi integrare una libreria calendario come FullCalendar
+        modal.showModal();
+    }
+
+    async function exportAppointments() {
+        Swal.fire({
+            title: 'Esporta Appuntamenti',
+            html: `
+                <div class="text-left">
+                    <p class="mb-3">Esporta gli appuntamenti del periodo selezionato</p>
+                    <select class="select select-bordered w-full" id="exportFormat">
+                        <option value="excel">Excel (.xlsx)</option>
+                        <option value="pdf">PDF</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: 'Esporta',
+            cancelButtonText: 'Annulla',
+            preConfirm: () => {
+                const format = document.getElementById('exportFormat').value;
+                return format;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const format = result.value;
+                const params = new URLSearchParams({
+                    saloneId: currentSaloneId,
+                    formato: format,
+                    periodo: currentDateFilter,
+                    data: document.getElementById('customDate').value
+                });
+
+                window.location.href = `/Partner/ExportAppuntamentiGiornalieri?${params}`;
+            }
+        });
+    }
+        // Aggiungi event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Carica appuntamenti di oggi all'avvio
+        loadAppointmentsByDate('oggi');
+
+        // Event listener per la ricerca
+        document.getElementById('searchAppointments').addEventListener('input', function() {
+            applyFilters();
+        });
+
+        // Event listener per i tab stato
+        document.querySelectorAll('.tab[data-filter]').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                applyFilters();
+            });
+        });
+    });
+</script>
