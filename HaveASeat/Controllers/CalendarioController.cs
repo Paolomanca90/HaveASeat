@@ -208,9 +208,12 @@ namespace HaveASeat.Controllers
 			{
 				AppuntamentoId = Guid.NewGuid(),
 				SaloneId = dto.SaloneId,
+				Salone = salone,
 				ApplicationUserId = dto.ClienteId,
+				ApplicationUser = cliente,
 				SlotId = dto.SlotId,
 				DipendenteId = dto.DipendenteId,
+				Dipendente = _context.Dipendente.Find(dto.DipendenteId),
 				Data = dto.Data,
 				Note = dto.Note ?? "",
 				Stato = StatoAppuntamento.Prenotato
