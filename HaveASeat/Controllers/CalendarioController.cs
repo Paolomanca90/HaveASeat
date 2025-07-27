@@ -288,6 +288,7 @@ namespace HaveASeat.Controllers
 					.ThenInclude(d => d.ApplicationUser)
 				.Include(a => a.Slot)
 				.Include(a => a.Salone)
+				.Include(a => a.Servizio)
 				.FirstOrDefaultAsync(a => a.AppuntamentoId == id && a.Salone.ApplicationUserId == userId);
 
 			if (appuntamento == null)
@@ -308,7 +309,8 @@ namespace HaveASeat.Controllers
 					$"{appuntamento.Dipendente.ApplicationUser.Nome} {appuntamento.Dipendente.ApplicationUser.Cognome}" : null,
 				dipendenteId = appuntamento.DipendenteId,
 				stato = appuntamento.Stato.ToString(),
-				note = appuntamento.Note
+				note = appuntamento.Note,
+				servizio = appuntamento.Servizio.Nome
 			};
 
 			return Json(new { success = true, appuntamento = dettagli });

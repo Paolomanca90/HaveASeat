@@ -78,9 +78,14 @@
                 border-color: var(--primary-color);
             }
 
-        .booking-sticky {
+            .service-card.selected {
+                border-color: var(--primary-color);
+                background-color: rgba(124, 58, 237, 0.05);
+            }
+
+        .booking-summary {
             position: sticky;
-            top: 100px;
+            top: 120px;
         }
 
         .gallery-grid {
@@ -101,38 +106,6 @@
                 transform: scale(1.05);
             }
 
-        .step-indicator {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .step {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            margin-right: 0.5rem;
-        }
-
-            .step.active {
-                background-color: var(--primary-color);
-                color: white;
-            }
-
-            .step.completed {
-                background-color: #10b981;
-                color: white;
-            }
-
-            .step.inactive {
-                background-color: #e5e7eb;
-                color: #6b7280;
-            }
-
         .staff-card {
             transition: all 0.3s ease;
         }
@@ -146,6 +119,89 @@
                 border-color: var(--primary-color);
                 background-color: rgba(124, 58, 237, 0.05);
             }
+
+        .booking-section {
+            opacity: 0.5;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+            .booking-section.active {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+        .step-indicator {
+            position: relative;
+        }
+
+            .step-indicator::before {
+                content: '';
+                position: absolute;
+                top: 35%;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: #e5e7eb;
+                z-index: 1;
+            }
+
+        .step-indicator-item {
+            position: relative;
+            z-index: 2;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: white;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+            .step-indicator-item.active {
+                background: var(--primary-color);
+                border-color: var(--primary-color);
+                color: white;
+            }
+
+            .step-indicator-item.completed {
+                background: #10b981;
+                border-color: #10b981;
+                color: white;
+            }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @@keyframes fadeIn {
+            from
+
+        {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.9) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .dark .summary-card {
+            background: linear-gradient(135deg, rgba(31,41,55,0.9) 0%, rgba(17,24,39,0.9) 100%);
+            border: 1px solid rgba(75,85,99,0.3);
+        }
     </style>
 }
 
@@ -221,129 +277,298 @@
 
 <div class="container mx-auto px-4 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Contenuto principale -->
-        <div class="lg:col-span-2 space-y-8">
+        <!-- Contenuto principale - 2 colonne -->
+        <div class="lg:col-span-2">
 
-            <!-- Servizi Section -->
-            @if (layout.MostraServizi && Model.ServiziPerCategoria.Any())
-            {
-                <section id="servizi" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
-                        <i class="fas fa-cut mr-3"></i>
-                        I Nostri Servizi
-                    </h2>
+            <!-- Progress Indicator -->
+            <div class="mb-8 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
+                    <i class="fas fa-calendar-check mr-3"></i>
+                    Prenota il tuo Appuntamento
+                </h2>
 
-                    @foreach (var categoria in Model.ServiziPerCategoria)
+                <!-- Step Indicator -->
+                <div class="step-indicator flex items-center justify-between mb-8">
+                    <div class="flex flex-col items-center">
+                        <div class="step-indicator-item active" id="step-1">1</div>
+                        <span class="font-medium text-gray-900 dark:text-white">Servizio</span>
+                    </div>
+                    @if (Model.MostraSceltaDipendente)
                     {
-                        <div class="mb-8 last:mb-0">
-                            <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
-                                @categoria.Key
-                            </h3>
+                        <div class="flex flex-col items-center">
+                            <div class="step-indicator-item" id="step-2">2</div>
+                            <span class="font-medium text-gray-500 dark:text-gray-400">Professionista</span>
+                        </div>
+                    }
+                    <div class="flex flex-col items-center">
+                        <div class="step-indicator-item" id="step-@(Model.MostraSceltaDipendente ? "3" : "2")">@(Model.MostraSceltaDipendente ? "3" : "2")</div>
+                        <span class="font-medium text-gray-500 dark:text-gray-400">Data e Ora</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="step-indicator-item" id="step-@(Model.MostraSceltaDipendente ? "4" : "3")">@(Model.MostraSceltaDipendente ? "4" : "3")</div>
+                        <span class="font-medium text-gray-500 dark:text-gray-400">Conferma</span>
+                    </div>
+                </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                @foreach (var servizio in categoria.Value)
-                                {
-                                    <div class="service-card bg-white dark:bg-gray-700 p-4 rounded-lg">
-                                        <div class="flex justify-between items-start mb-3">
-                                            <div class="flex-1">
-                                                <h4 class="font-semibold text-gray-900 dark:text-white">@servizio.Nome</h4>
-                                                @if (!string.IsNullOrEmpty(servizio.Descrizione))
-                                                {
-                                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">@servizio.Descrizione</p>
-                                                }
+                <!-- Booking Flow Content -->
+                <div id="bookingFlow">
+                    <!-- Step 1: Selezione Servizio -->
+                    <div id="booking-step-1" class="booking-section active fade-in">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Scegli il servizio</h3>
+
+                        @if (Model.ServiziPerCategoria.Any())
+                        {
+                            @foreach (var categoria in Model.ServiziPerCategoria)
+                            {
+                                <div class="mb-8 last:mb-0">
+                                    <h4 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+                                        @categoria.Key
+                                    </h4>
+
+                                    <div class="grid grid-cols-1 gap-4">
+                                        @foreach (var servizio in categoria.Value)
+                                        {
+                                            <div class="service-card bg-white dark:bg-gray-700 p-6 rounded-lg cursor-pointer"
+                                                 data-service-id="@servizio.ServizioId"
+                                                 data-service-name="@servizio.Nome"
+                                                 data-service-price="@servizio.PrezzoEffettivo"
+                                                 data-service-duration="@servizio.Durata"
+                                                 onclick="selectService('@servizio.ServizioId', '@servizio.Nome', @servizio.PrezzoEffettivo, @servizio.Durata)">
+
+                                                <div class="flex justify-between items-start">
+                                                    <div class="flex-1">
+                                                        <div class="flex items-center justify-between mb-3">
+                                                            <h5 class="font-semibold text-lg text-gray-900 dark:text-white">@servizio.Nome</h5>
+                                                            @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                                                            {
+                                                                <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium ml-2">
+                                                                    PROMO
+                                                                </span>
+                                                            }
+                                                        </div>
+
+                                                        @if (!string.IsNullOrEmpty(servizio.Descrizione))
+                                                        {
+                                                            <p class="text-gray-600 dark:text-gray-400 mb-4">@servizio.Descrizione</p>
+                                                        }
+
+                                                        <div class="flex items-center justify-between">
+                                                            <div class="flex items-center space-x-4">
+                                                                <div class="flex items-center space-x-2">
+                                                                    @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                                                                    {
+                                                                        <span class="text-xl font-bold salon-accent">€@servizio.PrezzoPromozione.ToString("F2")</span>
+                                                                        <span class="text-sm text-gray-400 line-through">€@servizio.Prezzo.ToString("F2")</span>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <span class="text-xl font-bold salon-primary">€@servizio.Prezzo.ToString("F2")</span>
+                                                                    }
+                                                                </div>
+
+                                                                <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                                                                    <i class="fas fa-clock mr-1"></i>
+                                                                    @servizio.Durata min
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                                                <div class="w-3 h-3 bg-salon-primary rounded-full hidden service-selected-indicator"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
-                                            {
-                                                <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium ml-2">
-                                                    PROMO
-                                                </span>
-                                            }
-                                        </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
 
-                                        <div class="flex items-center justify-between">
-                                            <div class="flex items-center space-x-2">
-                                                @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                        <div class="flex justify-end mt-6">
+                            <button id="continue-step-1" class="btn-salon-primary px-8 py-3 rounded-lg font-medium disabled:opacity-50" disabled onclick="nextStep()">
+                                Continua
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Selezione Staff (solo se abilitato) -->
+                    @if (Model.MostraSceltaDipendente)
+                    {
+                        <div id="booking-step-2" class="booking-section">
+                            <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Scegli il professionista</h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                @foreach (var dipendente in Model.DipendenteDisponibile)
+                                {
+                                    <div class="staff-card p-6 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer"
+                                         data-staff-id="@dipendente.DipendenteId"
+                                         data-staff-name="@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome"
+                                         onclick="selectStaff('@dipendente.DipendenteId', '@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome')">
+
+                                        <div class="flex items-center space-x-4">
+                                            <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                                @if (!string.IsNullOrEmpty(dipendente.ApplicationUser.ImmagineUser))
                                                 {
-                                                    <span class="text-lg font-bold salon-accent">€@servizio.PrezzoPromozione.ToString("F2")</span>
-                                                    <span class="text-sm text-gray-400 line-through">€@servizio.Prezzo.ToString("F2")</span>
+                                                    <img src="@dipendente.ApplicationUser.ImmagineUser" alt="@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome" class="w-full h-full object-cover">
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-lg font-bold salon-primary">€@servizio.Prezzo.ToString("F2")</span>
+                                                    <div class="w-full h-full bg-salon-primary flex items-center justify-center text-white font-bold">
+                                                        @dipendente.ApplicationUser.Nome?.FirstOrDefault()@dipendente.ApplicationUser.Cognome?.FirstOrDefault()
+                                                    </div>
                                                 }
                                             </div>
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                <i class="fas fa-clock mr-1"></i>
-                                                @servizio.Durata min
+                                            <div class="flex-1">
+                                                <h4 class="font-semibold text-gray-900 dark:text-white">
+                                                    @dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome
+                                                </h4>
+                                                @if (dipendente.ServiziOfferti.Any())
+                                                {
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                        Specialista in @string.Join(", ", dipendente.ServiziOfferti.Take(3).Select(s => s.Servizio.Nome))
+                                                    </p>
+                                                }
+                                            </div>
+                                            <div class="w-6 h-6 border-2 border-gray-300 rounded-full flex items-center justify-center">
+                                                <div class="w-3 h-3 bg-salon-primary rounded-full hidden staff-selected-indicator"></div>
                                             </div>
                                         </div>
-
-                                        <button onclick="selectService('@servizio.ServizioId', '@servizio.Nome', @servizio.PrezzoEffettivo, @servizio.Durata)"
-                                                class="w-full mt-3 btn-salon-primary px-4 py-2 rounded-lg font-medium transition-colors">
-                                            Prenota questo servizio
-                                        </button>
                                     </div>
                                 }
                             </div>
+
+                            <div class="flex justify-between mt-6">
+                                <button class="border-2 border-salon-primary salon-primary px-8 py-3 rounded-lg font-medium" onclick="prevStep()">
+                                    <i class="fas fa-arrow-left mr-2"></i>
+                                    Indietro
+                                </button>
+                                <button id="continue-step-2" class="btn-salon-primary px-8 py-3 rounded-lg font-medium disabled:opacity-50" disabled onclick="nextStep()">
+                                    Continua
+                                    <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
                         </div>
                     }
-                </section>
-            }
 
-            <!-- Team Section -->
-            @if (layout.MostraTeam && Model.DipendenteDisponibile.Any())
-            {
-                <section id="team" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
-                        <i class="fas fa-users mr-3"></i>
-                        Il Nostro Team
-                    </h2>
+                    <!-- Step 3/2: Selezione Data e Ora -->
+                    <div id="booking-step-@(Model.MostraSceltaDipendente ? "3" : "2")" class="booking-section">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Scegli data e orario</h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @foreach (var dipendente in Model.DipendenteDisponibile)
-                        {
-                            <div class="staff-card flex items-center space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-salon-primary transition-colors cursor-pointer"
-                                 onclick="selectStaff('@dipendente.DipendenteId', '@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome')">
-                                <div class="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    @if (!string.IsNullOrEmpty(dipendente.ApplicationUser.ImmagineUser))
-                                    {
-                                        <img src="@dipendente.ApplicationUser.ImmagineUser" alt="@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome" class="w-full h-full object-cover">
-                                    }
-                                    else
-                                    {
-                                        <div class="w-full h-full bg-salon-primary flex items-center justify-center text-white font-bold">
-                                            @dipendente.ApplicationUser.Nome?.FirstOrDefault()@dipendente.ApplicationUser.Cognome?.FirstOrDefault()
-                                        </div>
-                                    }
+                        <div class="grid grid-cols-1 gap-6">
+                            <!-- Selezione Data -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Seleziona la data</label>
+                                <input type="date" id="bookingDate"
+                                       min="@DateTime.Now.ToString("yyyy-MM-dd")"
+                                       max="@DateTime.Now.AddMonths(2).ToString("yyyy-MM-dd")"
+                                       class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                                       onchange="loadAvailableSlots()">
+                            </div>
+
+                            <!-- Orari Disponibili -->
+                            <div id="slotsContainer" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Orari disponibili</label>
+                                <div id="availableSlots" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                                    <!-- Slots will be loaded here -->
                                 </div>
-                                <div class="flex-1">
-                                    <h3 class="font-semibold text-gray-900 dark:text-white">
-                                        @dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome
-                                    </h3>
-                                    @if (dipendente.ServiziOfferti.Any())
-                                    {
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            Specialista in @string.Join(", ", dipendente.ServiziOfferti.Take(3).Select(s => s.Servizio.Nome))
-                                        </p>
-                                    }
-                                    @if (Model.MostraSceltaDipendente)
-                                    {
-                                        <p class="text-sm salon-primary mt-1">
-                                            <i class="fas fa-hand-pointer mr-1"></i>
-                                            Clicca per selezionare
-                                        </p>
-                                    }
+                            </div>
+                        </div>
+
+                        <div id="slotsLoading" class="hidden text-center py-8">
+                            <i class="fas fa-spinner fa-spin text-purple-600 mr-2"></i>
+                            <span class="text-gray-600 dark:text-gray-400">Caricamento orari...</span>
+                        </div>
+
+                        <div class="flex justify-between mt-6">
+                            <button class="border-2 border-salon-primary salon-primary px-8 py-3 rounded-lg font-medium" onclick="prevStep()">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Indietro
+                            </button>
+                            <button id="continue-step-@(Model.MostraSceltaDipendente ? "3" : "2")" class="btn-salon-primary px-8 py-3 rounded-lg font-medium disabled:opacity-50" disabled onclick="nextStep()">
+                                Continua
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 4/3: Dati Cliente e Conferma -->
+                    <div id="booking-step-@(Model.MostraSceltaDipendente ? "4" : "3")" class="booking-section">
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Conferma i tuoi dati</h3>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 mb-6">
+                                <div class="flex items-center text-green-800 dark:text-green-200">
+                                    <i class="fas fa-check-circle mr-3 text-xl"></i>
+                                    <span class="font-medium">I tuoi dati sono già salvati nel tuo profilo</span>
                                 </div>
                             </div>
                         }
-                    </div>
-                </section>
-            }
+                        else
+                        {
+                            <div class="space-y-4 mb-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome</label>
+                                        <input type="text" id="customerName" required
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cognome</label>
+                                        <input type="text" id="customerSurname" required
+                                               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+                                    <input type="email" id="customerEmail" required
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Telefono</label>
+                                    <input type="tel" id="customerPhone" required
+                                           class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                </div>
+                            </div>
+                        }
 
-            <!-- Galleria Section -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Note aggiuntive (opzionale)</label>
+                            <textarea id="bookingNotes" rows="3"
+                                      placeholder="Richieste speciali, allergie, ecc..."
+                                      class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
+                        </div>
+
+                        <!-- Politiche -->
+                        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-6">
+                            <h4 class="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Politiche di cancellazione</h4>
+                            <ul class="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
+                                <li>• Cancellazione gratuita fino a 24 ore prima</li>
+                                <li>• Arrivo in ritardo oltre 15 minuti: appuntamento rimandato</li>
+                                <li>• Pagamento al termine del servizio</li>
+                            </ul>
+                        </div>
+
+                        <div class="flex justify-between">
+                            <button class="border-2 border-salon-primary salon-primary px-8 py-3 rounded-lg font-medium" onclick="prevStep()">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Indietro
+                            </button>
+                            <button id="confirmBooking" class="btn-salon-accent px-8 py-3 rounded-lg font-medium" onclick="confirmBooking()">
+                                <i class="fas fa-check mr-2"></i>
+                                Conferma Prenotazione
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Altre sezioni (Galleria, Team, Recensioni) -->
             @if (layout.MostraGalleria && Model.GalleryImages.Any())
             {
-                <section id="galleria" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <section id="galleria" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 salon-primary">
                         <i class="fas fa-images mr-3"></i>
                         Galleria
@@ -360,7 +585,6 @@
                 </section>
             }
 
-            <!-- Recensioni Section -->
             @if (layout.MostraRecensioni && Model.RecensioniRecenti.Any())
             {
                 <section id="recensioni" class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -400,263 +624,129 @@
             }
         </div>
 
-        <!-- Sidebar Prenotazione -->
+        <!-- Sidebar Riepilogo - 1 colonna -->
         <div class="lg:col-span-1">
-            <div class="booking-sticky">
-                <!-- Widget Prenotazione -->
-                <div id="prenota" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div class="bg-salon-primary text-white p-6">
-                        <h3 class="text-xl font-bold mb-2">Prenota Appuntamento</h3>
-                        <p class="opacity-90">Scegli il servizio e prenota subito</p>
+            <div class="booking-summary">
+                <!-- Riepilogo Prenotazione -->
+                <div class="summary-card rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                        <i class="fas fa-receipt mr-3 salon-primary"></i>
+                        Riepilogo
+                    </h3>
 
-                        <!-- Step Indicator -->
-                        <div class="step-indicator mt-4">
-                            <div class="step active" id="step-indicator-1">1</div>
-                            <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
-                            @if (Model.MostraSceltaDipendente)
-                            {
-                                <div class="step inactive" id="step-indicator-2">2</div>
-                                <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
-                                <div class="step inactive" id="step-indicator-3">3</div>
-                                <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
-                                <div class="step inactive" id="step-indicator-4">4</div>
-                            }
-                            else
-                            {
-                                <div class="step inactive" id="step-indicator-2">2</div>
-                                <div class="flex-1 h-0.5 bg-white/30 mx-2"></div>
-                                <div class="step inactive" id="step-indicator-3">3</div>
-                            }
+                    <div id="summaryContent" class="space-y-4">
+                        <div id="summaryEmpty" class="text-center py-8">
+                            <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500 dark:text-gray-400">Seleziona un servizio per vedere il riepilogo</p>
                         </div>
-                        <div class="text-sm mt-2 opacity-80" id="step-description">
-                            Seleziona il servizio desiderato
-                        </div>
-                    </div>
 
-                    <div class="p-6" id="bookingWidget">
-                        <!-- Step 1: Servizio già selezionato tramite le card -->
-                        <div id="step1" class="booking-step">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">1. Servizio selezionato</h4>
-                            <div id="selectedServiceDisplay" class="hidden bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                                <div class="flex items-center justify-between">
+                        <div id="summaryDetails" class="hidden space-y-4">
+                            <!-- Servizio -->
+                            <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                                <div class="flex justify-between items-start">
                                     <div>
-                                        <h5 class="font-medium text-green-800 dark:text-green-200" id="selectedServiceName"></h5>
-                                        <p class="text-sm text-green-600 dark:text-green-300">
-                                            <span id="selectedServiceDuration"></span> minuti - €<span id="selectedServicePrice"></span>
+                                        <h4 class="font-medium text-gray-900 dark:text-white" id="summaryServiceName"></h4>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            <span id="summaryServiceDuration"></span> minuti
                                         </p>
                                     </div>
-                                    <button onclick="clearServiceSelection()" class="text-green-600 hover:text-green-800">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <p class="text-gray-600 dark:text-gray-400 text-sm">
-                                Clicca su "Prenota questo servizio" su uno dei servizi qui sopra per iniziare.
-                            </p>
-                        </div>
-
-                        <!-- Step 2: Selezione Staff (solo se abilitato) -->
-                        @if (Model.MostraSceltaDipendente)
-                        {
-                            <div id="step2" class="booking-step hidden">
-                                <h4 class="font-semibold text-gray-900 dark:text-white mb-4">2. Scegli il professionista</h4>
-                                <div id="selectedStaffDisplay" class="hidden bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <h5 class="font-medium text-blue-800 dark:text-blue-200" id="selectedStaffName"></h5>
-                                            <p class="text-sm text-blue-600 dark:text-blue-300">Professionista selezionato</p>
-                                        </div>
-                                        <button onclick="clearStaffSelection()" class="text-blue-600 hover:text-blue-800">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                    <div class="text-right">
+                                        <p class="font-bold text-lg salon-primary" id="summaryServicePrice"></p>
                                     </div>
                                 </div>
-                                <p class="text-gray-600 dark:text-gray-400 text-sm">
-                                    Clicca su uno dei professionisti nella sezione "Il Nostro Team" per selezionarlo.
-                                </p>
-                            </div>
-                        }
-
-                        <!-- Step 3: Selezione Data e Ora -->
-                        <div id="step3" class="booking-step hidden">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">
-                                @(Model.MostraSceltaDipendente ? "3" : "2"). Scegli data e orario
-                            </h4>
-
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Data</label>
-                                <input type="date" id="bookingDate"
-                                       min="@DateTime.Now.ToString("yyyy-MM-dd")"
-                                       max="@DateTime.Now.AddMonths(2).ToString("yyyy-MM-dd")"
-                                       class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                       onchange="loadAvailableSlots()">
                             </div>
 
-                            <div id="slotsContainer" class="hidden">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Orario disponibile</label>
-                                <div id="availableSlots" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
-                                    <!-- Slots will be loaded here -->
-                                </div>
-                            </div>
-
-                            <div id="slotsLoading" class="hidden text-center py-4">
-                                <i class="fas fa-spinner fa-spin text-purple-600 mr-2"></i>
-                                <span class="text-gray-600 dark:text-gray-400">Caricamento orari...</span>
-                            </div>
-                        </div>
-
-                        <!-- Step 4: Dati Cliente -->
-                        <div id="step4" class="booking-step hidden">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">
-                                @(Model.MostraSceltaDipendente ? "4" : "3"). I tuoi dati
-                            </h4>
-
-                            @if (User.Identity.IsAuthenticated)
-                            {
-                                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                                    <div class="flex items-center text-green-800 dark:text-green-200">
-                                        <i class="fas fa-check-circle mr-2"></i>
-                                        <span class="font-medium">Sei già loggato!</span>
-                                    </div>
-                                    <p class="text-sm text-green-700 dark:text-green-300 mt-1">
-                                        Procederemo con i tuoi dati salvati.
-                                    </p>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="space-y-4">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome</label>
-                                            <input type="text" id="customerName" required
-                                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                        </div>
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cognome</label>
-                                            <input type="text" id="customerSurname" required
-                                                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                        </div>
-                                    </div>
+                            <!-- Professionista -->
+                            <div id="summaryStaffSection" class="border-b border-gray-200 dark:border-gray-700 pb-4 hidden">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-user-tie salon-primary"></i>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-                                        <input type="email" id="customerEmail" required
-                                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
-                                        <input type="tel" id="customerPhone" required
-                                               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Professionista</p>
+                                        <p class="font-medium text-gray-900 dark:text-white" id="summaryStaffName"></p>
                                     </div>
                                 </div>
-                            }
-
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note aggiuntive (opzionale)</label>
-                                <textarea id="bookingNotes" rows="3"
-                                          placeholder="Richieste speciali, allergie, ecc..."
-                                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"></textarea>
                             </div>
-                        </div>
 
-                        <!-- Riepilogo Prenotazione -->
-                        <div id="bookingSummary" class="mt-6 hidden">
-                            <h4 class="font-semibold text-gray-900 dark:text-white mb-4">Riepilogo</h4>
-                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Servizio:</span>
-                                    <span id="summaryService" class="font-medium text-gray-900 dark:text-white"></span>
-                                </div>
-                                <div class="flex justify-between" id="summaryStaffRow" style="display: none;">
-                                    <span class="text-gray-600 dark:text-gray-400">Professionista:</span>
-                                    <span id="summaryStaff" class="font-medium text-gray-900 dark:text-white"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Data:</span>
-                                    <span id="summaryDate" class="font-medium text-gray-900 dark:text-white"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Orario:</span>
-                                    <span id="summaryTime" class="font-medium text-gray-900 dark:text-white"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Durata:</span>
-                                    <span id="summaryDuration" class="font-medium text-gray-900 dark:text-white"></span>
-                                </div>
-                                <hr class="border-gray-300 dark:border-gray-600">
-                                <div class="flex justify-between">
-                                    <span class="font-semibold text-gray-900 dark:text-white">Totale:</span>
-                                    <span id="summaryPrice" class="font-bold salon-primary text-lg"></span>
+                            <!-- Data e Ora -->
+                            <div id="summaryDateTimeSection" class="border-b border-gray-200 dark:border-gray-700 pb-4 hidden">
+                                <div class="space-y-3">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-calendar salon-primary"></i>
+                                        <div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Data</p>
+                                            <p class="font-medium text-gray-900 dark:text-white" id="summaryDate"></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-clock salon-primary"></i>
+                                        <div>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">Orario</p>
+                                            <p class="font-medium text-gray-900 dark:text-white" id="summaryTime"></p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Pulsanti Navigazione -->
-                        <div class="mt-6 space-y-3">
-                            <button id="continueBtn" onclick="nextStep()"
-                                    class="w-full btn-salon-primary px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-                                    disabled>
-                                Continua
-                            </button>
-
-                            <button id="backBtn" onclick="prevStep()"
-                                    class="w-full border-2 border-salon-primary salon-primary px-6 py-3 rounded-lg font-medium transition-colors hidden">
-                                Indietro
-                            </button>
-
-                            <button id="confirmBtn" onclick="confirmBooking()"
-                                    class="w-full btn-salon-accent px-6 py-3 rounded-lg font-medium transition-colors hidden">
-                                <i class="fas fa-check mr-2"></i>
-                                Conferma Prenotazione
-                            </button>
+                            <!-- Totale -->
+                            <div class="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-lg font-semibold text-gray-900 dark:text-white">Totale</span>
+                                    <span class="text-2xl font-bold salon-primary" id="summaryTotal"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Informazioni Contatto -->
-                @if (layout.MostraContatti)
-                {
-                    <div class="mt-6 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Contatti</h3>
-                        <div class="space-y-3">
-                            <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                <i class="fas fa-map-marker-alt w-5 mr-3 salon-primary"></i>
-                                <span class="text-sm">@Model.Salone.Indirizzo, @Model.Salone.Citta</span>
+                <!-- Informazioni Salone -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
+                        <i class="fas fa-info-circle mr-2 salon-primary"></i>
+                        Informazioni Salone
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-map-marker-alt text-salon-primary mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Indirizzo</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">@Model.Salone.Indirizzo, @Model.Salone.Citta</p>
                             </div>
-                            <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                <i class="fas fa-phone w-5 mr-3 salon-primary"></i>
-                                <a href="tel:@Model.Salone.Telefono" class="text-sm hover:salon-primary">@Model.Salone.Telefono</a>
-                            </div>
-                            <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                <i class="fas fa-envelope w-5 mr-3 salon-primary"></i>
-                                <a href="mailto:@Model.Salone.Email" class="text-sm hover:salon-primary">@Model.Salone.Email</a>
-                            </div>
-                            @if (!string.IsNullOrEmpty(Model.Salone.SitoWeb))
-                            {
-                                <div class="flex items-center text-gray-600 dark:text-gray-400">
-                                    <i class="fas fa-globe w-5 mr-3 salon-primary"></i>
-                                    <a href="@Model.Salone.SitoWeb" target="_blank" class="text-sm hover:salon-primary">Sito Web</a>
-                                </div>
-                            }
                         </div>
-
-                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <button onclick="getDirections()" class="w-full btn-salon-primary px-4 py-2 rounded-lg font-medium transition-colors">
-                                <i class="fas fa-directions mr-2"></i>
-                                Ottieni Indicazioni
-                            </button>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-phone text-salon-primary mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Telefono</p>
+                                <a href="tel:@Model.Salone.Telefono" class="text-sm text-salon-primary hover:underline">@Model.Salone.Telefono</a>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-envelope text-salon-primary mt-1"></i>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Email</p>
+                                <a href="mailto:@Model.Salone.Email" class="text-sm text-salon-primary hover:underline">@Model.Salone.Email</a>
+                            </div>
                         </div>
                     </div>
-                }
+
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <button onclick="getDirections()" class="w-full btn-salon-primary px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-directions mr-2"></i>
+                            Ottieni Indicazioni
+                        </button>
+                    </div>
+                </div>
 
                 <!-- Social Links -->
                 @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.InstagramUrl) ||
                                 !string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.FacebookUrl) ||
                                 !string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.TiktokUrl))
                 {
-                    <div class="mt-6 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">Seguici sui social</h3>
-                        <div class="flex space-x-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
+                            <i class="fas fa-share-alt mr-2 salon-primary"></i>
+                            Seguici sui social
+                        </h3>
+                        <div class="flex space-x-3">
                             @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.InstagramUrl))
                             {
                                 <a href="@Model.Salone.SalonePersonalizzazione.InstagramUrl" target="_blank"
@@ -721,9 +811,6 @@
         // Inizializzazione
         document.addEventListener('DOMContentLoaded', function() {
             console.log('Booking widget initialized with state:', bookingState);
-            updateStepVisibility();
-            updateButtons();
-            updateStepIndicator();
 
             // Imposta data minima a domani
             const dateInput = document.getElementById('bookingDate');
@@ -733,144 +820,85 @@
                 dateInput.min = tomorrow.toISOString().split('T')[0];
                 dateInput.value = tomorrow.toISOString().split('T')[0];
             }
+
+            // Event listeners per dati cliente
+            const customerInputs = ['customerName', 'customerSurname', 'customerEmail', 'customerPhone'];
+            customerInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', updateContinueButton);
+                }
+            });
         });
 
         // Selezione servizio
         function selectService(servizioId, serviceName, price, duration) {
             console.log('Selecting service:', { servizioId, serviceName, price, duration });
 
+            // Rimuovi selezione precedente
+            document.querySelectorAll('.service-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.service-selected-indicator').classList.add('hidden');
+            });
+
+            // Seleziona il servizio corrente
+            const selectedCard = document.querySelector(`[data-service-id="${servizioId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+                selectedCard.querySelector('.service-selected-indicator').classList.remove('hidden');
+            }
+
+            // Aggiorna lo stato
             bookingState.servizioId = servizioId;
             bookingState.serviceName = serviceName;
             bookingState.servicePrice = price;
             bookingState.serviceDuration = duration;
 
             // Reset selezioni successive
-            bookingState.selectedTimeSlot = null;
-            bookingState.slotTime = '';
-            bookingState.selectedDate = '';
+            resetSubsequentSelections();
 
-            // Evidenzia il servizio selezionato
-            document.querySelectorAll('.service-card').forEach(el => {
-                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-            });
-
-            const serviceCard = event.target.closest('.service-card');
-            if (serviceCard) {
-                serviceCard.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-            }
-
-            // Mostra il servizio selezionato
-            showSelectedService();
-
-            // Aggiorna lo step e i pulsanti
-            bookingState.currentStep = 1;
-            updateStepVisibility();
-            updateButtons();
-            updateStepIndicator();
+            // Aggiorna UI
             updateSummary();
-
-            // Scroll al widget di prenotazione
-            document.getElementById('prenota').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Mostra il servizio selezionato
-        function showSelectedService() {
-            const display = document.getElementById('selectedServiceDisplay');
-            const nameEl = document.getElementById('selectedServiceName');
-            const priceEl = document.getElementById('selectedServicePrice');
-            const durationEl = document.getElementById('selectedServiceDuration');
-
-            if (display && nameEl && priceEl && durationEl) {
-                nameEl.textContent = bookingState.serviceName;
-                priceEl.textContent = bookingState.servicePrice.toFixed(2);
-                durationEl.textContent = bookingState.serviceDuration;
-                display.classList.remove('hidden');
-            }
-        }
-
-        // Rimuovi selezione servizio
-        function clearServiceSelection() {
-            bookingState.servizioId = null;
-            bookingState.serviceName = '';
-            bookingState.servicePrice = 0;
-            bookingState.serviceDuration = 0;
-            bookingState.currentStep = 1;
-
-            document.getElementById('selectedServiceDisplay').classList.add('hidden');
-            document.querySelectorAll('.service-card').forEach(el => {
-                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-            });
-
-            updateStepVisibility();
-            updateButtons();
-            updateStepIndicator();
+            updateContinueButton();
         }
 
         // Selezione staff
         function selectStaff(dipendenteId, staffName) {
             console.log('Selecting staff:', { dipendenteId, staffName });
 
+            // Rimuovi selezione precedente
+            document.querySelectorAll('.staff-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.staff-selected-indicator').classList.add('hidden');
+            });
+
+            // Seleziona il staff corrente
+            const selectedCard = document.querySelector(`[data-staff-id="${dipendenteId}"]`);
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+                selectedCard.querySelector('.staff-selected-indicator').classList.remove('hidden');
+            }
+
+            // Aggiorna lo stato
             bookingState.dipendenteId = dipendenteId;
             bookingState.staffName = staffName;
 
             // Reset selezioni successive
             bookingState.selectedTimeSlot = null;
             bookingState.slotTime = '';
+            bookingState.selectedDate = '';
 
-            // Evidenzia il staff selezionato
-            document.querySelectorAll('.staff-card').forEach(el => {
-                el.classList.remove('selected', 'border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-            });
-
-            const staffCard = event.target.closest('.staff-card');
-            if (staffCard) {
-                staffCard.classList.add('selected', 'border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-            }
-
-            // Mostra il staff selezionato
-            showSelectedStaff();
+            // Aggiorna UI
+            updateSummary();
+            updateContinueButton();
 
             // Ricarica gli slot se la data è già selezionata
             if (bookingState.selectedDate) {
                 loadAvailableSlots();
             }
-
-            updateButtons();
-            updateStepIndicator();
-            updateSummary();
         }
 
-        // Mostra il staff selezionato
-        function showSelectedStaff() {
-            const display = document.getElementById('selectedStaffDisplay');
-            const nameEl = document.getElementById('selectedStaffName');
-
-            if (display && nameEl && bookingState.staffName) {
-                nameEl.textContent = bookingState.staffName;
-                display.classList.remove('hidden');
-            }
-        }
-
-        // Rimuovi selezione staff
-        function clearStaffSelection() {
-            bookingState.dipendenteId = null;
-            bookingState.staffName = '';
-
-            const display = document.getElementById('selectedStaffDisplay');
-            if (display) {
-                display.classList.add('hidden');
-            }
-
-            document.querySelectorAll('.staff-card').forEach(el => {
-                el.classList.remove('selected', 'border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-            });
-
-            updateButtons();
-            updateStepIndicator();
-            updateSummary();
-        }
-
-        // Caricamento slot disponibili con il nuovo sistema
+        // Caricamento slot disponibili
         function loadAvailableSlots() {
             const date = document.getElementById('bookingDate').value;
             if (!date) return;
@@ -913,10 +941,7 @@
 
             // Chiamata AJAX per caricare gli slot
             fetch(url)
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     console.log('Slots response:', data);
 
@@ -943,12 +968,14 @@
                                 <i class="fas fa-calendar-times text-4xl text-gray-300 mb-3"></i>
                                 <div class="text-gray-500 dark:text-gray-400">
                                     <div class="font-medium mb-1">Nessun orario disponibile</div>
-                                    <div class="text-sm">Prova una data diversa o contatta il salone</div>
+                                    <div class="text-sm">Prova una data diversa</div>
                                 </div>
                             </div>
                         `;
                         slotsContainer.classList.remove('hidden');
                     }
+
+                    updateContinueButton();
                 })
                 .catch(error => {
                     console.error('Errore caricamento slot:', error);
@@ -990,9 +1017,8 @@
                 selectedSlot.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
             }
 
-            updateButtons();
-            updateStepIndicator();
             updateSummary();
+            updateContinueButton();
         }
 
         // Navigazione tra i passi
@@ -1002,6 +1028,11 @@
                 return;
             }
 
+            // Nascondi step corrente
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('active');
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('hidden');
+
+            // Vai al prossimo step
             bookingState.currentStep++;
 
             // Salta lo step del personale se non abilitato
@@ -1009,15 +1040,20 @@
                 bookingState.currentStep = 3;
             }
 
-            console.log('Moving to step:', bookingState.currentStep);
+            // Mostra nuovo step
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('hidden');
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('active', 'fade-in');
 
-            updateStepVisibility();
-            updateButtons();
             updateStepIndicator();
-            updateStepDescription();
+            updateContinueButton();
         }
 
         function prevStep() {
+            // Nascondi step corrente
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('active');
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('hidden');
+
+            // Vai al step precedente
             bookingState.currentStep--;
 
             // Salta lo step del personale se non abilitato
@@ -1025,39 +1061,25 @@
                 bookingState.currentStep = 1;
             }
 
-            console.log('Moving back to step:', bookingState.currentStep);
+            // Mostra step precedente
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('hidden');
+            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('active', 'fade-in');
 
-            updateStepVisibility();
-            updateButtons();
             updateStepIndicator();
-            updateStepDescription();
+            updateContinueButton();
         }
 
         // Verifica se si può procedere
         function canProceed() {
-            console.log('Checking if can proceed. Current step:', bookingState.currentStep);
-            console.log('Current state:', bookingState);
-
             switch (bookingState.currentStep) {
                 case 1:
-                    const canProceedStep1 = bookingState.servizioId !== null;
-                    console.log('Step 1 - Service selected:', canProceedStep1);
-                    return canProceedStep1;
-
+                    return bookingState.servizioId !== null;
                 case 2:
                     if (!bookingState.showStaffSelection) return true;
-                    const canProceedStep2 = bookingState.dipendenteId !== null;
-                    console.log('Step 2 - Staff selected:', canProceedStep2);
-                    return canProceedStep2;
-
+                    return bookingState.dipendenteId !== null;
                 case 3:
-                    const canProceedStep3 = bookingState.selectedDate !== '' && bookingState.selectedTimeSlot !== null;
-                    console.log('Step 3 - Date and time selected:', canProceedStep3, {
-                        date: bookingState.selectedDate,
-                        timeSlot: bookingState.selectedTimeSlot
-                    });
-                    return canProceedStep3;
-
+                    const step3Check = bookingState.selectedDate !== '' && bookingState.selectedTimeSlot !== null;
+                    return bookingState.showStaffSelection ? step3Check : step3Check;
                 case 4:
                     if (@User.Identity.IsAuthenticated.ToString().ToLower()) {
                         return true;
@@ -1066,152 +1088,110 @@
                         const surname = document.getElementById('customerSurname')?.value;
                         const email = document.getElementById('customerEmail')?.value;
                         const phone = document.getElementById('customerPhone')?.value;
-                        const canProceedStep4 = name && surname && email && phone;
-                        console.log('Step 4 - Customer data valid:', canProceedStep4);
-                        return canProceedStep4;
+                        return name && surname && email && phone;
                     }
                 default:
                     return false;
             }
         }
 
-        // Aggiorna visibilità dei passi
-        function updateStepVisibility() {
-            console.log('Updating step visibility. Current step:', bookingState.currentStep);
-
-            document.querySelectorAll('.booking-step').forEach(step => {
-                step.classList.add('hidden');
-            });
-
-            // Mostra sempre lo step 1 (selezione servizio)
-            const step1 = document.getElementById('step1');
-            if (step1) step1.classList.remove('hidden');
-
-            // Mostra step corrente se diverso da 1
-            if (bookingState.currentStep > 1) {
-                const currentStepEl = document.getElementById('step' + bookingState.currentStep);
-                if (currentStepEl) {
-                    currentStepEl.classList.remove('hidden');
-                }
-            }
-
-            // Mostra il riepilogo se siamo oltre lo step iniziale
-            const summaryVisible = bookingState.currentStep > 1 && bookingState.servizioId;
-            const summaryEl = document.getElementById('bookingSummary');
-            if (summaryEl) {
-                summaryEl.classList.toggle('hidden', !summaryVisible);
-            }
-        }
-
         // Aggiorna gli indicatori di step
         function updateStepIndicator() {
-            const stepElements = document.querySelectorAll('[id^="step-indicator-"]');
+            for (let i = 1; i <= bookingState.maxSteps; i++) {
+                const stepElement = document.getElementById(`step-${i}`);
+                if (!stepElement) continue;
 
-            stepElements.forEach((stepEl, index) => {
-                const stepNumber = index + 1;
-                stepEl.classList.remove('active', 'completed', 'inactive');
+                stepElement.classList.remove('active', 'completed');
 
-                if (stepNumber < bookingState.currentStep || (stepNumber === bookingState.currentStep && canProceed())) {
-                    stepEl.classList.add('completed');
-                } else if (stepNumber === bookingState.currentStep) {
-                    stepEl.classList.add('active');
-                } else {
-                    stepEl.classList.add('inactive');
+                if (i < bookingState.currentStep) {
+                    stepElement.classList.add('completed');
+                } else if (i === bookingState.currentStep) {
+                    stepElement.classList.add('active');
                 }
-            });
-        }
-
-        // Aggiorna la descrizione dello step
-        function updateStepDescription() {
-            const descriptionEl = document.getElementById('step-description');
-            if (!descriptionEl) return;
-
-            const descriptions = {
-                1: 'Seleziona il servizio desiderato',
-                2: bookingState.showStaffSelection ? 'Scegli il tuo professionista' : 'Seleziona data e orario',
-                3: bookingState.showStaffSelection ? 'Seleziona data e orario' : 'Inserisci i tuoi dati',
-                4: 'Inserisci i tuoi dati'
-            };
-
-            descriptionEl.textContent = descriptions[bookingState.currentStep] || '';
-        }
-
-        // Aggiorna i pulsanti
-        function updateButtons() {
-            const continueBtn = document.getElementById('continueBtn');
-            const backBtn = document.getElementById('backBtn');
-            const confirmBtn = document.getElementById('confirmBtn');
-
-            if (!continueBtn || !backBtn || !confirmBtn) {
-                console.error('Button elements not found');
-                return;
             }
+        }
 
+        // Aggiorna pulsante continua
+        function updateContinueButton() {
             const canContinue = canProceed();
-            continueBtn.disabled = !canContinue;
+            const currentStepButton = document.getElementById(`continue-step-${bookingState.currentStep}`);
 
-            // Determina se siamo all'ultimo step
-            const isLastStep = bookingState.currentStep >= bookingState.maxSteps;
-
-            console.log('Button state:', { canContinue, isLastStep, currentStep: bookingState.currentStep, maxSteps: bookingState.maxSteps });
-
-            continueBtn.classList.toggle('hidden', isLastStep);
-            confirmBtn.classList.toggle('hidden', !isLastStep || !canContinue);
-            backBtn.classList.toggle('hidden', bookingState.currentStep === 1);
-
-            // Aggiorna il testo del pulsante continua
-            if (bookingState.currentStep === 1) {
-                continueBtn.innerHTML = bookingState.showStaffSelection ?
-                    '<i class="fas fa-arrow-right mr-2"></i>Scegli Professionista' :
-                    '<i class="fas fa-arrow-right mr-2"></i>Scegli Data e Ora';
-            } else if (bookingState.currentStep === 2 && bookingState.showStaffSelection) {
-                continueBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>Scegli Data e Ora';
-            } else if ((bookingState.currentStep === 2 && !bookingState.showStaffSelection) ||
-                       (bookingState.currentStep === 3 && bookingState.showStaffSelection)) {
-                continueBtn.innerHTML = '<i class="fas fa-arrow-right mr-2"></i>I tuoi Dati';
+            if (currentStepButton) {
+                currentStepButton.disabled = !canContinue;
             }
         }
 
         // Aggiorna il riepilogo
         function updateSummary() {
-            const summaryService = document.getElementById('summaryService');
-            const summaryStaff = document.getElementById('summaryStaff');
-            const summaryStaffRow = document.getElementById('summaryStaffRow');
-            const summaryDate = document.getElementById('summaryDate');
-            const summaryTime = document.getElementById('summaryTime');
-            const summaryDuration = document.getElementById('summaryDuration');
-            const summaryPrice = document.getElementById('summaryPrice');
+            const summaryEmpty = document.getElementById('summaryEmpty');
+            const summaryDetails = document.getElementById('summaryDetails');
 
-            if (summaryService) summaryService.textContent = bookingState.serviceName || '-';
+            if (!bookingState.servizioId) {
+                summaryEmpty.classList.remove('hidden');
+                summaryDetails.classList.add('hidden');
+                return;
+            }
 
-            if (summaryStaffRow && summaryStaff) {
-                if (bookingState.showStaffSelection && bookingState.staffName) {
-                    summaryStaff.textContent = bookingState.staffName;
-                    summaryStaffRow.style.display = 'flex';
+            summaryEmpty.classList.add('hidden');
+            summaryDetails.classList.remove('hidden');
+
+            // Aggiorna i dettagli
+            document.getElementById('summaryServiceName').textContent = bookingState.serviceName;
+            document.getElementById('summaryServiceDuration').textContent = bookingState.serviceDuration;
+            document.getElementById('summaryServicePrice').textContent = `€${bookingState.servicePrice.toFixed(2)}`;
+            document.getElementById('summaryTotal').textContent = `€${bookingState.servicePrice.toFixed(2)}`;
+
+            // Staff section
+            const staffSection = document.getElementById('summaryStaffSection');
+            if (bookingState.showStaffSelection) {
+                if (bookingState.staffName) {
+                    document.getElementById('summaryStaffName').textContent = bookingState.staffName;
+                    staffSection.classList.remove('hidden');
                 } else {
-                    summaryStaffRow.style.display = 'none';
+                    staffSection.classList.add('hidden');
                 }
             }
 
-            if (summaryDate && bookingState.selectedDate) {
+            // Date/Time section
+            const dateTimeSection = document.getElementById('summaryDateTimeSection');
+            if (bookingState.selectedDate && bookingState.slotTime) {
                 const date = new Date(bookingState.selectedDate);
-                summaryDate.textContent = date.toLocaleDateString('it-IT', {
+                document.getElementById('summaryDate').textContent = date.toLocaleDateString('it-IT', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                 });
+                document.getElementById('summaryTime').textContent = bookingState.slotTime;
+                dateTimeSection.classList.remove('hidden');
+            } else {
+                dateTimeSection.classList.add('hidden');
             }
+        }
 
-            if (summaryTime) summaryTime.textContent = bookingState.slotTime || '-';
-            if (summaryDuration) summaryDuration.textContent = bookingState.serviceDuration ? `${bookingState.serviceDuration} min` : '-';
-            if (summaryPrice) summaryPrice.textContent = bookingState.servicePrice ? `€${bookingState.servicePrice.toFixed(2)}` : '-';
+        // Reset selezioni successive
+        function resetSubsequentSelections() {
+            bookingState.dipendenteId = null;
+            bookingState.staffName = '';
+            bookingState.selectedTimeSlot = null;
+            bookingState.slotTime = '';
+            bookingState.selectedDate = '';
+
+            // Reset UI staff
+            document.querySelectorAll('.staff-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.staff-selected-indicator').classList.add('hidden');
+            });
+
+            // Reset UI slots
+            document.querySelectorAll('.slot-option').forEach(el => {
+                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            });
         }
 
         // Conferma prenotazione
         function confirmBooking() {
             if (!canProceed()) {
-                console.log('Cannot confirm booking. State:', bookingState);
                 Swal.fire('Attenzione', 'Completa tutti i campi richiesti', 'warning');
                 return;
             }
@@ -1221,7 +1201,7 @@
                 servizioId: bookingState.servizioId,
                 dipendenteId: bookingState.dipendenteId,
                 data: bookingState.selectedDate,
-                timeSlot: bookingState.slotTime, // Formato "HH:mm - HH:mm"
+                timeSlot: bookingState.slotTime,
                 note: document.getElementById('bookingNotes')?.value || ''
             };
 
@@ -1236,7 +1216,7 @@
             console.log('Sending booking request:', bookingData);
 
             // Disabilita il pulsante
-            const confirmBtn = document.getElementById('confirmBtn');
+            const confirmBtn = document.getElementById('confirmBooking');
             confirmBtn.disabled = true;
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Prenotando...';
 
@@ -1336,27 +1316,55 @@
             window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`, '_blank');
         }
 
-        // Event listeners per migliorare l'esperienza utente
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auto-scroll al widget se c'è l'hash #prenota
-            if (window.location.hash === '#prenota') {
-                setTimeout(() => {
-                    document.getElementById('prenota')?.scrollIntoView({ behavior: 'smooth' });
-                }, 500);
-            }
-
-            // Listener per input nei dati cliente (se guest)
-            const customerInputs = ['customerName', 'customerSurname', 'customerEmail', 'customerPhone'];
-            customerInputs.forEach(inputId => {
-                const input = document.getElementById(inputId);
-                if (input) {
-                    input.addEventListener('input', () => {
-                        updateButtons();
-                    });
-                }
+        // Scroll automatico al completamento di ogni step
+        function scrollToBooking() {
+            document.querySelector('#bookingFlow').scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
             });
+        }
 
-            console.log('Booking widget fully initialized');
-        });
+        // Override delle funzioni per includere scroll
+        const originalNextStep = nextStep;
+        nextStep = function() {
+            originalNextStep();
+            setTimeout(scrollToBooking, 300);
+        };
+
+        const originalPrevStep = prevStep;
+        prevStep = function() {
+            originalPrevStep();
+            setTimeout(scrollToBooking, 300);
+        };
+
+        // Responsive behavior
+        function handleResponsive() {
+            const isMobile = window.innerWidth < 1024;
+            const summaryContainer = document.querySelector('.booking-summary').parentElement;
+            const bookingContainer = document.querySelector('#bookingFlow').parentElement;
+
+            if (isMobile) {
+                // Su mobile, sposta il riepilogo dopo il booking flow
+                if (summaryContainer && bookingContainer) {
+                    summaryContainer.classList.remove('lg:col-span-1');
+                    summaryContainer.classList.add('lg:col-span-2');
+                    bookingContainer.parentElement.appendChild(summaryContainer);
+                }
+            }
+        }
+
+        // Event listeners
+        window.addEventListener('resize', handleResponsive);
+        document.addEventListener('DOMContentLoaded', handleResponsive);
+
+        // Auto-scroll al widget se c'è l'hash #prenota
+        if (window.location.hash === '#prenota') {
+            setTimeout(() => {
+                document.getElementById('bookingFlow')?.scrollIntoView({ behavior: 'smooth' });
+            }, 500);
+        }
+
+        // Inizializza lo step indicator
+        updateStepIndicator();
     </script>
 }
