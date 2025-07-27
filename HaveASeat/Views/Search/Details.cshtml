@@ -83,11 +83,6 @@
                 background-color: rgba(124, 58, 237, 0.05);
             }
 
-        .booking-summary {
-            position: sticky;
-            top: 120px;
-        }
-
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -121,12 +116,14 @@
             }
 
         .booking-section {
+            display: none;
             opacity: 0.5;
             pointer-events: none;
             transition: all 0.3s ease;
         }
 
             .booking-section.active {
+                display: block !important;
                 opacity: 1;
                 pointer-events: auto;
             }
@@ -205,19 +202,6 @@
     </style>
 }
 
-<!-- Header del salone con breadcrumb -->
-<nav class="bg-gray-50 dark:bg-gray-800 py-4">
-    <div class="container mx-auto px-4">
-        <div class="flex items-center space-x-2 text-sm">
-            <a href="/Search" class="text-gray-600 dark:text-gray-400 hover:text-purple-600">Ricerca</a>
-            <i class="fas fa-chevron-right text-gray-400"></i>
-            <a href="/Search?location=@Model.Salone.Citta" class="text-gray-600 dark:text-gray-400 hover:text-purple-600">@Model.Salone.Citta</a>
-            <i class="fas fa-chevron-right text-gray-400"></i>
-            <span class="salon-primary font-medium">@Model.Salone.Nome</span>
-        </div>
-    </div>
-</nav>
-
 <!-- Hero Section del Salone -->
 <section class="relative">
     @if (Model.CoverImage != null)
@@ -288,25 +272,60 @@
                 </h2>
 
                 <!-- Step Indicator -->
-                <div class="step-indicator flex items-center justify-between mb-8">
-                    <div class="flex flex-col items-center">
-                        <div class="step-indicator-item active" id="step-1">1</div>
-                        <span class="font-medium text-gray-900 dark:text-white">Servizio</span>
-                    </div>
-                    @if (Model.MostraSceltaDipendente)
-                    {
-                        <div class="flex flex-col items-center">
-                            <div class="step-indicator-item" id="step-2">2</div>
-                            <span class="font-medium text-gray-500 dark:text-gray-400">Professionista</span>
+                <div class="stepper-container relative mb-8">
+                    <!-- Linea di connessione -->
+                    <div class="absolute top-2/3 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700 transform -translate-y-1/2 z-0"></div>
+                    <div class="absolute top-2/3 left-0 h-1 bg-gradient-to-r from-purple-600 to-pink-600 transform -translate-y-1/2 z-0 transition-all duration-500"
+                         id="progress-bar" style="width: 25%;"></div>
+
+                    <!-- Steps -->
+                    <div class="relative z-10 flex justify-between items-center">
+                        <!-- Step 1: Servizio -->
+                        <div class="step-wrapper flex flex-col items-center">
+                            <div class="step-circle w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 bg-purple-600 text-white border-4 border-purple-600 shadow-lg"
+                                 id="step-circle-1">
+                                <i class="fas fa-cut"></i>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="font-semibold text-sm text-purple-600 dark:text-purple-400" id="step-label-1">Servizio</div>
+                            </div>
                         </div>
-                    }
-                    <div class="flex flex-col items-center">
-                        <div class="step-indicator-item" id="step-@(Model.MostraSceltaDipendente ? "3" : "2")">@(Model.MostraSceltaDipendente ? "3" : "2")</div>
-                        <span class="font-medium text-gray-500 dark:text-gray-400">Data e Ora</span>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <div class="step-indicator-item" id="step-@(Model.MostraSceltaDipendente ? "4" : "3")">@(Model.MostraSceltaDipendente ? "4" : "3")</div>
-                        <span class="font-medium text-gray-500 dark:text-gray-400">Conferma</span>
+
+                        <!-- Step 2: Staff (condizionale) -->
+                        @if (Model.MostraSceltaDipendente)
+                        {
+                            <div class="step-wrapper flex flex-col items-center">
+                                <div class="step-circle w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-4 border-gray-200 dark:border-gray-700"
+                                     id="step-circle-2">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <div class="mt-3 text-center">
+                                    <div class="font-semibold text-sm text-gray-500 dark:text-gray-400" id="step-label-2">Professionista</div>
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Step 3: Data e Ora -->
+                        <div class="step-wrapper flex flex-col items-center">
+                            <div class="step-circle w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-4 border-gray-200 dark:border-gray-700"
+                                 id="step-circle-@(Model.MostraSceltaDipendente ? "3" : "2")">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="font-semibold text-sm text-gray-500 dark:text-gray-400" id="step-label-@(Model.MostraSceltaDipendente ? "3" : "2")">Data e Ora</div>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Conferma -->
+                        <div class="step-wrapper flex flex-col items-center">
+                            <div class="step-circle w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-4 border-gray-200 dark:border-gray-700"
+                                 id="step-circle-@(Model.MostraSceltaDipendente ? "4" : "3")">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="font-semibold text-sm text-gray-500 dark:text-gray-400" id="step-label-@(Model.MostraSceltaDipendente ? "4" : "3")">Conferma</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -331,9 +350,9 @@
                                             <div class="service-card bg-white dark:bg-gray-700 p-6 rounded-lg cursor-pointer"
                                                  data-service-id="@servizio.ServizioId"
                                                  data-service-name="@servizio.Nome"
-                                                 data-service-price="@servizio.PrezzoEffettivo"
-                                                 data-service-duration="@servizio.Durata"
-                                                 onclick="selectService('@servizio.ServizioId', '@servizio.Nome', @servizio.PrezzoEffettivo, @servizio.Durata)">
+                                                 data-service-price="@servizio.PrezzoEffettivo.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                 data-service-duration="@servizio.Durata.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                                 onclick="selectService('@servizio.ServizioId', '@servizio.Nome', @servizio.PrezzoEffettivo.ToString(System.Globalization.CultureInfo.InvariantCulture), @servizio.Durata.ToString(System.Globalization.CultureInfo.InvariantCulture))">
 
                                                 <div class="flex justify-between items-start">
                                                     <div class="flex-1">
@@ -357,18 +376,18 @@
                                                                 <div class="flex items-center space-x-2">
                                                                     @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
                                                                     {
-                                                                        <span class="text-xl font-bold salon-accent">€@servizio.PrezzoPromozione.ToString("F2")</span>
-                                                                        <span class="text-sm text-gray-400 line-through">€@servizio.Prezzo.ToString("F2")</span>
+                                                                        <span class="text-xl font-bold salon-accent">€@servizio.PrezzoPromozione.ToString(System.Globalization.CultureInfo.InvariantCulture)</span>
+                                                                        <span class="text-sm text-gray-400 line-through">€@servizio.Prezzo.ToString(System.Globalization.CultureInfo.InvariantCulture)</span>
                                                                     }
                                                                     else
                                                                     {
-                                                                        <span class="text-xl font-bold salon-primary">€@servizio.Prezzo.ToString("F2")</span>
+                                                                        <span class="text-xl font-bold salon-primary">€@servizio.Prezzo.ToString(System.Globalization.CultureInfo.InvariantCulture)</span>
                                                                     }
                                                                 </div>
 
                                                                 <div class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                                                                     <i class="fas fa-clock mr-1"></i>
-                                                                    @servizio.Durata min
+                                                                    @(((int)servizio.Durata).ToString(System.Globalization.CultureInfo.InvariantCulture)) min
                                                                 </div>
                                                             </div>
 
@@ -470,7 +489,7 @@
                             <!-- Orari Disponibili -->
                             <div id="slotsContainer" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Orari disponibili</label>
-                                <div id="availableSlots" class="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                                <div id="availableSlots" class="grid grid-cols-2 gap-2 max-h-70 overflow-y-auto">
                                     <!-- Slots will be loaded here -->
                                 </div>
                             </div>
@@ -622,6 +641,7 @@
                     </div>
                 </section>
             }
+        
         </div>
 
         <!-- Sidebar Riepilogo - 1 colonna -->
@@ -829,7 +849,91 @@
                     input.addEventListener('input', updateContinueButton);
                 }
             });
+
+            // IMPORTANTE: Inizializza lo stepper al caricamento
+            updateStepIndicator();
         });
+
+        // FUNZIONE CORRETTA per aggiornare gli indicatori di step
+        function updateStepIndicator() {
+            console.log('Updating step indicator. Current step:', bookingState.currentStep);
+
+            // Aggiorna la barra di progresso
+            updateProgressBar();
+
+            // Calcola quanti step sono stati completati
+            const totalSteps = bookingState.maxSteps;
+
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepCircle = document.getElementById(`step-circle-${i}`);
+                const stepLabel = document.getElementById(`step-label-${i}`);
+
+                if (!stepCircle || !stepLabel) {
+                    console.warn(`Step elements not found for step ${i}`);
+                    continue;
+                }
+
+                // Reset delle classi CSS
+                stepCircle.classList.remove(
+                    'bg-purple-600', 'text-white', 'border-purple-600',
+                    'bg-green-500', 'border-green-500', 'shadow-lg'
+                );
+                stepCircle.classList.add(
+                    'bg-gray-200', 'dark:bg-gray-700', 'text-gray-500',
+                    'dark:text-gray-400', 'border-gray-200', 'dark:border-gray-700'
+                );
+
+                stepLabel.classList.remove(
+                    'text-purple-600', 'dark:text-purple-400',
+                    'text-green-600', 'dark:text-green-400'
+                );
+                stepLabel.classList.add('text-gray-500', 'dark:text-gray-400');
+
+                // Applica lo stato corretto
+                if (i < bookingState.currentStep) {
+                    // Step completato (verde)
+                    stepCircle.classList.remove(
+                        'bg-gray-200', 'dark:bg-gray-700', 'text-gray-500',
+                        'dark:text-gray-400', 'border-gray-200', 'dark:border-gray-700'
+                    );
+                    stepCircle.classList.add('bg-green-500', 'text-white', 'border-green-500', 'shadow-lg');
+
+                    stepLabel.classList.remove('text-gray-500', 'dark:text-gray-400');
+                    stepLabel.classList.add('text-green-600', 'dark:text-green-400');
+
+                } else if (i === bookingState.currentStep) {
+                    // Step attivo (viola)
+                    stepCircle.classList.remove(
+                        'bg-gray-200', 'dark:bg-gray-700', 'text-gray-500',
+                        'dark:text-gray-400', 'border-gray-200', 'dark:border-gray-700'
+                    );
+                    stepCircle.classList.add('bg-purple-600', 'text-white', 'border-purple-600', 'shadow-lg');
+
+                    stepLabel.classList.remove('text-gray-500', 'dark:text-gray-400');
+                    stepLabel.classList.add('text-purple-600', 'dark:text-purple-400');
+                }
+            }
+        }
+
+        // NUOVA FUNZIONE per aggiornare la barra di progresso
+        function updateProgressBar() {
+            const progressBar = document.getElementById('progress-bar');
+            if (!progressBar) {
+                console.warn('Progress bar element not found');
+                return;
+            }
+
+            const totalSteps = bookingState.maxSteps;
+            const currentStep = bookingState.currentStep;
+
+            // Calcola la percentuale di completamento
+            const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+
+            console.log('Progress update:', { currentStep, totalSteps, progressPercentage });
+
+            // Applica la larghezza con animazione
+            progressBar.style.width = `${Math.max(0, Math.min(100, progressPercentage))}%`;
+        }
 
         // Selezione servizio
         function selectService(servizioId, serviceName, price, duration) {
@@ -1021,16 +1125,21 @@
             updateContinueButton();
         }
 
-        // Navigazione tra i passi
+        // FUNZIONI CORRETTE per la navigazione tra i passi
         function nextStep() {
             if (!canProceed()) {
                 console.log('Cannot proceed to next step. Current state:', bookingState);
                 return;
             }
 
+            console.log('Moving from step', bookingState.currentStep);
+
             // Nascondi step corrente
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('active');
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('hidden');
+            const currentStepElement = document.getElementById(`booking-step-${bookingState.currentStep}`);
+            if (currentStepElement) {
+                currentStepElement.classList.remove('active');
+                currentStepElement.classList.add('hidden');
+            }
 
             // Vai al prossimo step
             bookingState.currentStep++;
@@ -1040,18 +1149,37 @@
                 bookingState.currentStep = 3;
             }
 
-            // Mostra nuovo step
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('hidden');
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('active', 'fade-in');
+            console.log('Moving to step', bookingState.currentStep);
 
+            // Mostra nuovo step
+            const nextStepElement = document.getElementById(`booking-step-${bookingState.currentStep}`);
+            if (nextStepElement) {
+                nextStepElement.classList.remove('hidden');
+                nextStepElement.classList.add('active', 'fade-in');
+            }
+
+            // IMPORTANTE: Aggiorna lo stepper DOPO aver cambiato lo step
             updateStepIndicator();
             updateContinueButton();
+
+            // Auto-scroll
+            setTimeout(() => {
+                document.querySelector('#bookingFlow')?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
         }
 
         function prevStep() {
+            console.log('Moving back from step', bookingState.currentStep);
+
             // Nascondi step corrente
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('active');
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('hidden');
+            const currentStepElement = document.getElementById(`booking-step-${bookingState.currentStep}`);
+            if (currentStepElement) {
+                currentStepElement.classList.remove('active');
+                currentStepElement.classList.add('hidden');
+            }
 
             // Vai al step precedente
             bookingState.currentStep--;
@@ -1061,10 +1189,16 @@
                 bookingState.currentStep = 1;
             }
 
-            // Mostra step precedente
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.remove('hidden');
-            document.getElementById(`booking-step-${bookingState.currentStep}`).classList.add('active', 'fade-in');
+            console.log('Moving to step', bookingState.currentStep);
 
+            // Mostra step precedente
+            const prevStepElement = document.getElementById(`booking-step-${bookingState.currentStep}`);
+            if (prevStepElement) {
+                prevStepElement.classList.remove('hidden');
+                prevStepElement.classList.add('active', 'fade-in');
+            }
+
+            // IMPORTANTE: Aggiorna lo stepper DOPO aver cambiato lo step
             updateStepIndicator();
             updateContinueButton();
         }
@@ -1092,22 +1226,6 @@
                     }
                 default:
                     return false;
-            }
-        }
-
-        // Aggiorna gli indicatori di step
-        function updateStepIndicator() {
-            for (let i = 1; i <= bookingState.maxSteps; i++) {
-                const stepElement = document.getElementById(`step-${i}`);
-                if (!stepElement) continue;
-
-                stepElement.classList.remove('active', 'completed');
-
-                if (i < bookingState.currentStep) {
-                    stepElement.classList.add('completed');
-                } else if (i === bookingState.currentStep) {
-                    stepElement.classList.add('active');
-                }
             }
         }
 
@@ -1316,27 +1434,6 @@
             window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`, '_blank');
         }
 
-        // Scroll automatico al completamento di ogni step
-        function scrollToBooking() {
-            document.querySelector('#bookingFlow').scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-
-        // Override delle funzioni per includere scroll
-        const originalNextStep = nextStep;
-        nextStep = function() {
-            originalNextStep();
-            setTimeout(scrollToBooking, 300);
-        };
-
-        const originalPrevStep = prevStep;
-        prevStep = function() {
-            originalPrevStep();
-            setTimeout(scrollToBooking, 300);
-        };
-
         // Responsive behavior
         function handleResponsive() {
             const isMobile = window.innerWidth < 1024;
@@ -1355,7 +1452,6 @@
 
         // Event listeners
         window.addEventListener('resize', handleResponsive);
-        document.addEventListener('DOMContentLoaded', handleResponsive);
 
         // Auto-scroll al widget se c'è l'hash #prenota
         if (window.location.hash === '#prenota') {
@@ -1363,8 +1459,5 @@
                 document.getElementById('bookingFlow')?.scrollIntoView({ behavior: 'smooth' });
             }, 500);
         }
-
-        // Inizializza lo step indicator
-        updateStepIndicator();
     </script>
 }
