@@ -286,10 +286,15 @@ namespace HaveASeat.Controllers
 				{
 					AppuntamentoId = Guid.NewGuid(),
 					SaloneId = request.SaloneId,
+					Salone = _context.Salone.Find(request.SaloneId),
 					ApplicationUserId = cliente.Id,
+					ApplicationUser = cliente,
 					DipendenteId = request.DipendenteId,
+					Dipendente = _context.Dipendente.Find(request.DipendenteId),
 					ServizioId = request.ServizioId,
+					Servizio = servizio,
 					SlotId = slot.SlotId,
+					Slot = slot,
 					Data = request.Data,
 					Note = request.Note ?? "",
 					Stato = HaveASeat.Utilities.Enum.StatoAppuntamento.Prenotato
@@ -378,6 +383,7 @@ namespace HaveASeat.Controllers
 			{
 				SlotId = Guid.NewGuid(),
 				SaloneId = saloneId,
+				Salone = _context.Salone.Find(saloneId),
 				OraInizio = oraInizio,
 				OraFine = oraFine,
 				GiorniSettimana = "0,1,2,3,4,5,6", // Tutti i giorni per default
