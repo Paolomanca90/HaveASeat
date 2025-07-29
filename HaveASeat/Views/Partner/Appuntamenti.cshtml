@@ -446,6 +446,7 @@
             <table class="table w-full">
                 <thead>
                     <tr>
+                        <th>Data</th>
                         <th>Orario</th>
                         <th>Cliente</th>
                         <th>Servizio</th>
@@ -500,6 +501,7 @@
 
 @section Scripts {
 <script>
+        console.log('Script appuntamenti caricato');
     let currentView = 'cards';
     let appointments = [];
     let filteredAppointments = [];
@@ -507,6 +509,9 @@
 
     // Inizializzazione
     document.addEventListener('DOMContentLoaded', function() {
+              console.log('DOM caricato, inizializzazione...');
+        console.log('Salone ID corrente:', currentSaloneId);
+             initializeViews();
         loadAppointments();
         setupEventListeners();
         
@@ -569,25 +574,35 @@
         }
     }
 
-    async function loadAppointments() {
-        showLoading(true);
-        
-        try {
-            const response = await fetch(`/Partner/GetAppuntamenti?saloneId=${currentSaloneId}`);
-            const data = await response.json();
-            
-            if (data.success) {
-                appointments = data.appuntamenti;
-                populateFilters(data);
-                filterAppointments();
+        async function loadAppointments() {
+                 await debugLoadAppointments();
+            console.log('Caricamento appuntamenti per salone:', currentSaloneId);
+            showLoading(true);
+
+            try {
+                const response = await fetch(`/Partner/GetAppuntamenti?saloneId=${currentSaloneId}`);
+                console.log('Response status:', response.status);
+
+                const data = await response.json();
+                console.log('Dati ricevuti:', data);
+
+                if (data.success) {
+                    appointments = data.appuntamenti || [];
+                    console.log('Numero appuntamenti caricati:', appointments.length);
+
+                    populateFilters(data);
+                    filterAppointments();
+                } else {
+                    console.error('Errore dal server:', data.message);
+                    showError(data.message || 'Errore nel caricamento degli appuntamenti');
+                }
+            } catch (error) {
+                console.error('Errore nel caricamento:', error);
+                showError('Errore nel caricamento degli appuntamenti');
+            } finally {
+                showLoading(false);
             }
-        } catch (error) {
-            console.error('Errore nel caricamento:', error);
-            showError('Errore nel caricamento degli appuntamenti');
-        } finally {
-            showLoading(false);
         }
-    }
 
     function populateFilters(data) {
         // Popola filtro servizi
@@ -635,7 +650,7 @@
             
             return true;
         });
-
+            console.log('Appuntamenti filtrati:', filteredAppointments.length);
         updateStats();
         renderAppointments();
     }
@@ -693,6 +708,7 @@
     }
 
     function renderAppointments() {
+    console.log('Rendering appuntamenti, vista:', currentView);
         if (filteredAppointments.length === 0) {
             showEmptyState(true);
             return;
@@ -767,6 +783,7 @@
         const tbody = document.getElementById('appointmentsTable');
         tbody.innerHTML = filteredAppointments.map(app => `
             <tr class="hover cursor-pointer" onclick="showAppointmentDetails('${app.id}')">
+                <td>${app.data}</td>
                 <td>${app.orarioInizio} - ${app.orarioFine}</td>
                 <td>
                     <div class="font-medium">${app.nomeCliente}</div>
@@ -848,25 +865,64 @@
         }
     }
 
-    function switchView(view) {
-        currentView = view;
-        
-        // Aggiorna bottoni
-        document.querySelectorAll('.view-toggle button').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.view === view);
-        });
-        
-        // Nascondi tutte le viste
-        document.querySelectorAll('.appointments-view').forEach(v => {
-            v.classList.add('hidden');
-        });
-        
-        // Mostra la vista selezionata
-        document.getElementById(`${view}View`).classList.remove('hidden');
-        
-        // Re-render
-        renderAppointments();
-    }
+          function switchView(view) {
+            console.log('Switching to view:', view);
+            currentView = view;
+
+            // Aggiorna bottoni
+            const buttons = document.querySelectorAll('.view-toggle button');
+            buttons.forEach(btn => {
+                // Rimuovi la classe active
+                btn.classList.remove('active');
+
+                // Aggiungi active se è il bottone selezionato
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${view}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Ottieni tutti i contenitori delle viste
+            const cardsView = document.getElementById('cardsView');
+            const tableView = document.getElementById('tableView');
+            const timelineView = document.getElementById('timelineView');
+
+            // Nascondili tutti
+            if (cardsView) cardsView.style.display = 'none';
+            if (tableView) tableView.style.display = 'none';
+            if (timelineView) timelineView.style.display = 'none';
+
+            // Mostra solo quello selezionato
+            switch(view) {
+                case 'cards':
+                    if (cardsView) cardsView.style.display = 'block';
+                    break;
+                case 'table':
+                    if (tableView) tableView.style.display = 'block';
+                    break;
+                case 'timeline':
+                    if (timelineView) timelineView.style.display = 'block';
+                    break;
+            }
+
+            // Re-render
+            renderAppointments();
+        }
+                // Aggiungi anche questo per assicurarti che all'avvio sia tutto corretto
+        function initializeViews() {
+            // Nascondi tutte le viste tranne cards (default)
+            document.getElementById('tableView').classList.add('hidden');
+            document.getElementById('timelineView').classList.add('hidden');
+            document.getElementById('cardsView').classList.remove('hidden');
+
+            // Assicurati che il bottone cards sia active
+            document.querySelectorAll('.view-toggle button').forEach((btn, index) => {
+                if (index === 0) { // Il primo bottone è cards
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
 
     function showAppointmentDetails(appointmentId) {
         const appointment = appointments.find(a => a.id === appointmentId);
@@ -1074,5 +1130,62 @@
             text: message
         });
     }
+          // Aggiungi questa funzione di debug al tuo JavaScript esistente
+            async function debugLoadAppointments() {
+                console.group('DEBUG: Caricamento Appuntamenti');
+                console.log('Salone ID:', currentSaloneId);
+                console.log('URL chiamata:', `/Partner/GetAppuntamenti?saloneId=${currentSaloneId}`);
+
+                try {
+                    const response = await fetch(`/Partner/GetAppuntamenti?saloneId=${currentSaloneId}`);
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+
+                    const responseText = await response.text();
+                    console.log('Response raw text:', responseText);
+
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch (e) {
+                        console.error('Errore parsing JSON:', e);
+                        console.groupEnd();
+                        return;
+                    }
+
+                    console.log('Data parsed:', data);
+
+                    if (data.debug) {
+                        console.group('Debug info dal server:');
+                        console.log('Total appuntamenti DB:', data.debug.totalAppuntamenti);
+                        console.log('Appuntamenti caricati:', data.debug.appuntamentiCaricati);
+                        console.log('Salone ID server:', data.debug.saloneId);
+                        console.log('User ID server:', data.debug.userId);
+                        console.groupEnd();
+                    }
+
+                    if (data.appuntamenti && Array.isArray(data.appuntamenti)) {
+                        console.log('Numero appuntamenti:', data.appuntamenti.length);
+                        if (data.appuntamenti.length > 0) {
+                            console.log('Primo appuntamento:', data.appuntamenti[0]);
+                        }
+                    } else {
+                        console.warn('Appuntamenti non è un array o è undefined');
+                    }
+
+                    if (data.servizi) {
+                        console.log('Servizi caricati:', data.servizi.length);
+                    }
+
+                    if (data.dipendenti) {
+                        console.log('Dipendenti caricati:', data.dipendenti.length);
+                    }
+
+                } catch (error) {
+                    console.error('Errore nella chiamata:', error);
+                }
+
+                console.groupEnd();
+            }
 </script>
 }

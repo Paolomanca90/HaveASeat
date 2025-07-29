@@ -18,13 +18,15 @@ namespace HaveASeat.Controllers
 	public class PartnerController : Controller
 	{
 		private readonly ApplicationDbContext _context;
+        private readonly ILogger<PartnerController> _logger;
 
-		public PartnerController(ApplicationDbContext context)
+        public PartnerController(ApplicationDbContext context, ILogger<PartnerController> logger)
 		{
 			_context = context;
-		}
-
-		public async Task<IActionResult> Index(Guid? saloneId = null, string periodo = "settimana")		
+            _logger = logger;
+        }
+        #region Index
+        public async Task<IActionResult> Index(Guid? saloneId = null, string periodo = "settimana")		
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (string.IsNullOrEmpty(userId))
@@ -102,7 +104,10 @@ namespace HaveASeat.Controllers
 			ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
 			return View(viewModel);
 		}
-		private async Task LoadDashboardStats(DashboardViewModel viewModel)
+        #endregion
+
+        #region LoadDashboardStats
+        private async Task LoadDashboardStats(DashboardViewModel viewModel)
 		{
 			var oggi = DateTime.Today;
 			var ieri = oggi.AddDays(-1);
@@ -221,8 +226,10 @@ namespace HaveASeat.Controllers
 
             viewModel.Stats.NumeroDipendenti = numeroDipendenti;
         }
+        #endregion
 
-		private async Task LoadChartData(DashboardViewModel viewModel)
+        #region LoadChartData
+        private async Task LoadChartData(DashboardViewModel viewModel)
 		{
 			var labels = new List<string>();
 			var incassi = new List<decimal>();
@@ -294,8 +301,10 @@ namespace HaveASeat.Controllers
 			viewModel.ChartData.Incassi = incassi;
 			viewModel.ChartData.Prenotazioni = prenotazioni;
 		}
+        #endregion
 
-		private async Task LoadTopServizi(DashboardViewModel viewModel)
+        #region LoadTopServizi
+        private async Task LoadTopServizi(DashboardViewModel viewModel)
 		{
 			// Simulazione dati - in produzione questi dovrebbero venire dal database
 			viewModel.TopServizi = new List<TopServizioViewModel>
@@ -307,8 +316,10 @@ namespace HaveASeat.Controllers
 				new TopServizioViewModel { Nome = "Massaggio Rilassante", NumeroPrenotazioni = 12, IncassoTotale = 960 }
 			};
 		}
+        #endregion
 
-		private async Task LoadAppuntamentiOggi(DashboardViewModel viewModel)
+        #region LoadAppuntamentiOggi
+        private async Task LoadAppuntamentiOggi(DashboardViewModel viewModel)
 		{
 			var oggi = DateTime.Today;
 
@@ -343,9 +354,10 @@ namespace HaveASeat.Controllers
                 }
             }).ToList();
         }
+        #endregion
 
-
-		[HttpGet]
+        #region GetDashboardData
+        [HttpGet]
 		public async Task<IActionResult> GetDashboardData(Guid saloneId, string periodo)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -409,6 +421,9 @@ namespace HaveASeat.Controllers
 			//ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
 			//         return View();
 		}
+        #endregion
+
+        #region ExportDashboard
         [HttpGet]
         public async Task<IActionResult> ExportDashboard(Guid saloneId, string periodo, string formato = "csv")
         {
@@ -523,7 +538,9 @@ namespace HaveASeat.Controllers
 
             return File(fileBytes, contentType, fileName);
         }
-       
+        #endregion
+
+        #region Appuntamenti
         [HttpGet]
         public async Task<IActionResult> Appuntamenti(Guid? saloneId = null)
         {
@@ -566,7 +583,96 @@ namespace HaveASeat.Controllers
 
             return View(viewModel);
         }
+        #endregion
 
+        #region GetAppuntamenti
+        //[HttpGet]
+        //public async Task<IActionResult> GetAppuntamenti(Guid saloneId)
+        //{
+        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    if (string.IsNullOrEmpty(userId))
+        //    {
+        //        return Json(new { success = false, message = "Non autorizzato" });
+        //    }
+
+        //    // Verifica che il salone appartenga all'utente
+        //    var salone = await _context.Salone
+        //        .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+
+        //    if (salone == null)
+        //    {
+        //        return Json(new { success = false, message = "Salone non trovato" });
+        //    }
+
+        //    try
+        //    {
+        //        // Recupera tutti gli appuntamenti del salone
+        //        var appuntamentiQuery = await _context.Appuntamento
+        //            .Include(a => a.ApplicationUser)
+        //            .Include(a => a.Servizio)
+        //            .Include(a => a.Dipendente)
+        //                .ThenInclude(d => d.ApplicationUser)
+        //            .Include(a => a.Slot)
+        //            .Where(a => a.SaloneId == saloneId)
+        //            .OrderBy(a => a.Data)
+        //            .ThenBy(a => a.Slot.OraInizio)
+        //            .ToListAsync();
+
+        //        var appuntamenti = appuntamentiQuery.Select(a => new
+        //        {
+        //            id = a.AppuntamentoId.ToString(),
+        //            data = a.Data.ToString("yyyy-MM-dd"),
+        //            orarioInizio = a.OraInizio.ToString("HH:mm"),
+        //            orarioFine = a.OraFine.ToString("HH:mm"),
+        //            nomeCliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
+        //            telefonoCliente = a.ApplicationUser.PhoneNumber ?? "",
+        //            emailCliente = a.ApplicationUser.Email,
+        //            servizioId = a.ServizioId.HasValue ? a.ServizioId.Value.ToString() : "",
+        //            nomeServizio = a.Servizio != null ? a.Servizio.Nome : "N/D",
+        //            durata = a.Servizio != null ? (int)a.Servizio.Durata : 0,
+        //            prezzo = a.Servizio != null ? a.Servizio.PrezzoEffettivo : 0,
+        //            dipendenteId = a.DipendenteId.HasValue ? a.DipendenteId.Value.ToString() : "",
+        //            nomeDipendente = a.Dipendente != null ?
+        //                $"{a.Dipendente.ApplicationUser.Nome} {a.Dipendente.ApplicationUser.Cognome}" : null,
+        //            stato = a.Stato.ToString(),
+        //            note = a.Note ?? ""
+        //        }).ToList();
+
+        //        // Recupera servizi - semplificato
+        //        var servizi = await _context.Servizio
+        //            .Where(s => s.SaloneId == saloneId)
+        //            .OrderBy(s => s.Nome)
+        //            .Select(s => new { id = s.ServizioId.ToString(), nome = s.Nome })
+        //            .ToListAsync();
+
+        //        // Recupera dipendenti - materializza prima poi trasforma
+        //        var dipendentiQuery = await _context.Dipendente
+        //            .Include(d => d.ApplicationUser)
+        //            .Where(d => d.SaloneId == saloneId)
+        //            .ToListAsync();
+
+        //        var dipendenti = dipendentiQuery
+        //            .Select(d => new
+        //            {
+        //                id = d.DipendenteId.ToString(),
+        //                nome = $"{d.ApplicationUser.Nome} {d.ApplicationUser.Cognome}"
+        //            })
+        //            .OrderBy(d => d.nome)
+        //            .ToList();
+
+        //        return Json(new
+        //        {
+        //            success = true,
+        //            appuntamenti,
+        //            servizi,
+        //            dipendenti
+        //        });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Json(new { success = false, message = "Errore nel recupero degli appuntamenti: " + ex.Message });
+        //    }
+        //}
         [HttpGet]
         public async Task<IActionResult> GetAppuntamenti(Guid saloneId)
         {
@@ -576,82 +682,127 @@ namespace HaveASeat.Controllers
                 return Json(new { success = false, message = "Non autorizzato" });
             }
 
+            // Log per debug
+            _logger?.LogInformation($"GetAppuntamenti chiamato per salone: {saloneId}, user: {userId}");
+
             // Verifica che il salone appartenga all'utente
             var salone = await _context.Salone
                 .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
 
             if (salone == null)
             {
+                _logger?.LogWarning($"Salone non trovato: {saloneId} per user: {userId}");
                 return Json(new { success = false, message = "Salone non trovato" });
             }
 
             try
             {
+                // Prima verifichiamo quanti appuntamenti ci sono nel DB
+                var totalAppuntamenti = await _context.Appuntamento
+                    .Where(a => a.SaloneId == saloneId)
+                    .CountAsync();
+
+                _logger?.LogInformation($"Totale appuntamenti nel DB per salone {saloneId}: {totalAppuntamenti}");
+
                 // Recupera tutti gli appuntamenti del salone
-                var appuntamenti = await _context.Appuntamento
+                var appuntamentiQuery = await _context.Appuntamento
                     .Include(a => a.ApplicationUser)
                     .Include(a => a.Servizio)
                     .Include(a => a.Dipendente)
                         .ThenInclude(d => d.ApplicationUser)
                     .Include(a => a.Slot)
                     .Where(a => a.SaloneId == saloneId)
-                    .OrderBy(a => a.Data)
-                    .ThenBy(a => a.Slot.OraInizio)
-                    .Select(a => new
-                    {
-                        id = a.AppuntamentoId,
-                        data = a.Data,
-                        orarioInizio = a.OraInizio.ToString("HH:mm"),
-                        orarioFine = a.OraFine.ToString("HH:mm"),
-                        nomeCliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
-                        telefonoCliente = a.ApplicationUser.PhoneNumber ?? "",
-                        emailCliente = a.ApplicationUser.Email,
-                        servizioId = a.ServizioId,
-                        nomeServizio = a.Servizio != null ? a.Servizio.Nome : "N/D",
-                        durata = a.Servizio != null ? a.Servizio.Durata : 0,
-                        prezzo = a.Servizio != null ? a.Servizio.PrezzoEffettivo : 0,
-                        dipendenteId = a.DipendenteId,
-                        nomeDipendente = a.Dipendente != null ?
-                            $"{a.Dipendente.ApplicationUser.Nome} {a.Dipendente.ApplicationUser.Cognome}" : null,
-                        stato = a.Stato.ToString(),
-                        note = a.Note
-                    })
                     .ToListAsync();
 
-                // Recupera servizi e dipendenti per i filtri
+                _logger?.LogInformation($"Appuntamenti recuperati con Include: {appuntamentiQuery.Count}");
+
+                // Debug: stampa i primi 3 appuntamenti
+                foreach (var app in appuntamentiQuery.Take(3))
+                {
+                    _logger?.LogInformation($"Appuntamento: ID={app.AppuntamentoId}, Data={app.Data}, Cliente={app.ApplicationUser?.Nome}, Slot={app.Slot?.OraInizio}");
+                }
+
+                var appuntamenti = appuntamentiQuery.Select(a => new
+                {
+                    id = a.AppuntamentoId.ToString(),
+                    data = a.Data.ToString("yyyy-MM-dd"),
+                    orarioInizio = a.OraInizio.ToString("HH:mm"),
+                    orarioFine = a.OraFine.ToString("HH:mm"),
+                    nomeCliente = a.ApplicationUser != null ?
+                        $"{a.ApplicationUser.Nome ?? ""} {a.ApplicationUser.Cognome ?? ""}".Trim() : "Cliente N/D",
+                    telefonoCliente = a.ApplicationUser?.PhoneNumber ?? "",
+                    emailCliente = a.ApplicationUser?.Email ?? "",
+                    servizioId = a.ServizioId?.ToString() ?? "",
+                    nomeServizio = a.Servizio?.Nome ?? "N/D",
+                    durata = a.Servizio != null ? (int)a.Servizio.Durata : 30,
+                    prezzo = a.Servizio?.PrezzoEffettivo ?? 0,
+                    dipendenteId = a.DipendenteId?.ToString() ?? "",
+                    nomeDipendente = a.Dipendente?.ApplicationUser != null ?
+                        $"{a.Dipendente.ApplicationUser.Nome ?? ""} {a.Dipendente.ApplicationUser.Cognome ?? ""}".Trim() : "",
+                    stato = a.Stato.ToString(),
+                    note = a.Note ?? ""
+                }).ToList();
+
+                _logger?.LogInformation($"Appuntamenti trasformati: {appuntamenti.Count}");
+
+                // Recupera servizi
                 var servizi = await _context.Servizio
                     .Where(s => s.SaloneId == saloneId)
-                    .Select(s => new { id = s.ServizioId, nome = s.Nome })
-                    .OrderBy(s => s.nome)
+                    .OrderBy(s => s.Nome)
+                    .Select(s => new { id = s.ServizioId.ToString(), nome = s.Nome })
                     .ToListAsync();
 
-                var dipendenti = await _context.Dipendente
+                _logger?.LogInformation($"Servizi trovati: {servizi.Count}");
+
+                // Recupera dipendenti
+                var dipendentiQuery = await _context.Dipendente
                     .Include(d => d.ApplicationUser)
                     .Where(d => d.SaloneId == saloneId)
-                    .Select(d => new
-                    {
-                        id = d.DipendenteId,
-                        nome = $"{d.ApplicationUser.Nome} {d.ApplicationUser.Cognome}"
-                    })
-                    .OrderBy(d => d.nome)
                     .ToListAsync();
 
-                return Json(new
+                var dipendenti = dipendentiQuery
+                    .Select(d => new
+                    {
+                        id = d.DipendenteId.ToString(),
+                        nome = d.ApplicationUser != null ?
+                            $"{d.ApplicationUser.Nome ?? ""} {d.ApplicationUser.Cognome ?? ""}".Trim() : "N/D"
+                    })
+                    .OrderBy(d => d.nome)
+                    .ToList();
+
+                _logger?.LogInformation($"Dipendenti trovati: {dipendenti.Count}");
+
+                var result = new
                 {
                     success = true,
                     appuntamenti,
                     servizi,
-                    dipendenti
-                });
+                    dipendenti,
+                    debug = new
+                    {
+                        totalAppuntamenti = totalAppuntamenti,
+                        appuntamentiCaricati = appuntamenti.Count,
+                        saloneId = saloneId.ToString(),
+                        userId = userId
+                    }
+                };
+
+                return Json(result);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = "Errore nel recupero degli appuntamenti: " + ex.Message });
+                _logger?.LogError(ex, $"Errore in GetAppuntamenti per salone {saloneId}");
+                return Json(new
+                {
+                    success = false,
+                    message = "Errore nel recupero degli appuntamenti: " + ex.Message,
+                    stackTrace = ex.StackTrace
+                });
             }
         }
+        #endregion
 
-        
-
+        #region UpdateAppuntamentoStatus
         [HttpPost]
         public async Task<IActionResult> UpdateAppuntamentoStatus(Guid appointmentId, string newStatus)
         {
@@ -695,129 +846,9 @@ namespace HaveASeat.Controllers
                 return Json(new { success = false, message = "Errore durante l'aggiornamento: " + ex.Message });
             }
         }
-        //[HttpGet]
-        //public async Task<IActionResult> ExportAppuntamentiGiornalieri(
-        //    Guid saloneId,
-        //    string formato = "excel",
-        //    string periodo = "oggi",
-        //    string? data = null)
-        //{
-        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //    if (string.IsNullOrEmpty(userId))
-        //    {
-        //        return Unauthorized();
-        //    }
-
-        //    var salone = await _context.Salone
-        //        .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
-
-        //    if (salone == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    // Determina le date in base al periodo
-        //    DateTime startDate, endDate;
-        //    var today = DateTime.Today;
-
-        //    switch (periodo)
-        //    {
-        //        case "domani":
-        //            startDate = endDate = today.AddDays(1);
-        //            break;
-        //        case "settimana":
-        //            startDate = today.AddDays(-(int)today.DayOfWeek + 1);
-        //            endDate = startDate.AddDays(6);
-        //            break;
-        //        case "custom":
-        //            if (!string.IsNullOrEmpty(data) && DateTime.TryParse(data, out var customDate))
-        //            {
-        //                startDate = endDate = customDate;
-        //            }
-        //            else
-        //            {
-        //                startDate = endDate = today;
-        //            }
-        //            break;
-        //        default: // oggi
-        //            startDate = endDate = today;
-        //            break;
-        //    }
-
-        //    // Recupera appuntamenti
-        //    var appuntamenti = await _context.Appuntamento
-        //        .Include(a => a.ApplicationUser)
-        //        .Include(a => a.Servizio)
-        //        .Include(a => a.Dipendente)
-        //            .ThenInclude(d => d.ApplicationUser)
-        //        .Where(a => a.SaloneId == saloneId &&
-        //                   a.Data >= startDate &&
-        //                   a.Data <= endDate.AddDays(1).AddSeconds(-1))
-        //        .OrderBy(a => a.Data)
-        //        .ThenBy(a => a.OraInizio)
-        //        .ToListAsync();
-
-        //    // Usa il servizio di export esistente
-        //    var exportData = new DashboardExportData
-        //    {
-        //        NomeSalone = salone.Nome,
-        //        DataInizio = startDate,
-        //        DataFine = endDate,
-        //        DataExport = DateTime.Now,
-        //        Appuntamenti = appuntamenti.Select(a => new AppuntamentoExportViewModel
-        //        {
-        //            Data = a.Data,
-        //            OraInizio = a.OraInizio.ToString("HH:mm"),
-        //            OraFine = a.OraFine.ToString("HH:mm"),
-        //            NomeCliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
-        //            TelefonoCliente = a.ApplicationUser.PhoneNumber ?? "",
-        //            EmailCliente = a.ApplicationUser.Email ?? "",
-        //            Servizio = a.Servizio?.Nome ?? "N/D",
-        //            Dipendente = a.Dipendente != null ?
-        //                $"{a.Dipendente.ApplicationUser.Nome} {a.Dipendente.ApplicationUser.Cognome}" : "Non assegnato",
-        //            Stato = a.Stato switch
-        //            {
-        //                StatoAppuntamento.Prenotato => "Confermato",
-        //                StatoAppuntamento.Annullato => "Cancellato",
-        //                _ => a.Stato.ToString()
-        //            },
-        //            Prezzo = a.Servizio?.PrezzoEffettivo ?? 0,
-        //            Note = a.Note
-        //        }).ToList()
-        //    };
-
-        //    // Genera file export
-        //    var exportService = new ExportService();
-        //    byte[] fileBytes;
-        //    string fileName;
-        //    string contentType;
-
-        //    var periodoStr = periodo == "custom" && !string.IsNullOrEmpty(data)
-        //        ? $"del_{DateTime.Parse(data):dd-MM-yyyy}"
-        //        : periodo;
-
-        //    switch (formato.ToLower())
-        //    {
-        //        case "excel":
-        //            fileBytes = exportService.ExportToExcel(exportData);
-        //            fileName = $"appuntamenti_{salone.Nome.Replace(" ", "_")}_{periodoStr}.xlsx";
-        //            contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        //            break;
-        //        case "pdf":
-        //            fileBytes = exportService.ExportToPdf(exportData);
-        //            fileName = $"appuntamenti_{salone.Nome.Replace(" ", "_")}_{periodoStr}.pdf";
-        //            contentType = "application/pdf";
-        //            break;
-        //        case "csv":
-        //        default:
-        //            fileBytes = exportService.ExportToCsv(exportData);
-        //            fileName = $"appuntamenti_{salone.Nome.Replace(" ", "_")}_{periodoStr}.csv";
-        //            contentType = "text/csv";
-        //            break;
-        //    }
-
-        //    return File(fileBytes, contentType, fileName);
-        //}
+        #endregion
+      
+        #region GetPromozioniAttive
         [HttpGet]
         public async Task<IActionResult> GetPromozioniAttive(Guid saloneId)
         {
@@ -866,6 +897,9 @@ namespace HaveASeat.Controllers
                 promozioni = promozioniAttive
             });
         }
+        #endregion
+
+        #region GetServiziAttivi
         [HttpGet]
         public async Task<IActionResult> GetServiziAttivi(Guid saloneId)
         {
@@ -923,6 +957,9 @@ namespace HaveASeat.Controllers
                 servizi = serviziAttivi
             });
         }
+        #endregion
+
+        #region Stripe
         public IActionResult CreateCheckoutSession(string id)
 		{
 			if (id == null)
@@ -1127,8 +1164,10 @@ namespace HaveASeat.Controllers
 			ViewBag.Errore = "Pagamento annullato.";
 			return View("Index");
 		}
+        #endregion
 
-		public IActionResult Sedi()
+        #region Sedi
+        public IActionResult Sedi()
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (string.IsNullOrEmpty(userId))
@@ -1415,8 +1454,11 @@ namespace HaveASeat.Controllers
 
 			return View(salone);
 		}
+        #endregion
 
-		public IActionResult ProfiloPartner()
+        #region Profilo Partner
+        [HttpGet]
+        public IActionResult ProfiloPartner()
 		{
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var user = _context.Users.FirstOrDefault(u => u.Id == userId);
@@ -1572,8 +1614,10 @@ namespace HaveASeat.Controllers
                 return Json(new { success = false, message = "Errore durante l'eliminazione: " + ex.Message });
             }
         }
+        #endregion
 
-		public async Task<IActionResult> Personalizza(Guid? id)
+        #region Personalizzazione salone
+        public async Task<IActionResult> Personalizza(Guid? id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			if (string.IsNullOrEmpty(userId))
@@ -1623,5 +1667,6 @@ namespace HaveASeat.Controllers
 
 			return View(selectedSalone);
 		}
-	}
+        #endregion
+    }
 }
