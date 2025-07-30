@@ -347,7 +347,9 @@ namespace HaveASeat.Controllers
 							{
 								DipendenteServizioId = Guid.NewGuid(),
 								DipendenteId = dipendente.DipendenteId,
-								ServizioId = servizioId
+								Dipendente = dipendente,
+								ServizioId = servizioId,
+								Servizio = _context.Servizio.Find(servizioId)
 							};
 							_context.DipendenteServizio.Add(dipendenteServizio);
 						}

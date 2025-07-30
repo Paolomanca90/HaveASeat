@@ -97,7 +97,7 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Gestisci i servizi offerti</p>
                 </div>
             </div>
-            <button onclick="addService()" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <button onclick="addService('@Model.SaloneId')" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <i class="fas fa-plus mr-2"></i>
                 Aggiungi
             </button>
@@ -162,7 +162,7 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Gestisci il tuo team</p>
                 </div>
             </div>
-            <button onclick="addStaff()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")
+            <button onclick="addStaff('@Model.SaloneId')" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")
                     @(Model.Servizi.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
                 <i class="fas fa-user-plus mr-2"></i>
                 Aggiungi
@@ -208,7 +208,7 @@
             <div class="text-center py-8">
                 <i class="fas fa-user-slash text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
                 <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun membro dello staff</p>
-                <button onclick="addStaff()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")
+                <button onclick="addStaff('@Model.SaloneId')" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Servizi.Any() ? "" : "opacity-50 cursor-not-allowed")
                     @(Model.Servizi.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
                     <i class="fas fa-user-plus mr-2"></i>
                     Aggiungi Primo Membro
@@ -286,90 +286,11 @@
             </div>
         }
     </div>
-
-    <!-- Slot Section -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
-        <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex items-center">
-                <div class="w-10 h-10 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center mr-3">
-                    <i class="fas fa-calendar-alt text-orange-600 dark:text-orange-400"></i>
-                </div>
-                <div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">Slot Prenotazioni</h3>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Gestisci fasce orarie disponibili</p>
-                </div>
-            </div>
-            <button onclick="addSlot()" class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Dipendenti.Any() ? "" : "opacity-50 cursor-not-allowed")
-                    @(Model.Dipendenti.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
-                <i class="fas fa-plus mr-2"></i>
-                Aggiungi
-            </button>
-        </div>
-
-        @if (Model.Slots.Any())
-        {
-            <div class="space-y-4 max-h-96 overflow-y-auto">
-                @foreach (var slot in Model.Slots.Where(s => s.IsAttivo).Take(5))
-                {
-                    <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-900 dark:text-gray-100">
-                                @slot.OraInizio.ToString(@"hh\:mm") - @slot.OraFine.ToString(@"hh\:mm")
-                            </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">
-                                Capacità: @slot.Capacita persone
-                            </div>
-                            <div class="text-xs text-orange-600 dark:text-orange-400 font-medium">
-                                @(string.IsNullOrEmpty(slot.Note) ? "Slot generico" : slot.Note)
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(slot.IsAttivo ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400" : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400")">
-                                @(slot.IsAttivo ? "Attivo" : "Non Attivo")
-                            </span>
-                            <button onclick="editSlot('@slot.SlotId')" class="p-2 text-orange-600 hover:bg-orange-100 dark:hover:bg-orange-900/20 rounded-lg transition-colors">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button onclick="deleteSlot('@slot.SlotId')" class="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="text-center py-8">
-                <i class="fas fa-calendar-times text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
-                <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun slot configurato</p>
-                <button onclick="addSlot()" class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors @(Model.Dipendenti.Any() ? "" : "opacity-50 cursor-not-allowed")
-                    @(Model.Dipendenti.Any() ? "" : "tabindex='-1' aria-disabled='true'")">
-                    <i class="fas fa-calendar-plus mr-2"></i>
-                    Aggiungi Primo Slot
-                </button>
-            </div>
-            @if (!Model.Dipendenti.Any())
-            {
-                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 w-1/2 mx-auto">
-                    <div class="flex items-start space-x-3">
-                        <i class="fas fa-exclamation-triangle text-yellow-500 mt-0.5"></i>
-                        <div class="text-center">
-                            <p class="text-yellow-800 dark:text-yellow-200 text-sm font-medium">Prima configura i dipendenti</p>
-                            <p class="text-yellow-700 dark:text-yellow-300 text-xs mt-1">
-                                Per aggiungere slot devi prima configurare almeno un dipendente per questo salone.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            }
-        }
-    </div>
 </div>
 
 <script>
     // Service management functions
-    function addService() {
+    function addService(currentSaloneId) {
         Swal.fire({
             title: '✂️ Aggiungi Nuovo Servizio',
             html: `
@@ -411,7 +332,27 @@
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire('✅ Servizio Aggiunto!', 'Il servizio è stato creato con successo', 'success');
+                // Prepara FormData per invio come form POST
+                const formData = new FormData();
+                formData.append('nome', document.getElementById('serviceName').value);
+                formData.append('descrizione', document.getElementById('serviceDescription').value);
+                formData.append('prezzo', document.getElementById('servicePrice').value);
+                formData.append('durata', document.getElementById('serviceDuration').value);
+
+                // Aggiungi token CSRF
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                formData.append('__RequestVerificationToken', token);
+
+                // Chiamata API
+                const response = fetch(`/Servizio/Create?saloneId=${currentSaloneId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok)
+                    Swal.fire('✅ Servizio Aggiunto!', 'Il servizio è stato creato con successo', 'success');
+                else
+                    Swal.fire('Errore!', 'Errore durante l\'aggiunta del servizio', 'error');
             }
         });
     }
@@ -436,23 +377,39 @@
             confirmButtonColor: '#ef4444'
         }).then((result) => {
             if (result.isConfirmed) {
-                Swal.fire('✅ Servizio Eliminato!', 'Il servizio è stato rimosso', 'success');
+                const formData = new FormData();
+                formData.append('id', serviceId);
+
+                // Aggiungi token CSRF
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                formData.append('__RequestVerificationToken', token);
+                const response = fetch(`/Servizio/Delete`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok)
+                    Swal.fire('✅ Servizio Eliminato!', 'Il servizio è stato rimosso', 'success');
+                else
+                    Swal.fire('Errore', 'Errore durante l\'eliminazione del servizio', 'error');
             }
         });
     }
 
     // Staff management functions
-    async function addStaff() {
+    async function addStaff(currentSaloneId) {
         // Prima recupera i servizi disponibili per questo salone
-        let servizi = [];
-        try {
-            const servicesResponse = await fetch(`/Staff/GetServizi?saloneId=${currentSaloneId}`);
-            if (servicesResponse.ok) {
-                servizi = await servicesResponse.json();
+        var servizi = [
+            @foreach (var servizio in Model.Servizi)
+            {
+                    <text>{
+                        servizioId: '@servizio.ServizioId',
+                        nome: '@servizio.Nome',
+                        prezzo: @servizio.Prezzo.ToString().Replace(',','.'),
+                        durata: @servizio.Durata.ToString().Replace(',', '.')
+                    },</text>
             }
-        } catch (error) {
-            console.error('Errore nel recupero servizi:', error);
-        }
+        ];
 
         // Genera HTML per i servizi
         const serviziHtml = `
@@ -545,7 +502,7 @@
                     nome: formData.get('nome'),
                     cognome: formData.get('cognome'),
                     email: formData.get('email'),
-                    telefono: formData.get('telefono') || '',
+                    phoneNumber: formData.get('telefono') || '',
                     serviziIds: serviziIds
                 };
             }
@@ -570,7 +527,7 @@
                 formData.append('nome', formValues.nome);
                 formData.append('cognome', formValues.cognome);
                 formData.append('email', formValues.email);
-                formData.append('telefono', formValues.telefono);
+                formData.append('phoneNumber', formValues.phoneNumber);
 
                 // Aggiungi servizi
                 formValues.serviziIds.forEach(id => {
@@ -666,12 +623,30 @@
     function deleteStaff(staffId) {
         Swal.fire({
             title: '🗑️ Rimuovere dal team?',
-            text: 'Il membro non potrà più accedere alla gestione della sede',
+            text: 'L\'utente non potrà più accedere alla gestione della sede',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Rimuovi',
             cancelButtonText: 'Annulla',
             confirmButtonColor: '#ef4444'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const formData = new FormData();
+                formData.append('id', serviceId);
+
+                // Aggiungi token CSRF
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                formData.append('__RequestVerificationToken', token);
+                const response = fetch(`/Staff/Delete`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok)
+                    Swal.fire('✅ Staff Eliminato!', 'L\'utente è stato rimosso', 'success');
+                else
+                    Swal.fire('Errore', 'Errore durante l\'eliminazione dell\'utente', 'error');
+            }
         });
     }
 
@@ -682,85 +657,6 @@
             text: 'Reindirizzamento alla configurazione orari...',
             icon: 'info',
             confirmButtonColor: '#10b981'
-        });
-    }
-
-    // Slot management functions
-    function addSlot() {
-        Swal.fire({
-            title: '📅 Aggiungi Slot Prenotazione',
-            html: `
-                <div class="text-left space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Ora Inizio *</label>
-                            <input type="time" id="slotStartTime" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Ora Fine *</label>
-                            <input type="time" id="slotEndTime" class="w-full px-3 py-2 border border-gray-300 rounded-md">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Capacità *</label>
-                        <input type="number" id="slotCapacity" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="1" min="1">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Note</label>
-                        <input type="text" id="slotNotes" class="w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Es. Solo per trattamenti speciali">
-                    </div>
-                    <div>
-                        <label class="flex items-center">
-                            <input type="checkbox" id="slotActive" class="mr-2" checked>
-                            <span class="text-sm text-gray-700">Slot attivo</span>
-                        </label>
-                    </div>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: '<i class="fas fa-save mr-2"></i>Salva',
-            cancelButtonText: 'Annulla',
-            confirmButtonColor: '#f59e0b',
-            preConfirm: () => {
-                const startTime = document.getElementById('slotStartTime').value;
-                const endTime = document.getElementById('slotEndTime').value;
-                const capacity = document.getElementById('slotCapacity').value;
-
-                if (!startTime || !endTime || !capacity) {
-                    Swal.showValidationMessage('Compila tutti i campi obbligatori');
-                    return false;
-                }
-                return { startTime, endTime, capacity };
-            }
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire('✅ Slot Aggiunto!', 'Il nuovo slot è disponibile per le prenotazioni', 'success');
-            }
-        });
-    }
-
-    function editSlot(slotId) {
-        Swal.fire({
-            title: '✏️ Modifica Slot',
-            text: 'Reindirizzamento alla modifica slot...',
-            icon: 'info',
-            confirmButtonColor: '#f59e0b'
-        });
-    }
-
-    function deleteSlot(slotId) {
-        Swal.fire({
-            title: '🗑️ Eliminare lo slot?',
-            text: 'Le prenotazioni esistenti per questo slot rimarranno valide',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Elimina',
-            cancelButtonText: 'Annulla',
-            confirmButtonColor: '#ef4444'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire('✅ Slot Eliminato!', 'Lo slot non è più disponibile', 'success');
-            }
         });
     }
 </script>

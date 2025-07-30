@@ -1441,6 +1441,8 @@ namespace HaveASeat.Controllers
 				.Include(s => s.Servizi)
 				.Include(s => s.Dipendenti)
 					.ThenInclude(d => d.ApplicationUser)
+				.Include(s => s.Dipendenti)
+					.ThenInclude(d => d.ServiziOfferti)
 				.Include(s => s.Orari)
 				.FirstOrDefault();
 
