@@ -284,8 +284,8 @@ namespace HaveASeat.Controllers
 			return View(dipendente);
 		}
 
-		// GET: Staff/Edit/5
-		public async Task<IActionResult> Edit(Guid id)
+        // GET: Staff/Edit/5
+        public async Task<IActionResult> Edit(Guid id)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 

@@ -263,121 +263,121 @@ else
     </div>
 
 <!-- Appointments Section -->
-    <div class="section dark:bg-gray-800">
-        <div class="section-title">
-            <h2 class="dark:text-neutral-50">Gestione Appuntamenti</h2>
-            <div class="flex gap-2">
-                <button class="btn btn-sm btn-outline" onclick="showCalendarModal()">
-                    <i class="fas fa-calendar-alt"></i> Vista Calendario
-                </button>
-                <a class="dark:text-neutral-50" href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
-            </div>
-        </div>
+    // <div class="section dark:bg-gray-800">
+    //     <div class="section-title">
+    //         <h2 class="dark:text-neutral-50">Gestione Appuntamenti</h2>
+    //         <div class="flex gap-2">
+    //             <button class="btn btn-sm btn-outline" onclick="showCalendarModal()">
+    //                 <i class="fas fa-calendar-alt"></i> Vista Calendario
+    //             </button>
+    //             <a class="dark:text-neutral-50" href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
+    //         </div>
+    //     </div>
 
-        <!-- Filtri Data Rapidi -->
-        <div class="flex flex-wrap gap-2 mb-4">
-            <button class="btn btn-sm btn-primary" onclick="filterByDate('oggi')" id="btnOggi">
-                Oggi
-            </button>
-            <button class="btn btn-sm btn-outline" onclick="filterByDate('domani')" id="btnDomani">
-                Domani
-            </button>
-            <button class="btn btn-sm btn-outline" onclick="filterByDate('settimana')" id="btnSettimana">
-                Questa Settimana
-            </button>
-            <input type="date" id="customDate" class="input input-sm input-bordered dark:bg-gray-700"
-                   value="@DateTime.Today.ToString("yyyy-MM-dd")" onchange="filterByCustomDate(this.value)">
-        </div>
+    //     <!-- Filtri Data Rapidi -->
+    //     <div class="flex flex-wrap gap-2 mb-4">
+    //         <button class="btn btn-sm btn-primary" onclick="filterByDate('oggi')" id="btnOggi">
+    //             Oggi
+    //         </button>
+    //         <button class="btn btn-sm btn-outline" onclick="filterByDate('domani')" id="btnDomani">
+    //             Domani
+    //         </button>
+    //         <button class="btn btn-sm btn-outline" onclick="filterByDate('settimana')" id="btnSettimana">
+    //             Questa Settimana
+    //         </button>
+    //         <input type="date" id="customDate" class="input input-sm input-bordered dark:bg-gray-700"
+    //                value="@DateTime.Today.ToString("yyyy-MM-dd")" onchange="filterByCustomDate(this.value)">
+    //     </div>
 
-        <div class="tabs">
-            <div class="tab active" data-filter="tutti">Tutti <span class="badge badge-sm ml-1" id="countTutti">0</span></div>
-            <div class="tab" data-filter="prenotato">Confermati <span class="badge badge-sm badge-success ml-1" id="countConfermati">0</span></div>
-            <div class="tab" data-filter="inAttesa">In attesa <span class="badge badge-sm badge-warning ml-1" id="countAttesa">0</span></div>
-            <div class="tab" data-filter="annullato">Cancellati <span class="badge badge-sm badge-error ml-1" id="countCancellati">0</span></div>
-        </div>
+    //     <div class="tabs">
+    //         <div class="tab active" data-filter="tutti">Tutti <span class="badge badge-sm ml-1" id="countTutti">0</span></div>
+    //         <div class="tab" data-filter="prenotato">Confermati <span class="badge badge-sm badge-success ml-1" id="countConfermati">0</span></div>
+    //         <div class="tab" data-filter="inAttesa">In attesa <span class="badge badge-sm badge-warning ml-1" id="countAttesa">0</span></div>
+    //         <div class="tab" data-filter="annullato">Cancellati <span class="badge badge-sm badge-error ml-1" id="countCancellati">0</span></div>
+    //     </div>
 
-        <div class="card dark:bg-gray-800">
-            <div class="appointment-header">
-                <div class="appointment-date-filter">
-                    <span class="text-sm text-gray-600 dark:text-gray-400" id="currentDateLabel">
-                        Appuntamenti di oggi
-                    </span>
-                </div>
+    //     <div class="card dark:bg-gray-800">
+    //         <div class="appointment-header">
+    //             <div class="appointment-date-filter">
+    //                 <span class="text-sm text-gray-600 dark:text-gray-400" id="currentDateLabel">
+    //                     Appuntamenti di oggi
+    //                 </span>
+    //             </div>
 
-                <div class="appointment-search dark:text-gray-200">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Cerca cliente, servizio o dipendente..." id="searchAppointments">
-                </div>
+    //             <div class="appointment-search dark:text-gray-200">
+    //                 <i class="fas fa-search"></i>
+    //                 <input type="text" placeholder="Cerca cliente, servizio o dipendente..." id="searchAppointments">
+    //             </div>
 
-                <div class="appointment-actions">
-                    <button class="btn btn-outline dark:text-gray-500" onclick="toggleFilters()">
-                        <i class="fas fa-filter"></i> Filtri Avanzati
-                    </button>
-                    <button class="btn btn-outline dark:text-gray-500" onclick="exportAppointments()">
-                        <i class="fas fa-download"></i> Esporta
-                    </button>
-                </div>
-            </div>
+    //             <div class="appointment-actions">
+    //                 <button class="btn btn-outline dark:text-gray-500" onclick="toggleFilters()">
+    //                     <i class="fas fa-filter"></i> Filtri Avanzati
+    //                 </button>
+    //                 <button class="btn btn-outline dark:text-gray-500" onclick="exportAppointments()">
+    //                     <i class="fas fa-download"></i> Esporta
+    //                 </button>
+    //             </div>
+    //         </div>
 
-            <!-- Filtri Avanzati (nascosti di default) -->
-            <div id="advancedFilters" class="hidden p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="form-control">
-                        <label class="label text-sm">
-                            <span class="label-text dark:text-gray-300">Servizio</span>
-                        </label>
-                        <select id="filterServizio" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
-                            <option value="">Tutti i servizi</option>
-                            <!-- Popolato dinamicamente -->
-                        </select>
-                    </div>
-                    <div class="form-control">
-                        <label class="label text-sm">
-                            <span class="label-text dark:text-gray-300">Dipendente</span>
-                        </label>
-                        <select id="filterDipendente" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
-                            <option value="">Tutti i dipendenti</option>
-                            <!-- Popolato dinamicamente -->
-                        </select>
-                    </div>
-                    <div class="form-control">
-                        <label class="label text-sm">
-                            <span class="label-text dark:text-gray-300">Orario</span>
-                        </label>
-                        <select id="filterOrario" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
-                            <option value="">Tutti gli orari</option>
-                            <option value="mattina">Mattina (8-12)</option>
-                            <option value="pomeriggio">Pomeriggio (12-17)</option>
-                            <option value="sera">Sera (17-20)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
+    //         <!-- Filtri Avanzati (nascosti di default) -->
+    //         <div id="advancedFilters" class="hidden p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
+    //             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    //                 <div class="form-control">
+    //                     <label class="label text-sm">
+    //                         <span class="label-text dark:text-gray-300">Servizio</span>
+    //                     </label>
+    //                     <select id="filterServizio" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
+    //                         <option value="">Tutti i servizi</option>
+    //                         <!-- Popolato dinamicamente -->
+    //                     </select>
+    //                 </div>
+    //                 <div class="form-control">
+    //                     <label class="label text-sm">
+    //                         <span class="label-text dark:text-gray-300">Dipendente</span>
+    //                     </label>
+    //                     <select id="filterDipendente" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
+    //                         <option value="">Tutti i dipendenti</option>
+    //                         <!-- Popolato dinamicamente -->
+    //                     </select>
+    //                 </div>
+    //                 <div class="form-control">
+    //                     <label class="label text-sm">
+    //                         <span class="label-text dark:text-gray-300">Orario</span>
+    //                     </label>
+    //                     <select id="filterOrario" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
+    //                         <option value="">Tutti gli orari</option>
+    //                         <option value="mattina">Mattina (8-12)</option>
+    //                         <option value="pomeriggio">Pomeriggio (12-17)</option>
+    //                         <option value="sera">Sera (17-20)</option>
+    //                     </select>
+    //                 </div>
+    //             </div>
+    //         </div>
 
-            <div class="appointment-list">
-                <div id="appointmentsContainer">
-                    <!-- Contenuto dinamico -->
-                </div>
-            </div>
-        </div>
-    </div>
+    //         <div class="appointment-list">
+    //             <div id="appointmentsContainer">
+    //                 <!-- Contenuto dinamico -->
+    //             </div>
+    //         </div>
+    //     </div>
+    // </div>
 
     <!-- Modal Vista Calendario -->
-    <dialog id="calendarModal" class="modal">
-        <div class="modal-box w-11/12 max-w-4xl">
-            <h3 class="font-bold text-lg mb-4">Vista Calendario Appuntamenti</h3>
-            <div id="calendarView">
-                <!-- Calendar view sarà popolato dinamicamente -->
-            </div>
-            <div class="modal-action">
-                <button class="btn" onclick="document.getElementById('calendarModal').close()">Chiudi</button>
-            </div>
-        </div>
-        <form method="dialog" class="modal-backdrop">
-            <button>close</button>
-        </form>
-    </dialog>
-}
+//     <dialog id="calendarModal" class="modal">
+//         <div class="modal-box w-11/12 max-w-4xl">
+//             <h3 class="font-bold text-lg mb-4">Vista Calendario Appuntamenti</h3>
+//             <div id="calendarView">
+//                 <!-- Calendar view sarà popolato dinamicamente -->
+//             </div>
+//             <div class="modal-action">
+//                 <button class="btn" onclick="document.getElementById('calendarModal').close()">Chiudi</button>
+//             </div>
+//         </div>
+//         <form method="dialog" class="modal-backdrop">
+//             <button>close</button>
+//         </form>
+//     </dialog>
+ }
 
 
     <!-- Modal - Visible only when TempData is not null -->
