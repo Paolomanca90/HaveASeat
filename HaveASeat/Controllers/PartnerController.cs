@@ -1121,8 +1121,6 @@ namespace HaveASeat.Controllers
         }
         #endregion
 
-
-
         #region Stripe
         public IActionResult CreateCheckoutSession(string id)
 		{

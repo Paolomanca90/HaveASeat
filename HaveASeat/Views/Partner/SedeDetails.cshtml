@@ -199,7 +199,7 @@
 <div class="mb-8">
     <div class="flex items-center justify-between mb-6">
         <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Appuntamenti della Settimana</h2>
-        <a href="/Partner/Calendario?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        <a href="/Calendario/Index?saloneId=@Model.SaloneId" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <i class="fas fa-calendar mr-2"></i>
             Vedi Calendario
         </a>
@@ -373,7 +373,7 @@
             <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
                 <i class="fas fa-cut text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
                 <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun servizio configurato</p>
-                <a href="/Partner/Servizi?saloneId=@Model.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <a href="/Servizio/Index?saloneId=@Model.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
                     <i class="fas fa-plus mr-2"></i>
                     Aggiungi Servizi
                 </a>
