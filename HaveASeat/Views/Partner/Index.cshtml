@@ -75,19 +75,22 @@ else
     
 <!-- Stats Cards -->
     <div class="dashboard-stats" id="statsContainer">
-        <div class="stat-card dark:bg-gray-800">
-        <div class="stat-card-header">
-            <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Prenotazioni Oggi</div>
+        <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showPrenotazioniModal()">
+            <div class="stat-card-header">
+                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Prenotazioni Confermate Oggi</div>
                 <div class="w-12 h-12 bg-sky-100 dark:bg-sky-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-calendar-check text-sky-600 dark:text-sky-400"></i>
                 </div>
-        </div>
+            </div>
             <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="prenotazioniOggi">@Model.Stats.PrenotazioniOggi</div>
             <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsPrenotazioniPositive ? "change-positive" : "change-negative")">
                 <i class="fas fa-arrow-@(Model.Stats.IsPrenotazioniPositive ? "up" : "down")"></i>
                 <span id="percPrenotazioni">@Math.Abs(Model.Stats.PercentualePrenotazioni)%</span> rispetto a ieri
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <i class="fas fa-hand-pointer"></i> Clicca per dettagli
+            </div>
         </div>
-    </div>
 
         <div class="stat-card dark:bg-gray-800">
         <div class="stat-card-header">
@@ -130,18 +133,19 @@ else
                 <span id="percServizi">@Math.Abs(Model.Stats.PercentualeServizi)%</span> rispetto a ieri
             </div>
     </div>
-        <div class="stat-card dark:bg-gray-800">
+        <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showDipendentiModal()">
             <div class="stat-card-header">
                 <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Dipendenti</div>
                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
                 </div>
-              
             </div>
             <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="numeroDipendenti">@Model.Stats.NumeroDipendenti</div>
             <div class="stat-card-change change-neutral">
-
                 <span class="text-sm text-gray-500 dark:text-gray-400 mt-2">Staff totale</span>
+            </div>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <i class="fas fa-hand-pointer"></i> Clicca per dettagli
             </div>
         </div>
         <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showServiziModal()">
@@ -208,6 +212,96 @@ else
             </form>
         </div>
         <!---->
+        <!-- Modal Prenotazioni Giornaliere -->
+        <div id="prenotazioniModal" class="modal">
+            <div class="modal-box w-11/12 max-w-5xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-xl flex items-center dark:text-neutral-50">
+                        <i class="fas fa-calendar-check text-sky-500 mr-2"></i>
+                        Prenotazioni Confermate di Oggi
+                    </h3>
+                    <button class="btn btn-sm btn-circle btn-ghost dark:text-neutral-50" onclick="closePrenotazioniModal()">✕</button>
+                </div>
+
+                <!-- Riepilogo statistiche -->
+                <div id="prenotazioniStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Verrà popolato dinamicamente -->
+                </div>
+
+                <!-- Timeline oraria -->
+                <div class="mb-4">
+                    <h4 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">Distribuzione Oraria</h4>
+                    <div id="timelineOraria" class="flex gap-1 h-20">
+                        <!-- Verrà popolato dinamicamente -->
+                    </div>
+                </div>
+
+                <div id="prenotazioniContent" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Il contenuto verrà caricato dinamicamente -->
+                    <div class="flex justify-center items-center h-32">
+                        <span class="loading loading-spinner loading-lg"></span>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button class="btn btn-outline dark:text-gray-400" onclick="closePrenotazioniModal()">Chiudi</button>
+                    <a href="@Url.Action("Appuntamenti", "Partner")" class="btn btn-primary bg-sky-600">
+                        <i class="fas fa-calendar-alt mr-2"></i>Gestisci Appuntamenti
+                    </a>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button onclick="closePrenotazioniModal()">close</button>
+            </form>
+        </div>
+
+        <!-- Modal Dipendenti -->
+        <div id="dipendentiModal" class="modal">
+            <div class="modal-box w-11/12 max-w-5xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-xl flex items-center dark:text-neutral-50">
+                        <i class="fas fa-users text-blue-500 mr-2"></i>
+                        Team del Salone
+                    </h3>
+                    <button class="btn btn-sm btn-circle btn-ghost dark:text-neutral-50" onclick="closeDipendentiModal()">✕</button>
+                </div>
+
+                <!-- Riepilogo statistiche -->
+                <div id="dipendentiStats" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Verrà popolato dinamicamente -->
+                </div>
+
+                <!-- Filtri -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <button class="btn btn-sm btn-outline" onclick="filterDipendenti('tutti')">
+                        <i class="fas fa-list mr-1"></i> Tutti
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="filterDipendenti('con-appuntamenti')">
+                        <i class="fas fa-calendar-check mr-1"></i> Con appuntamenti oggi
+                    </button>
+                    <button class="btn btn-sm btn-outline" onclick="filterDipendenti('senza-servizi')">
+                        <i class="fas fa-user-slash mr-1"></i> Senza servizi
+                    </button>
+                </div>
+
+                <div id="dipendentiContent" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Il contenuto verrà caricato dinamicamente -->
+                    <div class="flex justify-center items-center h-32">
+                        <span class="loading loading-spinner loading-lg"></span>
+                    </div>
+                </div>
+
+                <div class="modal-action">
+                    <button class="btn btn-outline dark:text-gray-400" onclick="closeDipendentiModal()">Chiudi</button>
+                    <a href="@Url.Action("Dipendenti", "Partner")" class="btn btn-primary bg-blue-600">
+                        <i class="fas fa-user-plus mr-2"></i>Gestisci Staff
+                    </a>
+                </div>
+            </div>
+            <form method="dialog" class="modal-backdrop">
+                <button onclick="closeDipendentiModal()">close</button>
+            </form>
+        </div>
         <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showPromozioniModal()">
             <div class="stat-card-header">
                 <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Promozioni Attive</div>
@@ -261,123 +355,7 @@ else
             </div>
         </div>
     </div>
-
-<!-- Appointments Section -->
-    // <div class="section dark:bg-gray-800">
-    //     <div class="section-title">
-    //         <h2 class="dark:text-neutral-50">Gestione Appuntamenti</h2>
-    //         <div class="flex gap-2">
-    //             <button class="btn btn-sm btn-outline" onclick="showCalendarModal()">
-    //                 <i class="fas fa-calendar-alt"></i> Vista Calendario
-    //             </button>
-    //             <a class="dark:text-neutral-50" href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
-    //         </div>
-    //     </div>
-
-    //     <!-- Filtri Data Rapidi -->
-    //     <div class="flex flex-wrap gap-2 mb-4">
-    //         <button class="btn btn-sm btn-primary" onclick="filterByDate('oggi')" id="btnOggi">
-    //             Oggi
-    //         </button>
-    //         <button class="btn btn-sm btn-outline" onclick="filterByDate('domani')" id="btnDomani">
-    //             Domani
-    //         </button>
-    //         <button class="btn btn-sm btn-outline" onclick="filterByDate('settimana')" id="btnSettimana">
-    //             Questa Settimana
-    //         </button>
-    //         <input type="date" id="customDate" class="input input-sm input-bordered dark:bg-gray-700"
-    //                value="@DateTime.Today.ToString("yyyy-MM-dd")" onchange="filterByCustomDate(this.value)">
-    //     </div>
-
-    //     <div class="tabs">
-    //         <div class="tab active" data-filter="tutti">Tutti <span class="badge badge-sm ml-1" id="countTutti">0</span></div>
-    //         <div class="tab" data-filter="prenotato">Confermati <span class="badge badge-sm badge-success ml-1" id="countConfermati">0</span></div>
-    //         <div class="tab" data-filter="inAttesa">In attesa <span class="badge badge-sm badge-warning ml-1" id="countAttesa">0</span></div>
-    //         <div class="tab" data-filter="annullato">Cancellati <span class="badge badge-sm badge-error ml-1" id="countCancellati">0</span></div>
-    //     </div>
-
-    //     <div class="card dark:bg-gray-800">
-    //         <div class="appointment-header">
-    //             <div class="appointment-date-filter">
-    //                 <span class="text-sm text-gray-600 dark:text-gray-400" id="currentDateLabel">
-    //                     Appuntamenti di oggi
-    //                 </span>
-    //             </div>
-
-    //             <div class="appointment-search dark:text-gray-200">
-    //                 <i class="fas fa-search"></i>
-    //                 <input type="text" placeholder="Cerca cliente, servizio o dipendente..." id="searchAppointments">
-    //             </div>
-
-    //             <div class="appointment-actions">
-    //                 <button class="btn btn-outline dark:text-gray-500" onclick="toggleFilters()">
-    //                     <i class="fas fa-filter"></i> Filtri Avanzati
-    //                 </button>
-    //                 <button class="btn btn-outline dark:text-gray-500" onclick="exportAppointments()">
-    //                     <i class="fas fa-download"></i> Esporta
-    //                 </button>
-    //             </div>
-    //         </div>
-
-    //         <!-- Filtri Avanzati (nascosti di default) -->
-    //         <div id="advancedFilters" class="hidden p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
-    //             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    //                 <div class="form-control">
-    //                     <label class="label text-sm">
-    //                         <span class="label-text dark:text-gray-300">Servizio</span>
-    //                     </label>
-    //                     <select id="filterServizio" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
-    //                         <option value="">Tutti i servizi</option>
-    //                         <!-- Popolato dinamicamente -->
-    //                     </select>
-    //                 </div>
-    //                 <div class="form-control">
-    //                     <label class="label text-sm">
-    //                         <span class="label-text dark:text-gray-300">Dipendente</span>
-    //                     </label>
-    //                     <select id="filterDipendente" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
-    //                         <option value="">Tutti i dipendenti</option>
-    //                         <!-- Popolato dinamicamente -->
-    //                     </select>
-    //                 </div>
-    //                 <div class="form-control">
-    //                     <label class="label text-sm">
-    //                         <span class="label-text dark:text-gray-300">Orario</span>
-    //                     </label>
-    //                     <select id="filterOrario" class="select select-sm select-bordered dark:bg-gray-600" onchange="applyFilters()">
-    //                         <option value="">Tutti gli orari</option>
-    //                         <option value="mattina">Mattina (8-12)</option>
-    //                         <option value="pomeriggio">Pomeriggio (12-17)</option>
-    //                         <option value="sera">Sera (17-20)</option>
-    //                     </select>
-    //                 </div>
-    //             </div>
-    //         </div>
-
-    //         <div class="appointment-list">
-    //             <div id="appointmentsContainer">
-    //                 <!-- Contenuto dinamico -->
-    //             </div>
-    //         </div>
-    //     </div>
-    // </div>
-
-    <!-- Modal Vista Calendario -->
-//     <dialog id="calendarModal" class="modal">
-//         <div class="modal-box w-11/12 max-w-4xl">
-//             <h3 class="font-bold text-lg mb-4">Vista Calendario Appuntamenti</h3>
-//             <div id="calendarView">
-//                 <!-- Calendar view sarà popolato dinamicamente -->
-//             </div>
-//             <div class="modal-action">
-//                 <button class="btn" onclick="document.getElementById('calendarModal').close()">Chiudi</button>
-//             </div>
-//         </div>
-//         <form method="dialog" class="modal-backdrop">
-//             <button>close</button>
-//         </form>
-//     </dialog>
- }
+}
 
 
     <!-- Modal - Visible only when TempData is not null -->
@@ -693,7 +671,13 @@ else
         initializeChart();
          if (currentSaloneId) {
         checkPromozioniInScadenza();
-            checkServiziSenzaStaff();
+        checkServiziSenzaStaff();
+        checkPrenotazioniImminenti();
+
+         // Ricontrolla ogni 5 minuti
+        setInterval(() => {
+            checkPrenotazioniImminenti();
+        }, 300000); // 5 minuti
     }
 
         // Event listener per il cambio sede
@@ -1788,4 +1772,467 @@ else
             });
         });
     });
+</script>
+<script>
+    // Variabili globali per i dati
+    let prenotazioniData = null;
+    let dipendentiData = null;
+
+    // Funzioni per il modal delle prenotazioni
+    function showPrenotazioniModal() {
+        const modal = document.getElementById('prenotazioniModal');
+        modal.classList.add('modal-open');
+        loadPrenotazioniGiornaliere();
+    }
+
+    function closePrenotazioniModal() {
+        const modal = document.getElementById('prenotazioniModal');
+        modal.classList.remove('modal-open');
+    }
+
+    function loadPrenotazioniGiornaliere() {
+        const content = document.getElementById('prenotazioniContent');
+        const stats = document.getElementById('prenotazioniStats');
+
+        // Mostra loading
+        content.innerHTML = `
+            <div class="flex justify-center items-center h-32">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        `;
+        stats.innerHTML = '';
+
+        fetch(`/Partner/GetPrenotazioniGiornaliere?saloneId=${currentSaloneId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    prenotazioniData = data;
+                    displayPrenotazioniStats(data);
+                    displayTimelineOraria(data.prenotazioniPerOra);
+                    displayPrenotazioni(data.prenotazioni);
+                } else {
+                    content.innerHTML = '<div class="alert alert-error">Errore nel caricamento delle prenotazioni</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                content.innerHTML = '<div class="alert alert-error">Errore di connessione</div>';
+            });
+    }
+
+    function displayPrenotazioniStats(data) {
+        const stats = document.getElementById('prenotazioniStats');
+
+        stats.innerHTML = `
+            <div class="stat bg-base-100 shadow rounded-lg">
+                <div class="stat-figure text-sky-600">
+                    <i class="fas fa-calendar-check text-2xl"></i>
+                </div>
+                <div class="stat-title">Prenotazioni Totali</div>
+                <div class="stat-value text-sky-600">${data.totalePrenotazioni}</div>
+                <div class="stat-desc">${data.data}</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg">
+                <div class="stat-figure text-green-600">
+                    <i class="fas fa-euro-sign text-2xl"></i>
+                </div>
+                <div class="stat-title">Incasso Previsto</div>
+                <div class="stat-value text-green-600">€${data.incassoTotale.toFixed(2)}</div>
+                <div class="stat-desc">Solo confermate</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg">
+                <div class="stat-figure text-purple-600">
+                    <i class="fas fa-clock text-2xl"></i>
+                </div>
+                <div class="stat-title">Media per Ora</div>
+                <div class="stat-value text-purple-600">${(data.totalePrenotazioni / 12).toFixed(1)}</div>
+                <div class="stat-desc">Dalle 8:00 alle 20:00</div>
+            </div>
+        `;
+    }
+
+    function displayTimelineOraria(prenotazioniPerOra) {
+        const timeline = document.getElementById('timelineOraria');
+        const ore = [];
+
+        // Crea array con tutte le ore dalle 8 alle 20
+        for (let i = 8; i <= 20; i++) {
+            const oraStr = i.toString().padStart(2, '0');
+            const trovato = prenotazioniPerOra.find(p => p.ora === oraStr);
+            ore.push({ ora: oraStr, numero: trovato ? trovato.numero : 0 });
+        }
+
+        const maxPrenotazioni = Math.max(...ore.map(o => o.numero), 1);
+
+        timeline.innerHTML = ore.map(o => `
+            <div class="flex-1 flex flex-col items-center">
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-t relative" style="height: 60px;">
+                    <div class="absolute bottom-0 w-full bg-sky-500 rounded-t transition-all duration-500"
+                         style="height: ${(o.numero / maxPrenotazioni) * 100}%"
+                         title="${o.numero} prenotazioni">
+                    </div>
+                </div>
+                <span class="text-xs text-gray-600 dark:text-gray-400 mt-1">${o.ora}</span>
+            </div>
+        `).join('');
+    }
+
+    function displayPrenotazioni(prenotazioni) {
+        const content = document.getElementById('prenotazioniContent');
+
+        if (prenotazioni.length === 0) {
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-calendar-times text-sky-500 text-5xl mb-4"></i>
+                    <p class="text-gray-500 text-lg">Nessuna prenotazione confermata per oggi</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<div class="space-y-3">';
+
+        prenotazioni.forEach(prenotazione => {
+            const isPast = new Date(`${prenotazione.data}T${prenotazione.oraInizio}`) < new Date();
+
+            html += `
+                <div class="card bg-base-100 shadow-lg border border-base-200 ${isPast ? 'opacity-60' : ''}">
+                    <div class="card-body">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <div class="badge badge-lg badge-outline">
+                                        <i class="far fa-clock mr-1"></i>
+                                        ${prenotazione.oraInizio} - ${prenotazione.oraFine}
+                                    </div>
+                                    ${isPast ?
+                                        '<span class="badge badge-ghost badge-sm">Completato</span>' :
+                                        '<span class="badge badge-success badge-sm">In programma</span>'
+                                    }
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                                    <div>
+                                        <h5 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Cliente</h5>
+                                        <p class="font-medium">${prenotazione.cliente.nome}</p>
+                                        ${prenotazione.cliente.telefono ?
+                                            `<p class="text-sm text-gray-600"><i class="fas fa-phone mr-1"></i>${prenotazione.cliente.telefono}</p>` : ''
+                                        }
+                                        ${prenotazione.cliente.email ?
+                                            `<p class="text-sm text-gray-600"><i class="fas fa-envelope mr-1"></i>${prenotazione.cliente.email}</p>` : ''
+                                        }
+                                    </div>
+
+                                    <div>
+                                        <h5 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Servizio</h5>
+                                        <p class="font-medium">${prenotazione.servizio.nome}</p>
+                                        <p class="text-sm text-gray-600">
+                                            <i class="far fa-clock mr-1"></i>${prenotazione.servizio.durata} min
+                                            <span class="ml-2"><i class="fas fa-euro-sign mr-1"></i>€${prenotazione.servizio.prezzo.toFixed(2)}</span>
+                                        </p>
+                                        ${prenotazione.dipendente ?
+                                            `<p class="text-sm text-gray-600"><i class="fas fa-user-tie mr-1"></i>${prenotazione.dipendente.nome}</p>` :
+                                            '<p class="text-sm text-warning"><i class="fas fa-exclamation-triangle mr-1"></i>Dipendente non assegnato</p>'
+                                        }
+                                    </div>
+                                </div>
+
+                                ${prenotazione.note ? `
+                                    <div class="mt-3 pt-3 border-t border-base-200">
+                                        <p class="text-sm text-gray-600 italic">
+                                            <i class="fas fa-sticky-note mr-1"></i> ${prenotazione.note}
+                                        </p>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div class="flex flex-col gap-2">
+                                <button class="btn btn-sm btn-ghost" onclick="viewAppuntamento('${prenotazione.appuntamentoId}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-ghost" onclick="sendWhatsApp('${prenotazione.cliente.telefono}')">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        content.innerHTML = html;
+    }
+
+    // Funzioni per il modal dei dipendenti
+    function showDipendentiModal() {
+        const modal = document.getElementById('dipendentiModal');
+        modal.classList.add('modal-open');
+        loadDipendentiAttivi();
+    }
+
+    function closeDipendentiModal() {
+        const modal = document.getElementById('dipendentiModal');
+        modal.classList.remove('modal-open');
+    }
+
+    function loadDipendentiAttivi() {
+        const content = document.getElementById('dipendentiContent');
+        const stats = document.getElementById('dipendentiStats');
+
+        // Mostra loading
+        content.innerHTML = `
+            <div class="flex justify-center items-center h-32">
+                <span class="loading loading-spinner loading-lg"></span>
+            </div>
+        `;
+        stats.innerHTML = '';
+
+        fetch(`/Partner/GetDipendentiAttivi?saloneId=${currentSaloneId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    dipendentiData = data;
+                    displayDipendentiStats(data);
+                    displayDipendenti(data.dipendenti);
+                } else {
+                    content.innerHTML = '<div class="alert alert-error">Errore nel caricamento dei dipendenti</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                content.innerHTML = '<div class="alert alert-error">Errore di connessione</div>';
+            });
+    }
+
+    function displayDipendentiStats(data) {
+        const stats = document.getElementById('dipendentiStats');
+
+        stats.innerHTML = `
+            <div class="stat bg-base-100 shadow rounded-lg">
+                <div class="stat-figure text-blue-600">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+                <div class="stat-title">Totale Dipendenti</div>
+                <div class="stat-value text-blue-600">${data.totaleDipendenti}</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg">
+                <div class="stat-figure text-green-600">
+                    <i class="fas fa-calendar-check text-2xl"></i>
+                </div>
+                <div class="stat-title">Con Appuntamenti Oggi</div>
+                <div class="stat-value text-green-600">${data.dipendentiConAppuntamentiOggi}</div>
+            </div>
+            <div class="stat bg-base-100 shadow rounded-lg">
+                <div class="stat-figure text-orange-600">
+                    <i class="fas fa-exclamation-triangle text-2xl"></i>
+                </div>
+                <div class="stat-title">Senza Servizi</div>
+                <div class="stat-value text-orange-600">${data.dipendentiSenzaServizi}</div>
+            </div>
+        `;
+    }
+
+    function displayDipendenti(dipendenti, filter = 'tutti') {
+        const content = document.getElementById('dipendentiContent');
+
+        if (dipendenti.length === 0) {
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-user-slash text-blue-500 text-5xl mb-4"></i>
+                    <p class="text-gray-500 text-lg">Nessun dipendente registrato</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Filtra i dipendenti
+        let dipendentiFiltrati = dipendenti;
+        if (filter === 'con-appuntamenti') {
+            dipendentiFiltrati = dipendenti.filter(d => d.appuntamentiOggi > 0);
+        } else if (filter === 'senza-servizi') {
+            dipendentiFiltrati = dipendenti.filter(d => d.numeroServizi === 0);
+        }
+
+        if (dipendentiFiltrati.length === 0) {
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-search text-gray-400 text-4xl mb-4"></i>
+                    <p class="text-gray-500">Nessun dipendente trovato per questo filtro</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+
+        dipendentiFiltrati.forEach(dipendente => {
+            const giorni = Math.floor((new Date() - new Date(dipendente.dataAssunzione)) / (1000 * 60 * 60 * 24));
+
+            html += `
+                <div class="card bg-base-100 shadow-lg border border-base-200 hover:shadow-xl transition-shadow">
+                    <div class="card-body">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h4 class="card-title text-lg">${dipendente.nome} ${dipendente.cognome}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    <i class="fas fa-calendar-alt mr-1"></i>In team da ${giorni} giorni
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${dipendente.appuntamentiOggi > 0 ?
+                                    `<span class="badge badge-success badge-sm">${dipendente.appuntamentiOggi} app. oggi</span>` :
+                                    '<span class="badge badge-ghost badge-sm">Libero oggi</span>'
+                                }
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <!-- Contatti -->
+                            <div class="text-sm">
+                                ${dipendente.email ?
+                                    `<p class="text-gray-600"><i class="fas fa-envelope mr-2"></i>${dipendente.email}</p>` : ''
+                                }
+                                ${dipendente.telefono ?
+                                    `<p class="text-gray-600"><i class="fas fa-phone mr-2"></i>${dipendente.telefono}</p>` : ''
+                                }
+                            </div>
+
+                            <!-- Servizi -->
+                            <div class="border-t pt-3">
+                                <h5 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">
+                                    Servizi Offerti (${dipendente.numeroServizi})
+                                </h5>
+                                ${dipendente.numeroServizi > 0 ? `
+                                    <div class="flex flex-wrap gap-1">
+                                        ${dipendente.serviziOfferti.slice(0, 3).map(s =>
+                                            `<span class="badge badge-sm badge-outline">${s.nomeServizio}</span>`
+                                        ).join('')}
+                                        ${dipendente.numeroServizi > 3 ?
+                                            `<span class="badge badge-sm badge-ghost">+${dipendente.numeroServizi - 3}</span>` : ''
+                                        }
+                                    </div>
+                                ` : `
+                                    <div class="alert alert-warning py-2">
+                                        <i class="fas fa-exclamation-triangle text-sm"></i>
+                                        <span class="text-sm">Nessun servizio assegnato</span>
+                                    </div>
+                                `}
+                            </div>
+
+                            <!-- Prossimo appuntamento -->
+                            ${dipendente.prossimoAppuntamento ? `
+                                <div class="border-t pt-3">
+                                    <h5 class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">
+                                        Prossimo Appuntamento
+                                    </h5>
+                                    <div class="bg-base-200 rounded-lg p-2 text-sm">
+                                        <p class="font-medium">${new Date(dipendente.prossimoAppuntamento.data).toLocaleDateString('it-IT')} alle ${dipendente.prossimoAppuntamento.ora}</p>
+                                        <p class="text-gray-600">${dipendente.prossimoAppuntamento.servizio}</p>
+                                        <p class="text-gray-600">${dipendente.prossimoAppuntamento.cliente}</p>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            <!-- Statistiche -->
+                            <div class="flex justify-between items-center pt-3 border-t text-sm">
+                                <span class="text-gray-600">
+                                    <i class="fas fa-chart-line mr-1"></i>
+                                    ${dipendente.appuntamentiTotali} app. totali
+                                </span>
+                                <button class="btn btn-xs btn-ghost" onclick="viewDipendenteDetails('${dipendente.dipendenteId}')">
+                                    <i class="fas fa-info-circle mr-1"></i>Dettagli
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        content.innerHTML = html;
+    }
+
+    function filterDipendenti(filter) {
+        if (dipendentiData && dipendentiData.dipendenti) {
+            displayDipendenti(dipendentiData.dipendenti, filter);
+
+            // Aggiorna stile bottoni
+            document.querySelectorAll('#dipendentiModal .btn-outline').forEach(btn => {
+                btn.classList.remove('btn-active');
+            });
+            event.target.classList.add('btn-active');
+        }
+    }
+
+    // Funzioni helper
+    function viewAppuntamento(id) {
+        window.location.href = `/Partner/AppuntamentoDetails/${id}`;
+    }
+
+    function sendWhatsApp(telefono) {
+        if (!telefono) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Numero non disponibile',
+                text: 'Il cliente non ha un numero di telefono registrato'
+            });
+            return;
+        }
+
+        // Rimuovi spazi e caratteri non numerici
+        const numero = telefono.replace(/\D/g, '');
+        const numeroWhatsApp = numero.startsWith('39') ? numero : '39' + numero;
+
+        window.open(`https://wa.me/${numeroWhatsApp}`, '_blank');
+    }
+
+    function viewDipendenteDetails(id) {
+        window.location.href = `/Partner/DipendenteDetails/${id}`;
+    }
+
+    // Notifiche all'avvio per prenotazioni
+    function checkPrenotazioniImminenti() {
+        fetch(`/Partner/GetPrenotazioniGiornaliere?saloneId=${currentSaloneId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.prenotazioni.length > 0) {
+                    // Trova prenotazioni nei prossimi 30 minuti
+                    const now = new Date();
+                    const prossimePrenotazioni = data.prenotazioni.filter(p => {
+                        const oraApp = new Date(`${p.data}T${p.oraInizio}`);
+                        const diff = (oraApp - now) / (1000 * 60); // differenza in minuti
+                        return diff > 0 && diff <= 30;
+                    });
+
+                    if (prossimePrenotazioni.length > 0) {
+                        showNotificaPrenotazioniImminenti(prossimePrenotazioni);
+                    }
+                }
+            });
+    }
+
+    function showNotificaPrenotazioniImminenti(prenotazioni) {
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-top toast-end';
+        toast.innerHTML = `
+            <div class="alert alert-info shadow-lg">
+                <div>
+                    <i class="fas fa-bell animate-pulse"></i>
+                    <span>${prenotazioni.length} prenotazioni nei prossimi 30 minuti!</span>
+                </div>
+                <button class="btn btn-sm btn-ghost" onclick="showPrenotazioniModal(); this.parentElement.parentElement.remove();">
+                    Visualizza
+                </button>
+            </div>
+        `;
+
+        document.body.appendChild(toast);
+
+        // Rimuovi dopo 10 secondi
+        setTimeout(() => {
+            toast.remove();
+        }, 10000);
+    }
 </script>

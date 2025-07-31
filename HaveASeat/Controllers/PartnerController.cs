@@ -575,8 +575,7 @@ namespace HaveASeat.Controllers
             {
                 viewModel.SelectedSaloneId = viewModel.SaloniUtente.First().SaloneId;
             }
-			ViewBag.Salonechevisualizzo = viewModel.SelectedSaloneId;
-
+            ViewBag.SaloneCorrente = viewModel.SaloniUtente;
             ViewBag.Saloni = viewModel.SaloniUtente;
             ViewBag.HasMultipleSedi = viewModel.SaloniUtente.Count > 1;
             ViewBag.NomeUtente = _context.Users.Find(userId)?.Nome;
@@ -958,6 +957,171 @@ namespace HaveASeat.Controllers
             });
         }
         #endregion
+
+        #region GetDipendentiAttivi
+        [HttpGet]
+        public async Task<IActionResult> GetDipendentiAttivi(Guid saloneId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Non autorizzato" });
+            }
+
+            var salone = await _context.Salone
+                .Include(s => s.Dipendenti)
+                    .ThenInclude(d => d.ApplicationUser)
+                .Include(s => s.Dipendenti)
+                    .ThenInclude(d => d.ServiziOfferti)
+                        .ThenInclude(ds => ds.Servizio)
+                .Include(s => s.Dipendenti)
+                    .ThenInclude(d => d.Appuntamenti)
+                .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+
+            if (salone == null)
+            {
+                return Json(new { success = false, message = "Salone non trovato" });
+            }
+
+            var oggi = DateTime.Today;
+            var dipendentiAttivi = salone.Dipendenti
+                .OrderBy(d => d.ApplicationUser.Cognome)
+                .ThenBy(d => d.ApplicationUser.Nome)
+                .Select(d => new
+                {
+                    dipendenteId = d.DipendenteId,
+                    nome = d.ApplicationUser.Nome,
+                    cognome = d.ApplicationUser.Cognome,
+                    email = d.ApplicationUser.Email,
+                    telefono = d.ApplicationUser.PhoneNumber,
+                    dataAssunzione = d.DataCreazione,
+                    serviziOfferti = d.ServiziOfferti.Select(so => new
+                    {
+                        servizioId = so.ServizioId,
+                        nomeServizio = so.Servizio.Nome,
+                        prezzo = so.Servizio.PrezzoEffettivo
+                    }).ToList(),
+                    numeroServizi = d.ServiziOfferti.Count,
+                    appuntamentiOggi = d.Appuntamenti.Count(a => a.Data.Date == oggi && a.Stato == StatoAppuntamento.Prenotato),
+                    appuntamentiTotali = d.Appuntamenti.Count(a => a.Stato == StatoAppuntamento.Prenotato),
+                    prossimoAppuntamento = d.Appuntamenti
+                        .Where(a => a.Data >= DateTime.Now && a.Stato == StatoAppuntamento.Prenotato)
+                        .OrderBy(a => a.Data)
+                        .Select(a => new
+                        {
+                            data = a.Data,
+                            ora = a.OraInizio.ToString("HH:mm"),
+                            servizio = a.Servizio.Nome,
+                            cliente = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}"
+                        })
+                        .FirstOrDefault()
+                })
+                .ToList();
+
+            var totaleDipendenti = dipendentiAttivi.Count;
+            var dipendentiConAppuntamentiOggi = dipendentiAttivi.Count(d => d.appuntamentiOggi > 0);
+            var dipendentiSenzaServizi = dipendentiAttivi.Count(d => d.numeroServizi == 0);
+
+            return Json(new
+            {
+                success = true,
+                totaleDipendenti,
+                dipendentiConAppuntamentiOggi,
+                dipendentiSenzaServizi,
+                dipendenti = dipendentiAttivi
+            });
+        }
+        #endregion
+
+        #region GetPrenotazioniGiornaliere
+        [HttpGet]
+        public async Task<IActionResult> GetPrenotazioniGiornaliere(Guid saloneId, DateTime? data = null)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Non autorizzato" });
+            }
+
+            var salone = await _context.Salone
+                .FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
+
+            if (salone == null)
+            {
+                return Json(new { success = false, message = "Salone non trovato" });
+            }
+
+            var dataRiferimento = data ?? DateTime.Today;
+
+            // Prima recupera i dati grezzi
+            var prenotazioniQuery = await _context.Appuntamento
+                .Include(a => a.ApplicationUser)
+                .Include(a => a.Dipendente)
+                    .ThenInclude(d => d.ApplicationUser)
+                .Include(a => a.Servizio)
+                .Include(a => a.Slot)
+                .Where(a => a.SaloneId == saloneId &&
+                           a.Data.Date == dataRiferimento.Date &&
+                           a.Stato == StatoAppuntamento.Prenotato)
+                .ToListAsync();
+
+            // Poi ordina e proietta in memoria
+            var prenotazioni = prenotazioniQuery
+                .OrderBy(a => a.OraInizio)
+                .Select(a => new
+                {
+                    appuntamentoId = a.AppuntamentoId,
+                    data = a.Data,
+                    oraInizio = a.OraInizio.ToString("HH:mm"),
+                    oraFine = a.OraFine.ToString("HH:mm"),
+                    cliente = new
+                    {
+                        nome = $"{a.ApplicationUser.Nome} {a.ApplicationUser.Cognome}",
+                        telefono = a.ApplicationUser.PhoneNumber,
+                        email = a.ApplicationUser.Email
+                    },
+                    servizio = new
+                    {
+                        nome = a.Servizio?.Nome ?? "Servizio non specificato",
+                        durata = a.Servizio?.Durata ?? 0,
+                        prezzo = a.Servizio?.PrezzoEffettivo ?? 0
+                    },
+                    dipendente = a.Dipendente != null ? new
+                    {
+                        nome = $"{a.Dipendente.ApplicationUser.Nome} {a.Dipendente.ApplicationUser.Cognome}"
+                    } : null,
+                    note = a.Note,
+                    stato = a.Stato.ToString()
+                })
+                .ToList();
+
+            // Calcola statistiche orarie
+            var prenotazioniPerOra = prenotazioni
+                .GroupBy(p => p.oraInizio.Substring(0, 2))
+                .Select(g => new
+                {
+                    ora = g.Key,
+                    numero = g.Count()
+                })
+                .OrderBy(x => x.ora)
+                .ToList();
+
+            // Calcola incasso totale
+            var incassoTotale = prenotazioni.Sum(p => p.servizio.prezzo);
+
+            return Json(new
+            {
+                success = true,
+                data = dataRiferimento.ToString("dd/MM/yyyy"),
+                totalePrenotazioni = prenotazioni.Count,
+                incassoTotale,
+                prenotazioniPerOra,
+                prenotazioni
+            });
+        }
+        #endregion
+
+
 
         #region Stripe
         public IActionResult CreateCheckoutSession(string id)

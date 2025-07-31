@@ -249,11 +249,20 @@
     <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestione Appuntamenti</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-1">Visualizza e gestisci tutti gli appuntamenti</p>
+        @if (ViewBag.HasMultipleSedi != null)
+        {
+            <div class="mt-2">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Hai @saloni?.Count sedi - Seleziona quella cui vuoi visualizzare gli appuntamenti
+                </span>
+            </div>
+        }
     </div>
     
     @if (hasMultipleSedi && saloni != null)
     {
-        <select id="sedeSelector" class="select select-bordered sede-selector mr-4 text-purple-100 bg-purple-600 dark:text-gray-300 bg-gray-800">
+        <select id="sedeSelector" class="select select-bordered sede-selector mr-4 text-purple-100 bg-gray-600-600 dark:text-gray-300 bg-gray-800">
             @foreach (var salone in saloni)
             {
                 <option value="@salone.SaloneId" selected="@(salone.SaloneId == Model.SelectedSaloneId ? "selected" : null)">
@@ -278,7 +287,6 @@
 </div>
 
 <!-- Statistiche Rapide -->
-<p>sto visualizzando il seguente salone : @ViewBag.Salonechevisualizzo</p>
 <div class="stats-grid">
     <div class="stat-box">
         <div class="stat-value" id="totaleAppuntamenti">0</div>
@@ -291,6 +299,10 @@
     <div class="stat-box">
         <div class="stat-value text-yellow-600" id="inAttesa">0</div>
         <div class="stat-label">In Attesa</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-value text-blue-600" id="completati">0</div>
+        <div class="stat-label">Completati</div>
     </div>
     <div class="stat-box">
         <div class="stat-value text-red-600" id="cancellati">0</div>
@@ -336,6 +348,7 @@
                 <option value="">Tutti gli stati</option>
                 <option value="Prenotato">Confermati</option>
                 <option value="InAttesa">In Attesa</option>
+                <option value="Completato">Completati</option>
                 <option value="Annullato">Cancellati</option>
             </select>
         </div>
@@ -694,6 +707,7 @@
             totale: filteredAppointments.length,
             confermati: filteredAppointments.filter(a => a.stato === 'Prenotato').length,
             inAttesa: filteredAppointments.filter(a => a.stato === 'InAttesa').length,
+            completati: filteredAppointments.filter(a => a.stato === 'Completato').length,
             cancellati: filteredAppointments.filter(a => a.stato === 'Annullato').length,
             incasso: filteredAppointments
                 .filter(a => a.stato !== 'Annullato')
@@ -703,6 +717,7 @@
         document.getElementById('totaleAppuntamenti').textContent = stats.totale;
         document.getElementById('confermati').textContent = stats.confermati;
         document.getElementById('inAttesa').textContent = stats.inAttesa;
+        document.getElementById('completati').textContent = stats.completati;
         document.getElementById('cancellati').textContent = stats.cancellati;
         document.getElementById('incassoGiornaliero').textContent = `€${stats.incasso.toFixed(2)}`;
     }
@@ -851,6 +866,7 @@
         switch(stato) {
             case 'Prenotato': return 'confirmed';
             case 'InAttesa': return 'pending';
+            case 'Completato': return 'completed';
             case 'Annullato': return 'cancelled';
             default: return 'pending';
         }
@@ -860,6 +876,7 @@
         switch(stato) {
             case 'Prenotato': return 'Confermato';
             case 'InAttesa': return 'In Attesa';
+            case 'Completato': return 'Completato';
             case 'Annullato': return 'Cancellato';
             default: return stato;
         }

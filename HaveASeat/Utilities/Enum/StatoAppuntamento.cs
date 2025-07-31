@@ -3,6 +3,7 @@
 	public enum StatoAppuntamento
 	{
 		Prenotato = 0,
-		Annullato = 1
+		Annullato = 1,
+		Completato = 2
 	}
 }
