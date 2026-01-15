@@ -97,10 +97,10 @@
                     <p class="text-sm text-gray-600 dark:text-gray-400">Gestisci i servizi offerti</p>
                 </div>
             </div>
-            <button onclick="addService('@Model.SaloneId')" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+            <a href="/Servizio/Index?saloneId=@Model.SaloneId" " class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <i class="fas fa-plus mr-2"></i>
                 Aggiungi
-            </button>
+            </a>
         </div>
 
         @if (Model.Servizi.Any())
@@ -142,10 +142,10 @@
             <div class="text-center py-8">
                 <i class="fas fa-cut text-4xl text-gray-400 dark:text-gray-600 mb-4"></i>
                 <p class="text-gray-500 dark:text-gray-400 mb-4">Nessun servizio configurato</p>
-                <button onclick="addService()" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <a href="/Servizio/Index?saloneId=@Model.SaloneId" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
                     <i class="fas fa-plus mr-2"></i>
                     Aggiungi Primo Servizio
-                </button>
+                </a>
             </div>
         }
     </div>
