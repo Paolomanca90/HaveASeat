@@ -245,80 +245,143 @@
 }
 
 <!-- Header -->
-<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
     <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestione Appuntamenti</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-1">Visualizza e gestisci tutti gli appuntamenti</p>
     </div>
-    
-    @if (hasMultipleSedi && saloni != null)
-    {
-        <select id="sedeSelector" class="select select-bordered sede-selector mr-4 text-purple-100 bg-purple-600 dark:text-gray-300 bg-gray-800">
-            @foreach (var salone in saloni)
-            {
-                <option value="@salone.SaloneId" selected="@(salone.SaloneId == Model.SelectedSaloneId ? "selected" : null)">
-                    @salone.Nome - @salone.Citta
-                </option>
 
-              @*   @if (salone.SaloneId == Model.SelectedSaloneId)
-                {
-                    <option value="@salone.SaloneId" data-nome="@salone.Nome" data-citta="@salone.Citta" selected>
-                        @salone.Nome - @salone.Citta
-                    </option>
-                }
-                else
-                {
-                    <option value="@salone.SaloneId" data-nome="@salone.Nome" data-citta="@salone.Citta">
-                        @salone.Nome - @salone.Citta
-                    </option>
-                } *@
-            }
-        </select>
-    }
+    <div class="flex items-center space-x-3">
+        @if (hasMultipleSedi && saloni != null && saloni.Count > 1)
+        {
+            <!-- Selettore Sedi - Solo se più di un salone -->
+            <div class="dropdown dropdown-bottom dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px] dark:text-gray-200 hover:text-black dark:hover:text-gray-700">
+                    <i class="fas fa-store mr-2"></i>
+                    <span class="truncate" id="selectedSaloneName">
+                        @{
+                            var selectedSalone = saloni.FirstOrDefault(s => s.SaloneId == Model.SelectedSaloneId);
+                        }
+                        @(selectedSalone?.Nome ?? "Seleziona sede")
+                    </span>
+                    <i class="fas fa-chevron-down ml-2"></i>
+                </div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 dark:bg-gray-800 rounded-box z-[1] w-64 p-2 shadow-xl border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto">
+                    @foreach (var salone in saloni)
+                    {
+                        <li>
+                            <a onclick="changeSede('@salone.SaloneId')"
+                               class="@(salone.SaloneId == Model.SelectedSaloneId ? "active bg-purple-50 dark:bg-purple-900/20" : "") transition-colors cursor-pointer">
+                                <i class="fas fa-store mr-2 dark:text-gray-200 @(salone.SaloneId == Model.SelectedSaloneId ? "text-purple-600" : "")"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium dark:text-gray-200">@salone.Nome</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-100">@salone.Citta</div>
+                                </div>
+                                @if (salone.SaloneId == Model.SelectedSaloneId)
+                                {
+                                    <i class="fas fa-check ml-auto text-green-500"></i>
+                                }
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
 </div>
 
 <!-- Statistiche Rapide -->
-<p>sto visualizzando il seguente salone : @ViewBag.Salonechevisualizzo</p>
-<div class="stats-grid">
-    <div class="stat-box">
-        <div class="stat-value" id="totaleAppuntamenti">0</div>
-        <div class="stat-label">Appuntamenti Totali</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Appuntamenti Totali</p>
+                <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="totaleAppuntamenti">0</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-calendar text-purple-600 dark:text-purple-400"></i>
+            </div>
+        </div>
     </div>
-    <div class="stat-box">
-        <div class="stat-value text-green-600" id="confermati">0</div>
-        <div class="stat-label">Confermati</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Confermati</p>
+                <p class="text-3xl font-bold text-green-600 dark:text-green-400" id="confermati">0</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+            </div>
+        </div>
     </div>
-    <div class="stat-box">
-        <div class="stat-value text-yellow-600" id="inAttesa">0</div>
-        <div class="stat-label">In Attesa</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">In Attesa</p>
+                <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400" id="inAttesa">0</p>
+            </div>
+            <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-clock text-yellow-600 dark:text-yellow-400"></i>
+            </div>
+        </div>
     </div>
-    <div class="stat-box">
-        <div class="stat-value text-red-600" id="cancellati">0</div>
-        <div class="stat-label">Cancellati</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Cancellati</p>
+                <p class="text-3xl font-bold text-red-600 dark:text-red-400" id="cancellati">0</p>
+            </div>
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-times-circle text-red-600 dark:text-red-400"></i>
+            </div>
+        </div>
     </div>
-    <div class="stat-box">
-        <div class="stat-value text-purple-600" id="incassoGiornaliero">€0</div>
-        <div class="stat-label">Incasso Previsto</div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Incasso Previsto</p>
+                <p class="text-3xl font-bold text-purple-600 dark:text-purple-400" id="incassoGiornaliero">€0</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                <i class="fas fa-euro-sign text-purple-600 dark:text-purple-400"></i>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Sezione Filtri -->
-<div class="filters-section">
+<div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+    <!-- Tab Filtro Stato -->
+    <div class="flex flex-wrap items-center gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+        <button onclick="filterByStatus('')" class="filter-status-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-purple-600 text-white" data-status="">
+            Tutti <span class="ml-1 text-xs opacity-75" id="countAll">0</span>
+        </button>
+        <button onclick="filterByStatus('Prenotato')" class="filter-status-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600" data-status="Prenotato">
+            Confermati <span class="ml-1 px-1.5 py-0.5 rounded-full text-xs bg-green-500 text-white" id="countConfermati">0</span>
+        </button>
+        <button onclick="filterByStatus('InAttesa')" class="filter-status-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600" data-status="InAttesa">
+            In attesa <span class="ml-1 px-1.5 py-0.5 rounded-full text-xs bg-yellow-500 text-white" id="countInAttesa">0</span>
+        </button>
+        <button onclick="filterByStatus('Annullato')" class="filter-status-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600" data-status="Annullato">
+            Cancellati <span class="ml-1 px-1.5 py-0.5 rounded-full text-xs bg-red-500 text-white" id="countCancellati">0</span>
+        </button>
+    </div>
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Filtro Data -->
         <div class="form-control">
             <label class="label">
-                <span class="label-text dark:text-gray-300">Data</span>
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Data</span>
             </label>
-            <input type="date" id="filterDate" class="input input-bordered w-full dark:bg-gray-700 dark:text-gray-300" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            <input type="date" id="filterDate" class="input input-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
         </div>
 
         <!-- Filtro Range Date -->
         <div class="form-control">
             <label class="label">
-                <span class="label-text dark:text-gray-300">Periodo</span>
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Periodo</span>
             </label>
-            <select id="filterPeriodo" class="select select-bordered w-full dark:bg-gray-700 dark:text-gray-300">
+            <select id="filterPeriodo" class="select select-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
                 <option value="giorno">Oggi</option>
                 <option value="domani">Domani</option>
                 <option value="settimana">Questa Settimana</option>
@@ -327,25 +390,12 @@
             </select>
         </div>
 
-        <!-- Filtro Stato -->
-        <div class="form-control">
-            <label class="label">
-                <span class="label-text dark:text-gray-300">Stato</span>
-            </label>
-            <select id="filterStato" class="select select-bordered w-full dark:bg-gray-700 dark:text-gray-300">
-                <option value="">Tutti gli stati</option>
-                <option value="Prenotato">Confermati</option>
-                <option value="InAttesa">In Attesa</option>
-                <option value="Annullato">Cancellati</option>
-            </select>
-        </div>
-
         <!-- Filtro Servizio -->
         <div class="form-control">
             <label class="label">
-                <span class="label-text dark:text-gray-300">Servizio</span>
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Servizio</span>
             </label>
-            <select id="filterServizio" class="select select-bordered w-full dark:bg-gray-700 dark:text-gray-300">
+            <select id="filterServizio" class="select select-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
                 <option value="">Tutti i servizi</option>
                 <!-- Popolato dinamicamente -->
             </select>
@@ -354,9 +404,9 @@
         <!-- Filtro Dipendente -->
         <div class="form-control">
             <label class="label">
-                <span class="label-text dark:text-gray-300">Dipendente</span>
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Dipendente</span>
             </label>
-            <select id="filterDipendente" class="select select-bordered w-full dark:bg-gray-700 dark:text-gray-300">
+            <select id="filterDipendente" class="select select-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
                 <option value="">Tutti i dipendenti</option>
                 <!-- Popolato dinamicamente -->
             </select>
@@ -365,10 +415,10 @@
         <!-- Ricerca Cliente -->
         <div class="form-control">
             <label class="label">
-                <span class="label-text dark:text-gray-300">Cerca Cliente</span>
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Cerca Cliente</span>
             </label>
             <div class="relative">
-                <input type="text" id="searchCliente" class="input input-bordered w-full pr-10 dark:bg-gray-700 dark:text-gray-300" placeholder="Nome o telefono..." />
+                <input type="text" id="searchCliente" class="input input-bordered w-full pr-10 bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" placeholder="Nome o telefono..." />
                 <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
         </div>
@@ -376,38 +426,38 @@
         <!-- Date personalizzate (nascoste di default) -->
         <div id="customDateRange" class="form-control col-span-2 hidden">
             <label class="label">
-                <span class="label-text dark:text-gray-300">Periodo Personalizzato</span>
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Periodo Personalizzato</span>
             </label>
             <div class="flex gap-2">
-                <input type="date" id="dateFrom" class="input input-bordered flex-1 dark:bg-gray-700 dark:text-gray-300" />
-                <span class="self-center">a</span>
-                <input type="date" id="dateTo" class="input input-bordered flex-1 dark:bg-gray-700 dark:text-gray-300" />
+                <input type="date" id="dateFrom" class="input input-bordered flex-1 bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
+                <span class="self-center text-gray-600 dark:text-gray-400">a</span>
+                <input type="date" id="dateTo" class="input input-bordered flex-1 bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
             </div>
         </div>
     </div>
 
     <!-- Azioni Filtri -->
-    <div class="flex justify-between items-center mt-4">
-        <button onclick="resetFilters()" class="btn btn-ghost btn-sm">
+    <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <button onclick="resetFilters()" class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
             <i class="fas fa-undo mr-2"></i>Reset Filtri
         </button>
         <div class="flex gap-2">
-            <button onclick="applyFilters()" class="btn btn-primary btn-sm">
+            <button onclick="applyFilters()" class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors">
                 <i class="fas fa-filter mr-2"></i>Applica Filtri
             </button>
             <div class="relative">
-                <button onclick="toggleExportMenu()" class="btn btn-outline btn-sm">
+                <button onclick="toggleExportMenu()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <i class="fas fa-download mr-2"></i>Esporta
                 </button>
-                <div id="exportMenu" class="export-menu">
-                    <button onclick="exportAppointments('excel')">
-                        <i class="fas fa-file-excel mr-2"></i>Excel
+                <div id="exportMenu" class="absolute right-0 top-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl z-50 min-w-[180px] hidden">
+                    <button onclick="exportAppointments('excel')" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-file-excel mr-3 text-green-600"></i>Excel
                     </button>
-                    <button onclick="exportAppointments('pdf')">
-                        <i class="fas fa-file-pdf mr-2"></i>PDF
+                    <button onclick="exportAppointments('pdf')" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-file-pdf mr-3 text-red-600"></i>PDF
                     </button>
-                    <button onclick="exportAppointments('csv')">
-                        <i class="fas fa-file-csv mr-2"></i>CSV
+                    <button onclick="exportAppointments('csv')" class="flex items-center w-full px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-file-csv mr-3 text-blue-600"></i>CSV
                     </button>
                 </div>
             </div>
@@ -416,23 +466,23 @@
 </div>
 
 <!-- Toggle Vista -->
-<div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-semibold dark:text-gray-100">Appuntamenti del Giorno</h2>
-    <div class="view-toggle">
-        <button class="active" onclick="switchView('cards')" data-view="cards">
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Appuntamenti del Giorno</h2>
+    <div class="flex items-center space-x-2">
+        <button class="view-toggle-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-purple-600 text-white" onclick="switchView('cards')" data-view="cards">
             <i class="fas fa-th-large"></i>
         </button>
-        <button onclick="switchView('table')" data-view="table">
+        <button class="view-toggle-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600" onclick="switchView('table')" data-view="table">
             <i class="fas fa-table"></i>
         </button>
-        <button onclick="switchView('timeline')" data-view="timeline">
+        <button class="view-toggle-btn px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600" onclick="switchView('timeline')" data-view="timeline">
             <i class="fas fa-stream"></i>
         </button>
     </div>
 </div>
 
 <!-- Contenitore Appuntamenti -->
-<div class="appointments-container">
+<div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
     <!-- Vista Cards (default) -->
     <div id="cardsView" class="appointments-view">
         <div id="appointmentsCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -519,6 +569,8 @@
         document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
     });
 
+    let currentStatusFilter = '';
+
     function setupEventListeners() {
         // Cambio periodo
         document.getElementById('filterPeriodo').addEventListener('change', function() {
@@ -530,15 +582,6 @@
             }
         });
 
-        // Cambio sede
-        const sedeSelector = document.getElementById('sedeSelector');
-        if (sedeSelector) {
-            sedeSelector.addEventListener('change', function() {
-                currentSaloneId = this.value;
-                loadAppointments();
-            });
-        }
-
         // Ricerca in tempo reale
         document.getElementById('searchCliente').addEventListener('input', function() {
             filterAppointments();
@@ -547,9 +590,65 @@
         // Click fuori dal menu export per chiuderlo
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.relative')) {
-                document.getElementById('exportMenu').classList.remove('show');
+                const exportMenu = document.getElementById('exportMenu');
+                if (exportMenu) exportMenu.classList.add('hidden');
             }
         });
+    }
+
+    function changeSede(saloneId) {
+        currentSaloneId = saloneId;
+
+        // Aggiorna il nome visualizzato nel dropdown
+        const selectedName = document.getElementById('selectedSaloneName');
+        if (selectedName) {
+            // Trova il nome del salone selezionato dal dropdown
+            const dropdownItems = document.querySelectorAll('.dropdown-content li a');
+            dropdownItems.forEach(item => {
+                if (item.getAttribute('onclick')?.includes(saloneId)) {
+                    const nameEl = item.querySelector('.font-medium');
+                    if (nameEl && selectedName) {
+                        selectedName.textContent = nameEl.textContent;
+                    }
+                }
+            });
+        }
+
+        // Chiudi il dropdown
+        document.activeElement.blur();
+
+        // Ricarica gli appuntamenti
+        loadAppointments();
+    }
+
+    function filterByStatus(status) {
+        currentStatusFilter = status;
+
+        // Aggiorna stile bottoni
+        document.querySelectorAll('.filter-status-btn').forEach(btn => {
+            btn.classList.remove('bg-purple-600', 'text-white');
+            btn.classList.add('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+        });
+
+        const activeBtn = document.querySelector(`.filter-status-btn[data-status="${status}"]`);
+        if (activeBtn) {
+            activeBtn.classList.remove('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+            activeBtn.classList.add('bg-purple-600', 'text-white');
+        }
+
+        filterAppointments();
+    }
+
+    function updateStatusCounts() {
+        const all = appointments.length;
+        const confermati = appointments.filter(a => a.stato === 'Prenotato').length;
+        const inAttesa = appointments.filter(a => a.stato === 'InAttesa').length;
+        const cancellati = appointments.filter(a => a.stato === 'Annullato').length;
+
+        document.getElementById('countAll').textContent = all;
+        document.getElementById('countConfermati').textContent = confermati;
+        document.getElementById('countInAttesa').textContent = inAttesa;
+        document.getElementById('countCancellati').textContent = cancellati;
     }
 
     function updateDateFromPeriod(period) {
@@ -623,7 +722,6 @@
     function filterAppointments() {
         const filterDate = document.getElementById('filterDate').value;
         const filterPeriodo = document.getElementById('filterPeriodo').value;
-        const filterStato = document.getElementById('filterStato').value;
         const filterServizio = document.getElementById('filterServizio').value;
         const filterDipendente = document.getElementById('filterDipendente').value;
         const searchCliente = document.getElementById('searchCliente').value.toLowerCase();
@@ -631,27 +729,28 @@
         filteredAppointments = appointments.filter(app => {
             // Filtro data/periodo
             if (!matchDateFilter(app.data, filterDate, filterPeriodo)) return false;
-            
-            // Filtro stato
-            if (filterStato && app.stato !== filterStato) return false;
-            
+
+            // Filtro stato (dalle tab)
+            if (currentStatusFilter && app.stato !== currentStatusFilter) return false;
+
             // Filtro servizio
             if (filterServizio && app.servizioId !== filterServizio) return false;
-            
+
             // Filtro dipendente
             if (filterDipendente && app.dipendenteId !== filterDipendente) return false;
-            
+
             // Ricerca cliente
             if (searchCliente) {
                 const clienteMatch = app.nomeCliente.toLowerCase().includes(searchCliente) ||
                                    app.telefonoCliente.includes(searchCliente);
                 if (!clienteMatch) return false;
             }
-            
+
             return true;
         });
             console.log('Appuntamenti filtrati:', filteredAppointments.length);
         updateStats();
+        updateStatusCounts();
         renderAppointments();
     }
 
@@ -865,48 +964,48 @@
         }
     }
 
-          function switchView(view) {
-            console.log('Switching to view:', view);
-            currentView = view;
+    function switchView(view) {
+        console.log('Switching to view:', view);
+        currentView = view;
 
-            // Aggiorna bottoni
-            const buttons = document.querySelectorAll('.view-toggle button');
-            buttons.forEach(btn => {
-                // Rimuovi la classe active
-                btn.classList.remove('active');
+        // Aggiorna stile bottoni
+        document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+            btn.classList.remove('bg-purple-600', 'text-white');
+            btn.classList.add('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+        });
 
-                // Aggiungi active se è il bottone selezionato
-                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${view}'`)) {
-                    btn.classList.add('active');
-                }
-            });
-
-            // Ottieni tutti i contenitori delle viste
-            const cardsView = document.getElementById('cardsView');
-            const tableView = document.getElementById('tableView');
-            const timelineView = document.getElementById('timelineView');
-
-            // Nascondili tutti
-            if (cardsView) cardsView.style.display = 'none';
-            if (tableView) tableView.style.display = 'none';
-            if (timelineView) timelineView.style.display = 'none';
-
-            // Mostra solo quello selezionato
-            switch(view) {
-                case 'cards':
-                    if (cardsView) cardsView.style.display = 'block';
-                    break;
-                case 'table':
-                    if (tableView) tableView.style.display = 'block';
-                    break;
-                case 'timeline':
-                    if (timelineView) timelineView.style.display = 'block';
-                    break;
-            }
-
-            // Re-render
-            renderAppointments();
+        const activeBtn = document.querySelector(`.view-toggle-btn[data-view="${view}"]`);
+        if (activeBtn) {
+            activeBtn.classList.remove('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+            activeBtn.classList.add('bg-purple-600', 'text-white');
         }
+
+        // Ottieni tutti i contenitori delle viste
+        const cardsView = document.getElementById('cardsView');
+        const tableView = document.getElementById('tableView');
+        const timelineView = document.getElementById('timelineView');
+
+        // Nascondili tutti
+        if (cardsView) cardsView.style.display = 'none';
+        if (tableView) tableView.style.display = 'none';
+        if (timelineView) timelineView.style.display = 'none';
+
+        // Mostra solo quello selezionato
+        switch(view) {
+            case 'cards':
+                if (cardsView) cardsView.style.display = 'block';
+                break;
+            case 'table':
+                if (tableView) tableView.style.display = 'block';
+                break;
+            case 'timeline':
+                if (timelineView) timelineView.style.display = 'block';
+                break;
+        }
+
+        // Re-render
+        renderAppointments();
+    }
                 // Aggiungi anche questo per assicurarti che all'avvio sia tutto corretto
         function initializeViews() {
             // Nascondi tutte le viste tranne cards (default)
@@ -1033,7 +1132,7 @@
     }
 
     function toggleExportMenu() {
-        document.getElementById('exportMenu').classList.toggle('show');
+        document.getElementById('exportMenu').classList.toggle('hidden');
     }
 
     async function exportAppointments(format) {

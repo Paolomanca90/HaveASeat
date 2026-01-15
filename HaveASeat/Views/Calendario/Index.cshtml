@@ -11,25 +11,22 @@
     <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Calendario Prenotazioni</h1>
         <p class="text-gray-600 dark:text-gray-400 mt-1">
-            <span>Gestisci le prenotazioni di <strong>@Model.SaloneCorrente?.Nome</strong></span>
-            <span class="ml-2 text-sm">
-                @Model.DataSelezionata.ToString("dddd, dd MMMM yyyy")
-            </span>
+            @Model.DataSelezionata.ToString("dddd, dd MMMM yyyy")
         </p>
-        @if (Model.HasMultipleSedi)
+        @if (Model.HasMultipleSedi && Model.Saloni.Count > 1)
         {
             <div class="mt-2">
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Hai @Model.Saloni.Count sedi - Seleziona quella da visualizzare
+                    <i class="fas fa-store mr-1"></i>
+                    @Model.SaloneCorrente?.Nome
                 </span>
             </div>
         }
     </div>
 
     <div class="flex items-center space-x-3">
-        <!-- Selettore Salone -->
-        @if (Model.HasMultipleSedi)
+        <!-- Selettore Salone - Solo se più di un salone -->
+        @if (Model.HasMultipleSedi && Model.Saloni.Count > 1)
         {
             <div class="dropdown dropdown-bottom dropdown-end">
                 <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px] dark:text-gray-200 hover:text-black dark:hover:text-gray-700">
@@ -58,17 +55,17 @@
                 </ul>
             </div>
         }
-        
+
         <!-- Navigation Controls -->
         <div class="flex items-center space-x-2">
             <button class="inline-flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="cambiaGiorno(-1)">
                 <i class="fas fa-chevron-left text-gray-600 dark:text-gray-300"></i>
             </button>
-            
+
             <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="vaiOggi()">
                 Oggi
             </button>
-            
+
             <button class="inline-flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="cambiaGiorno(1)">
                 <i class="fas fa-chevron-right text-gray-600 dark:text-gray-300"></i>
             </button>

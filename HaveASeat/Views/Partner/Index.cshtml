@@ -9,57 +9,64 @@
 <link href="/css/ReportDashboard.css" rel="stylesheet" />
 }
 <!-- Header -->
-<div class="header">
+<div class="flex flex-col lg:flex-row lg:items-center justify-between mb-8 space-y-4 lg:space-y-0">
     <div>
         <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-        <p class="text-2xl text-gray-600 dark:text-gray-400 mt-1">Bentornato <span class="dark:text-gray-300"> <strong>@ViewBag.NomeUtente</strong></span></p>
-        @if (ViewBag.HasMultipleSedi != null)
+        <p class="text-gray-600 dark:text-gray-400 mt-1">
+            Bentornato, <strong class="text-gray-900 dark:text-gray-200">@ViewBag.NomeUtente</strong>
+        </p>
+        @if (hasMultipleSedi && saloni != null)
         {
             <div class="mt-2">
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Hai @saloni?.Count sedi - Seleziona quella cui vuoi visionare i report
+                    Hai @saloni.Count sedi - Seleziona quella di cui vuoi visionare i report
                 </span>
             </div>
         }
     </div>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <div class="header-actions">
-        @if (Model.SaloniUtente.Any())
+    <div class="flex items-center space-x-3">
+        @if (Model.SaloniUtente.Count() > 1)
         {
-            <!-- Selettore Sedi -->
-            <select id="sedeSelector" class="select select-bordered sede-selector mr-4 text-purple-100 bg-purple-600 dark:text-gray-300 bg-gray-800">
-                @foreach (var salone in Model.SaloniUtente)
-                {
-                    @if (salone.SaloneId == Model.SelectedSaloneId)
+            <!-- Selettore Sedi - Solo se più di un salone -->
+            <div class="dropdown dropdown-bottom dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-outline border-gray-300 dark:border-gray-600 min-w-[200px] dark:text-gray-200 hover:text-black dark:hover:text-gray-700">
+                    <i class="fas fa-store mr-2"></i>
+                    <span class="truncate" id="selectedSaloneName">
+                        @{
+                            var selectedSalone = Model.SaloniUtente.FirstOrDefault(s => s.SaloneId == Model.SelectedSaloneId);
+                        }
+                        @(selectedSalone?.Nome ?? "Seleziona sede")
+                    </span>
+                    <i class="fas fa-chevron-down ml-2"></i>
+                </div>
+                <ul tabindex="0" class="dropdown-content menu bg-base-100 dark:bg-gray-800 rounded-box z-[1] w-64 p-2 shadow-xl border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto">
+                    @foreach (var salone in Model.SaloniUtente)
                     {
-                        <option value="@salone.SaloneId" data-nome="@salone.Nome" data-citta="@salone.Citta" selected>
-                            @salone.Nome - @salone.Citta
-                        </option>
+                        <li>
+                            <a onclick="changeSede('@salone.SaloneId', '@salone.Nome', '@salone.Citta')"
+                               class="@(salone.SaloneId == Model.SelectedSaloneId ? "active bg-purple-50 dark:bg-purple-900/20" : "") transition-colors cursor-pointer">
+                                <i class="fas fa-store mr-2 dark:text-gray-200 @(salone.SaloneId == Model.SelectedSaloneId ? "text-purple-600 dark:text-purple-600" : "")"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium dark:text-gray-200">@salone.Nome</div>
+                                    <div class="text-xs text-gray-500 dark:text-gray-100">@salone.Citta</div>
+                                </div>
+                                @if (salone.SaloneId == Model.SelectedSaloneId)
+                                {
+                                    <i class="fas fa-check ml-auto text-green-500"></i>
+                                }
+                            </a>
+                        </li>
                     }
-                    else
-                    {
-                        <option value="@salone.SaloneId" data-nome="@salone.Nome" data-citta="@salone.Citta">
-                            @salone.Nome - @salone.Citta
-                        </option>
-                    }
-                }
-            </select>
+                </ul>
+            </div>
         }
-        <div class="flex items-center space-x-3">
-            <button onclick="exportData()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                <i class="fas fa-download mr-2"></i>
-                Esporta Dati
-            </button>
-        </div>
-@* 
-        <button class="btn btn-outline" id="exportBtn">
-            <i class="fas fa-download"></i> Esporta
-        </button> 
-        <button class="btn btn-primary" onclick="window.location.href='@Url.Action("Dipendenti", "Partner")'">
-            <i class="fas fa-plus"></i> Aggiungi staff
-        </button> *@
+        <button onclick="exportData()" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200">
+            <i class="fas fa-download mr-2"></i>
+            Esporta Dati
+        </button>
     </div>
 </div>
 @if (!Model.SaloniUtente.Any())
@@ -74,93 +81,119 @@ else
 {
     
 <!-- Stats Cards -->
-    <div class="dashboard-stats" id="statsContainer">
-        <div class="stat-card dark:bg-gray-800">
-        <div class="stat-card-header">
-            <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Prenotazioni Oggi</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" id="statsContainer">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Prenotazioni Oggi</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="prenotazioniOggi">@Model.Stats.PrenotazioniOggi</p>
+                </div>
                 <div class="w-12 h-12 bg-sky-100 dark:bg-sky-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-calendar-check text-sky-600 dark:text-sky-400"></i>
                 </div>
-        </div>
-            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="prenotazioniOggi">@Model.Stats.PrenotazioniOggi</div>
-            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsPrenotazioniPositive ? "change-positive" : "change-negative")">
-                <i class="fas fa-arrow-@(Model.Stats.IsPrenotazioniPositive ? "up" : "down")"></i>
+            </div>
+            <p class="text-sm mt-2 @(Model.Stats.IsPrenotazioniPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                <i class="fas fa-arrow-@(Model.Stats.IsPrenotazioniPositive ? "up" : "down") mr-1"></i>
                 <span id="percPrenotazioni">@Math.Abs(Model.Stats.PercentualePrenotazioni)%</span> rispetto a ieri
+            </p>
         </div>
-    </div>
 
-        <div class="stat-card dark:bg-gray-800">
-        <div class="stat-card-header">
-                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Nuovi Clienti</div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Nuovi Clienti</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="nuoviClienti">@Model.Stats.NuoviClienti</p>
+                </div>
                 <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-user-plus text-yellow-600 dark:text-yellow-400"></i>
                 </div>
-        </div>
-            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="nuoviClienti">@Model.Stats.NuoviClienti</div>
-            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsNuoviClientiPositive ? "change-positive" : "change-negative")">
-                <i class="fas fa-arrow-@(Model.Stats.IsNuoviClientiPositive ? "up" : "down")"></i>
-                <span id="percClienti">@Math.Abs(Model.Stats.PercentualeNuoviClienti)%</span> questa settimana
             </div>
-    </div>
+            <p class="text-sm mt-2 @(Model.Stats.IsNuoviClientiPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                <i class="fas fa-arrow-@(Model.Stats.IsNuoviClientiPositive ? "up" : "down") mr-1"></i>
+                <span id="percClienti">@Math.Abs(Model.Stats.PercentualeNuoviClienti)%</span> questa settimana
+            </p>
+        </div>
 
-        <div class="stat-card dark:bg-gray-800">
-        <div class="stat-card-header">
-                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Incasso Giornaliero</div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Incasso Giornaliero</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="incassoGiornaliero">€@Model.Stats.IncassoGiornaliero.ToString("N0")</p>
+                </div>
                 <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-euro-sign text-green-600 dark:text-green-400"></i>
                 </div>
-        </div>
-            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="incassoGiornaliero">€@Model.Stats.IncassoGiornaliero.ToString("N0")</div>
-            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsIncassoPositive ? "change-positive" : "change-negative")">
-                <i class="fas fa-arrow-@(Model.Stats.IsIncassoPositive ? "up" : "down")"></i>
-                <span id="percIncasso">@Math.Abs(Model.Stats.PercentualeIncasso)%</span> rispetto a ieri
             </div>
-    </div>
+            <p class="text-sm mt-2 @(Model.Stats.IsIncassoPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                <i class="fas fa-arrow-@(Model.Stats.IsIncassoPositive ? "up" : "down") mr-1"></i>
+                <span id="percIncasso">@Math.Abs(Model.Stats.PercentualeIncasso)%</span> rispetto a ieri
+            </p>
+        </div>
 
-        <div class="stat-card dark:bg-gray-800">
-        <div class="stat-card-header">
-                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Completati</div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Servizi Completati</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="serviziCompletati">@Model.Stats.ServiziCompletati</p>
+                </div>
                 <div class="w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-clipboard-check text-teal-600 dark:text-teal-400"></i>
                 </div>
-        </div>
-            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="serviziCompletati">@Model.Stats.ServiziCompletati</div>
-            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsServiziPositive ? "change-positive" : "change-negative")">
-                <i class="fas fa-arrow-@(Model.Stats.IsServiziPositive ? "up" : "down")"></i>
-                <span id="percServizi">@Math.Abs(Model.Stats.PercentualeServizi)%</span> rispetto a ieri
             </div>
+            <p class="text-sm mt-2 @(Model.Stats.IsServiziPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                <i class="fas fa-arrow-@(Model.Stats.IsServiziPositive ? "up" : "down") mr-1"></i>
+                <span id="percServizi">@Math.Abs(Model.Stats.PercentualeServizi)%</span> rispetto a ieri
+            </p>
+        </div>
     </div>
-        <div class="stat-card dark:bg-gray-800">
-            <div class="stat-card-header">
-                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Dipendenti</div>
+
+    <!-- Stats Cards - Seconda riga -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Dipendenti</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="numeroDipendenti">@Model.Stats.NumeroDipendenti</p>
+                </div>
                 <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
                 </div>
-              
             </div>
-            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="numeroDipendenti">@Model.Stats.NumeroDipendenti</div>
-            <div class="stat-card-change change-neutral">
-
-                <span class="text-sm text-gray-500 dark:text-gray-400 mt-2">Staff totale</span>
-            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Staff totale</p>
         </div>
-        <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showServiziModal()">
-            <div class="stat-card-header">
-                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Servizi</div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1" onclick="showServiziModal()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Servizi</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="numeroServizi">@Model.Stats.NumeroServizi</p>
+                </div>
                 <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
                     <i class="fas fa-cut text-purple-600 dark:text-purple-400"></i>
                 </div>
             </div>
-            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="numeroServizi">@Model.Stats.NumeroServizi</div>
-            <div class="stat-card-change change-neutral">
-                <span class="text-sm text-gray-500 dark:text-gray-400 mt-2">Servizi totali attivi</span>
-            </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                <i class="fas fa-hand-pointer"></i> Clicca per dettagli
-            </div>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <i class="fas fa-hand-pointer mr-1"></i> Clicca per dettagli
+            </p>
         </div>
-        <!---->
-        <!-- Aggiungi questo modale dopo il modale delle promozioni -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-lg transition-all duration-200 hover:-translate-y-1" onclick="showPromozioniModal()">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Promozioni Attive</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-gray-100" id="promozioniAttive">@Model.Stats.PromozioniAttive</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tags text-orange-600 dark:text-orange-400"></i>
+                </div>
+            </div>
+            <p class="text-sm mt-2 @(Model.Stats.IsPromozioniPositive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")">
+                <i class="fas fa-arrow-@(Model.Stats.IsPromozioniPositive ? "up" : "down") mr-1"></i>
+                <span id="percPromozioni">@Math.Abs(Model.Stats.PercentualePromozioni)%</span> rispetto a ieri
+            </p>
+        </div>
+    </div>
+
+        <!-- Modale Servizi -->
         <div id="serviziModal" class="modal">
             <div class="modal-box w-11/12 max-w-4xl">
                 <div class="flex items-center justify-between mb-4">
@@ -207,55 +240,34 @@ else
                 <button onclick="closeServiziModal()">close</button>
             </form>
         </div>
-        <!---->
-        <div class="stat-card dark:bg-gray-800 cursor-pointer hover:shadow-lg transition-shadow" onclick="showPromozioniModal()">
-            <div class="stat-card-header">
-                <div class="stat-card-title text-sm font-medium text-gray-600 dark:text-gray-400">Promozioni Attive</div>
-                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-tags text-orange-600 dark:text-orange-400"></i>
-                </div>
-            </div>
-            <div class="stat-card-value text-3xl font-bold text-gray-900 dark:text-gray-100" id="promozioniAttive">@Model.Stats.PromozioniAttive</div>
-            <div class="stat-card-change text-sm mt-2 @(Model.Stats.IsPromozioniPositive ? "change-positive" : "change-negative")">
-                <i class="fas fa-arrow-@(Model.Stats.IsPromozioniPositive ? "up" : "down")"></i>
-                <span id="percPromozioni">@Math.Abs(Model.Stats.PercentualePromozioni)%</span> rispetto a ieri
-            </div>
-            <div class="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                <i class="fas fa-hand-pointer"></i> Clicca per dettagli
-            </div>
-        </div>
-</div>
 
 <!-- Charts Section -->
-    <div class="charts-section">
-        <div class="chart-container dark:bg-gray-800">
-        <div class="chart-header grafico">
-                <div class="chart-title dark:text-neutral-50 datiGrafico">Prenotazioni e Incassi</div>
-            <div class="chart-duration">
-                    <button class="duration-btn dark:text-neutral-50 @(Model.PeriodoSelezionato == "giorno" ? "active" : "")" data-periodo="giorno">Giorno</button>
-                    <button class="duration-btn dark:text-neutral-50 @(Model.PeriodoSelezionato == "settimana" ? "active" : "")" data-periodo="settimana">Settimana</button>
-                    <button class="duration-btn dark:text-neutral-50 @(Model.PeriodoSelezionato == "mese" ? "active" : "")" data-periodo="mese">Mese</button>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 grafico">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 datiGrafico">Prenotazioni e Incassi</h3>
+                <div class="flex items-center space-x-2 mt-3 sm:mt-0">
+                    <button class="duration-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors @(Model.PeriodoSelezionato == "giorno" ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600")" data-periodo="giorno">Giorno</button>
+                    <button class="duration-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors @(Model.PeriodoSelezionato == "settimana" ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600")" data-periodo="settimana">Settimana</button>
+                    <button class="duration-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors @(Model.PeriodoSelezionato == "mese" ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600")" data-periodo="mese">Mese</button>
+                </div>
+            </div>
+            <div class="h-80">
+                <canvas id="revenueChart"></canvas>
             </div>
         </div>
-        <div class="canvas-container">
-            <canvas id="revenueChart"></canvas>
-        </div>
-    </div>
 
-        <div class="chart-container top-services dark:bg-gray-800">
-        <div class="chart-header">
-            <div class="chart-title dark:text-neutral-50">Servizi Più Richiesti</div>
-        </div>
-
-            <div id="topServiziContainer">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100 mb-6">Servizi Più Richiesti</h3>
+            <div id="topServiziContainer" class="space-y-4">
                 @foreach (var servizio in Model.TopServizi)
                 {
-                    <div class="service-item">
-                        <div class="service-info">
-                            <div class="service-name dark:text-gray-300">@servizio.Nome</div>
-                            <div class="service-bookings dark:text-gray-400">@servizio.NumeroPrenotazioni prenotazioni</div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div>
+                            <p class="font-medium text-gray-900 dark:text-gray-100">@servizio.Nome</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">@servizio.NumeroPrenotazioni prenotazioni</p>
                         </div>
-                        <div class="service-revenue dark:text-gray-300">€@servizio.IncassoTotale.ToString("N0")</div>
+                        <span class="text-lg font-bold text-green-600 dark:text-green-400">€@servizio.IncassoTotale.ToString("N0")</span>
                     </div>
                 }
             </div>
@@ -263,14 +275,16 @@ else
     </div>
 
 <!-- Appointments Section -->
-    <div class="section dark:bg-gray-800">
-        <div class="section-title">
-            <h2 class="dark:text-neutral-50">Gestione Appuntamenti</h2>
-            <div class="flex gap-2">
-                <button class="btn btn-sm btn-outline" onclick="showCalendarModal()">
-                    <i class="fas fa-calendar-alt"></i> Vista Calendario
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Gestione Appuntamenti</h2>
+            <div class="flex items-center space-x-3 mt-3 sm:mt-0">
+                <button class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors" onclick="showCalendarModal()">
+                    <i class="fas fa-calendar-alt mr-2"></i> Vista Calendario
                 </button>
-                <a class="dark:text-neutral-50" href="@Url.Action("Calendario", "Partner")">Vedi tutte</a>
+                <a href="@Url.Action("Calendario", "Partner")" class="inline-flex items-center px-3 py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
+                    Vedi tutte <i class="fas fa-arrow-right ml-2"></i>
+                </a>
             </div>
         </div>
 
@@ -290,34 +304,35 @@ else
         </div>
 
         <div class="tabs">
-            <div class="tab active" data-filter="tutti">Tutti <span class="badge badge-sm ml-1" id="countTutti">0</span></div>
-            <div class="tab" data-filter="prenotato">Confermati <span class="badge badge-sm badge-success ml-1" id="countConfermati">0</span></div>
-            <div class="tab" data-filter="inAttesa">In attesa <span class="badge badge-sm badge-warning ml-1" id="countAttesa">0</span></div>
-            <div class="tab" data-filter="annullato">Cancellati <span class="badge badge-sm badge-error ml-1" id="countCancellati">0</span></div>
+            <div class="tab pb-8 active" data-filter="tutti">Tutti <span class="badge badge-sm ml-1" id="countTutti">0</span></div>
+            <div class="tab pb-8" data-filter="prenotato">Confermati <span class="badge badge-sm badge-success ml-1" id="countConfermati">0</span></div>
+            <div class="tab pb-8" data-filter="inAttesa">In attesa <span class="badge badge-sm badge-warning ml-1" id="countAttesa">0</span></div>
+            <div class="tab pb-8" data-filter="annullato">Cancellati <span class="badge badge-sm badge-error ml-1" id="countCancellati">0</span></div>
         </div>
 
-        <div class="card dark:bg-gray-800">
-            <div class="appointment-header">
-                <div class="appointment-date-filter">
-                    <span class="text-sm text-gray-600 dark:text-gray-400" id="currentDateLabel">
+        <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4 mb-4">
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div>
+                    <span class="text-sm font-medium text-gray-600 dark:text-gray-400" id="currentDateLabel">
                         Appuntamenti di oggi
                     </span>
                 </div>
 
-                <div class="appointment-search dark:text-gray-200">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Cerca cliente, servizio o dipendente..." id="searchAppointments">
+                <div class="relative flex-1 max-w-md">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Cerca cliente, servizio o dipendente..." id="searchAppointments" class="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
                 </div>
 
-                <div class="appointment-actions">
-                    <button class="btn btn-outline dark:text-gray-500" onclick="toggleFilters()">
-                        <i class="fas fa-filter"></i> Filtri Avanzati
+                <div class="flex items-center space-x-2">
+                    <button class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="toggleFilters()">
+                        <i class="fas fa-filter mr-2"></i> Filtri
                     </button>
-                    <button class="btn btn-outline dark:text-gray-500" onclick="exportAppointments()">
-                        <i class="fas fa-download"></i> Esporta
+                    <button class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="exportAppointments()">
+                        <i class="fas fa-download mr-2"></i> Esporta
                     </button>
                 </div>
             </div>
+        </div>
 
             <!-- Filtri Avanzati (nascosti di default) -->
             <div id="advancedFilters" class="hidden p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-4">
@@ -354,12 +369,9 @@ else
                 </div>
             </div>
 
-            <div class="appointment-list">
-                <div id="appointmentsContainer">
-                    <!-- Contenuto dinamico -->
-                </div>
+            <div id="appointmentsContainer" class="space-y-3">
+                <!-- Contenuto dinamico -->
             </div>
-        </div>
     </div>
 
     <!-- Modal Vista Calendario -->
@@ -696,18 +708,16 @@ else
             checkServiziSenzaStaff();
     }
 
-        // Event listener per il cambio sede
-        document.getElementById('sedeSelector')?.addEventListener('change', function() {
-            currentSaloneId = this.value;
-            updateSaloneBadgeAndTitle();
-            loadDashboardData();
-        });
 
         // Event listener per il cambio periodo
         document.querySelectorAll('.duration-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
+                document.querySelectorAll('.duration-btn').forEach(b => {
+                    b.classList.remove('bg-purple-600', 'text-white');
+                    b.classList.add('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+                });
+                this.classList.remove('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+                this.classList.add('bg-purple-600', 'text-white');
                 currentPeriodo = this.dataset.periodo;
                 loadDashboardData();
             });
@@ -732,39 +742,32 @@ else
 
        
 
-      function updateSaloneBadgeAndTitle() {
-        const selector = document.getElementById('sedeSelector');
-        if (!selector) return;
+    function changeSede(saloneId, nomeSalone, cittaSalone) {
+        currentSaloneId = saloneId;
 
-        const selectedOption = selector.options[selector.selectedIndex];
-        const nomeSalone = selectedOption.getAttribute('data-nome');
-        const cittaSalone = selectedOption.getAttribute('data-citta');
+        // Aggiorna il nome visualizzato nel dropdown
+        const selectedName = document.getElementById('selectedSaloneName');
+        if (selectedName) {
+            selectedName.textContent = nomeSalone;
+        }
 
-        // Aggiorna il badge sotto il messaggio di benvenuto
-        const badgeContainer = document.querySelector('.header > div > div.mt-2');
+        // Chiudi il dropdown
+        document.activeElement.blur();
+
+        // Aggiorna il titolo del grafico
         const badgeCharter = document.querySelector('.grafico > .datiGrafico');
-         if (badgeCharter) {
+        if (badgeCharter) {
             badgeCharter.innerHTML = `
                 <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-sm font-medium text-purple-700 ring-1 ring-purple-700/10 ring-inset">
                     <i class="fas fa-store mr-2"></i>
-                    Prenotazioni e Incassi di - ${nomeSalone} - ${cittaSalone}
-                </span>
-            `;
-        }
-        if (badgeContainer) {
-            badgeContainer.innerHTML = `
-                <span class="inline-flex items-center rounded-md bg-sky-100 dark:bg-sky-900/30 px-2 py-1 text-sm font-medium text-sky-600 dark:text-sky-400 ring-1 ring-blue-700/10 ring-inset">
-                    <i class="fas fa-store mr-2"></i>
-                    Stai visionando i report di: ${nomeSalone} - ${cittaSalone}
+                    Prenotazioni e Incassi di ${nomeSalone} - ${cittaSalone}
                 </span>
             `;
         }
 
-        // Aggiorna il titolo del grafico
-        const chartTitle = document.getElementById('chartTitle');
-        if (chartTitle) {
-            chartTitle.textContent = `Prenotazioni e Incassi - ${nomeSalone}`;
-        }
+        // Carica i nuovi dati
+        loadDashboardData();
+        loadAppointmentsByDate(currentDateFilter);
     }
 
     function initializeChart() {
@@ -877,19 +880,27 @@ else
     
     function updateStatChange(type, isPositive) {
         const elements = {
-            'prenotazioni': document.querySelector('#prenotazioniOggi').closest('.stat-card').querySelector('.stat-card-change'),
-            'clienti': document.querySelector('#nuoviClienti').closest('.stat-card').querySelector('.stat-card-change'),
-            'incasso': document.querySelector('#incassoGiornaliero').closest('.stat-card').querySelector('.stat-card-change'),
-            'servizi': document.querySelector('#serviziCompletati').closest('.stat-card').querySelector('.stat-card-change'),
-            'promozioni': document.querySelector('#promozioniAttive').closest('.stat-card').querySelector('.stat-card-change')
+            'prenotazioni': document.querySelector('#prenotazioniOggi')?.closest('.rounded-xl')?.querySelector('p.text-sm:last-child'),
+            'clienti': document.querySelector('#nuoviClienti')?.closest('.rounded-xl')?.querySelector('p.text-sm:last-child'),
+            'incasso': document.querySelector('#incassoGiornaliero')?.closest('.rounded-xl')?.querySelector('p.text-sm:last-child'),
+            'servizi': document.querySelector('#serviziCompletati')?.closest('.rounded-xl')?.querySelector('p.text-sm:last-child'),
+            'promozioni': document.querySelector('#promozioniAttive')?.closest('.rounded-xl')?.querySelector('p.text-sm:last-child')
         };
 
         const element = elements[type];
         if (element) {
-            element.classList.remove('change-positive', 'change-negative');
-            element.classList.add(isPositive ? 'change-positive' : 'change-negative');
+            // Rimuovi classi vecchie
+            element.classList.remove('text-green-600', 'dark:text-green-400', 'text-red-600', 'dark:text-red-400');
+            // Aggiungi classi nuove
+            if (isPositive) {
+                element.classList.add('text-green-600', 'dark:text-green-400');
+            } else {
+                element.classList.add('text-red-600', 'dark:text-red-400');
+            }
             const icon = element.querySelector('i');
-            icon.className = 'fas fa-arrow-' + (isPositive ? 'up' : 'down');
+            if (icon) {
+                icon.className = 'fas fa-arrow-' + (isPositive ? 'up' : 'down') + ' mr-1';
+            }
         }
     }
 
@@ -908,12 +919,12 @@ else
 
         servizi.forEach(servizio => {
             container.innerHTML += `
-                <div class="service-item">
-                    <div class="service-info">
-                        <div class="service-name">${servizio.nome}</div>
-                        <div class="service-bookings">${servizio.numeroPrenotazioni} prenotazioni</div>
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div>
+                        <p class="font-medium text-gray-900 dark:text-gray-100">${servizio.nome}</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">${servizio.numeroPrenotazioni} prenotazioni</p>
                     </div>
-                    <div class="service-revenue">€${servizio.incassoTotale.toLocaleString('it-IT')}</div>
+                    <span class="text-lg font-bold text-green-600 dark:text-green-400">€${servizio.incassoTotale.toLocaleString('it-IT')}</span>
                 </div>
             `;
         });
@@ -1030,19 +1041,57 @@ else
         document.body.removeChild(link);
     }
 
-    // Funzioni placeholder per le azioni degli appuntamenti
     function editAppointment(id) {
         window.location.href = `/Partner/EditAppuntamento/${id}`;
     }
 
-    function sendMessage(id) {
-        // Implementare invio messaggio
-        console.log('Invia messaggio per appuntamento:', id);
+    function viewAppointmentDetails(id) {
+        window.location.href = `/Partner/AppuntamentoDetails/${id}`;
     }
 
-    function showAppointmentMenu(id) {
-        // Implementare menu contestuale
-        console.log('Mostra menu per appuntamento:', id);
+    function sendMessage(id) {
+        Swal.fire({
+            title: 'Invia Messaggio',
+            html: `
+                <div class="text-left">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Messaggio per il cliente:</label>
+                    <textarea id="messageText" class="w-full px-3 py-2 border border-gray-300 rounded-lg" rows="4" placeholder="Scrivi il tuo messaggio..."></textarea>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '<i class="fas fa-paper-plane mr-2"></i>Invia',
+            cancelButtonText: 'Annulla',
+            confirmButtonColor: '#7c3aed',
+            preConfirm: () => {
+                const message = document.getElementById('messageText').value;
+                if (!message.trim()) {
+                    Swal.showValidationMessage('Inserisci un messaggio');
+                    return false;
+                }
+                return message;
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/Partner/SendMessageToClient`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ appuntamentoId: id, message: result.value })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire('Inviato!', 'Il messaggio è stato inviato al cliente.', 'success');
+                    } else {
+                        Swal.fire('Errore', data.message || 'Impossibile inviare il messaggio.', 'error');
+                    }
+                })
+                .catch(() => {
+                    Swal.fire('Errore', 'Errore di connessione.', 'error');
+                });
+            }
+        });
     }
 </script>
 <script>

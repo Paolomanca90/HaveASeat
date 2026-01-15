@@ -247,13 +247,14 @@ namespace HaveASeat.Controllers
 					var fineOra = inizioOra.AddHours(1);
 
 					var appuntamentiOra = await _context.Appuntamento
+						.Include(a => a.Servizio)
 						.Where(a => a.SaloneId == viewModel.SelectedSaloneId &&
 								   a.Data >= inizioOra && a.Data < fineOra &&
 								   a.Stato != StatoAppuntamento.Annullato)
-						.CountAsync();
+						.ToListAsync();
 
-					prenotazioni.Add(appuntamentiOra);
-					incassi.Add(appuntamentiOra * 50); // Placeholder per incasso
+					prenotazioni.Add(appuntamentiOra.Count);
+					incassi.Add(appuntamentiOra.Sum(a => a.Servizio?.PrezzoEffettivo ?? 0));
 				}
 			}
 			else if (viewModel.PeriodoSelezionato == "settimana")
@@ -266,13 +267,14 @@ namespace HaveASeat.Controllers
 					labels.Add(data.ToString("ddd"));
 
 					var appuntamentiGiorno = await _context.Appuntamento
+						.Include(a => a.Servizio)
 						.Where(a => a.SaloneId == viewModel.SelectedSaloneId &&
 								   a.Data.Date == data.Date &&
 								   a.Stato != StatoAppuntamento.Annullato)
-						.CountAsync();
+						.ToListAsync();
 
-					prenotazioni.Add(appuntamentiGiorno);
-					incassi.Add(appuntamentiGiorno * 50); // Placeholder per incasso
+					prenotazioni.Add(appuntamentiGiorno.Count);
+					incassi.Add(appuntamentiGiorno.Sum(a => a.Servizio?.PrezzoEffettivo ?? 0));
 				}
 			}
 			else // mese
@@ -287,13 +289,14 @@ namespace HaveASeat.Controllers
 					labels.Add($"Sett. {settimana + 1}");
 
 					var appuntamentiSettimana = await _context.Appuntamento
+						.Include(a => a.Servizio)
 						.Where(a => a.SaloneId == viewModel.SelectedSaloneId &&
 								   a.Data >= inizioSettimana && a.Data < fineSettimana &&
 								   a.Stato != StatoAppuntamento.Annullato)
-						.CountAsync();
+						.ToListAsync();
 
-					prenotazioni.Add(appuntamentiSettimana);
-					incassi.Add(appuntamentiSettimana * 50); // Placeholder per incasso
+					prenotazioni.Add(appuntamentiSettimana.Count);
+					incassi.Add(appuntamentiSettimana.Sum(a => a.Servizio?.PrezzoEffettivo ?? 0));
 				}
 			}
 
@@ -303,18 +306,35 @@ namespace HaveASeat.Controllers
 		}
         #endregion
 
-        #region LoadTopServizi
+                #region LoadTopServizi
         private async Task LoadTopServizi(DashboardViewModel viewModel)
 		{
-			// Simulazione dati - in produzione questi dovrebbero venire dal database
-			viewModel.TopServizi = new List<TopServizioViewModel>
-			{
-				new TopServizioViewModel { Nome = "Taglio e Piega", NumeroPrenotazioni = 34, IncassoTotale = 1360 },
-				new TopServizioViewModel { Nome = "Colorazione Capelli", NumeroPrenotazioni = 28, IncassoTotale = 2240 },
-				new TopServizioViewModel { Nome = "Manicure", NumeroPrenotazioni = 21, IncassoTotale = 840 },
-				new TopServizioViewModel { Nome = "Trattamento Viso", NumeroPrenotazioni = 15, IncassoTotale = 1050 },
-				new TopServizioViewModel { Nome = "Massaggio Rilassante", NumeroPrenotazioni = 12, IncassoTotale = 960 }
-			};
+			// Recupera gli appuntamenti con i servizi dal database
+			var appuntamenti = await _context.Appuntamento
+				.Include(a => a.Servizio)
+				.Where(a => a.SaloneId == viewModel.SelectedSaloneId &&
+						   a.Stato != StatoAppuntamento.Annullato &&
+						   a.ServizioId != null &&
+						   a.Data >= viewModel.DataInizio &&
+						   a.Data <= viewModel.DataFine)
+				.ToListAsync();
+
+			// Raggruppa in memoria per usare la proprietà calcolata PrezzoEffettivo
+			var topServizi = appuntamenti
+				.Where(a => a.Servizio != null)
+				.GroupBy(a => new { a.ServizioId, a.Servizio!.Nome })
+				.Select(g => new TopServizioViewModel
+				{
+					ServizioId = g.Key.ServizioId ?? Guid.Empty,
+					Nome = g.Key.Nome ?? "Servizio",
+					NumeroPrenotazioni = g.Count(),
+					IncassoTotale = g.Sum(a => a.Servizio?.PrezzoEffettivo ?? 0)
+				})
+				.OrderByDescending(s => s.NumeroPrenotazioni)
+				.Take(5)
+				.ToList();
+
+			viewModel.TopServizi = topServizi;
 		}
         #endregion
 
