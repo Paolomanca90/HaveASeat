@@ -640,10 +640,11 @@
     }
 
     function updateStatusCounts() {
-        const all = appointments.length;
-        const confermati = appointments.filter(a => a.stato === 'Prenotato').length;
-        const inAttesa = appointments.filter(a => a.stato === 'InAttesa').length;
-        const cancellati = appointments.filter(a => a.stato === 'Annullato').length;
+        // Usa filteredAppointments per mostrare i conteggi coerenti con i filtri applicati (data/periodo)
+        const all = filteredAppointments.length;
+        const confermati = filteredAppointments.filter(a => a.stato === 'Prenotato').length;
+        const inAttesa = filteredAppointments.filter(a => a.stato === 'InAttesa').length;
+        const cancellati = filteredAppointments.filter(a => a.stato === 'Annullato').length;
 
         document.getElementById('countAll').textContent = all;
         document.getElementById('countConfermati').textContent = confermati;
@@ -793,7 +794,6 @@
             totale: filteredAppointments.length,
             confermati: filteredAppointments.filter(a => a.stato === 'Prenotato').length,
             inAttesa: filteredAppointments.filter(a => a.stato === 'InAttesa').length,
-            completati: filteredAppointments.filter(a => a.stato === 'Completato').length,
             cancellati: filteredAppointments.filter(a => a.stato === 'Annullato').length,
             incasso: filteredAppointments
                 .filter(a => a.stato !== 'Annullato')
@@ -803,7 +803,6 @@
         document.getElementById('totaleAppuntamenti').textContent = stats.totale;
         document.getElementById('confermati').textContent = stats.confermati;
         document.getElementById('inAttesa').textContent = stats.inAttesa;
-        document.getElementById('completati').textContent = stats.completati;
         document.getElementById('cancellati').textContent = stats.cancellati;
         document.getElementById('incassoGiornaliero').textContent = `€${stats.incasso.toFixed(2)}`;
     }
@@ -1122,12 +1121,23 @@
     function resetFilters() {
         document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
         document.getElementById('filterPeriodo').value = 'giorno';
-        document.getElementById('filterStato').value = '';
         document.getElementById('filterServizio').value = '';
         document.getElementById('filterDipendente').value = '';
         document.getElementById('searchCliente').value = '';
         document.getElementById('customDateRange').classList.add('hidden');
-        
+
+        // Reset status filter to 'all'
+        currentStatusFilter = '';
+        document.querySelectorAll('.filter-status-btn').forEach(btn => {
+            btn.classList.remove('bg-purple-600', 'text-white');
+            btn.classList.add('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+        });
+        const allBtn = document.querySelector('.filter-status-btn[data-status=""]');
+        if (allBtn) {
+            allBtn.classList.remove('bg-gray-100', 'text-gray-700', 'dark:bg-gray-700', 'dark:text-gray-300');
+            allBtn.classList.add('bg-purple-600', 'text-white');
+        }
+
         filterAppointments();
     }
 
@@ -1145,13 +1155,13 @@
             formato: format,
             dataInizio: getFilterStartDate(),
             dataFine: getFilterEndDate(),
-            stato: document.getElementById('filterStato').value,
+            stato: currentStatusFilter,
             servizioId: document.getElementById('filterServizio').value,
             dipendenteId: document.getElementById('filterDipendente').value
         });
 
         window.location.href = `/Partner/ExportAppuntamenti?${params}`;
-        document.getElementById('exportMenu').classList.remove('show');
+        document.getElementById('exportMenu').classList.add('hidden');
     }
 
     function getFilterStartDate() {

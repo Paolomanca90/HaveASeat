@@ -416,3 +416,139 @@
     margin-top: auto;
     padding-top: 16px;
 }
+
+/* ========== DARK MODE STYLES ========== */
+
+/* Main content gradient */
+[data-theme="dark"] .main-content,
+.dark .main-content {
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+}
+
+/* Hero section */
+[data-theme="dark"] .hero h1,
+.dark .hero h1 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .hero p,
+.dark .hero p {
+    color: #9ca3af;
+}
+
+/* Search form */
+[data-theme="dark"] .search-form,
+.dark .search-form {
+    background: #374151;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .form-group label,
+.dark .form-group label {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+.dark .form-group input,
+.dark .form-group select {
+    background: #1f2937;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .form-group input::placeholder,
+.dark .form-group input::placeholder {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus,
+.dark .form-group input:focus,
+.dark .form-group select:focus {
+    border-color: #9c6ade;
+}
+
+/* Salons section */
+[data-theme="dark"] .salons-section,
+.dark .salons-section {
+    background: #1f2937;
+}
+
+[data-theme="dark"] .section-title,
+.dark .section-title {
+    color: #f3f4f6;
+}
+
+/* Salon card */
+[data-theme="dark"] .salon-card,
+.dark .salon-card {
+    background: #374151;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+[data-theme="dark"] .salon-name,
+.dark .salon-name {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .salon-rating,
+.dark .salon-rating {
+    background: #4b5563;
+}
+
+[data-theme="dark"] .rating-text,
+.dark .rating-text {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .salon-location,
+.dark .salon-location {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .services-title,
+.dark .services-title {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .service-tag,
+.dark .service-tag {
+    background: #4c1d95;
+    color: #e9d5ff;
+}
+
+[data-theme="dark"] .service-tag.more,
+.dark .service-tag.more {
+    background: #4b5563;
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .price-range,
+.dark .price-range {
+    color: #f3f4f6;
+}
+
+/* Filter buttons */
+[data-theme="dark"] .filter-btn,
+.dark .filter-btn {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .filter-btn:hover,
+[data-theme="dark"] .filter-btn.active,
+.dark .filter-btn:hover,
+.dark .filter-btn.active {
+    background: #9c6ade;
+    border-color: #9c6ade;
+    color: white;
+}
+
+/* Skeleton loading dark mode */
+[data-theme="dark"] .skeleton-loading,
+.dark .skeleton-loading {
+    background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+    background-size: 200% 100%;
+}

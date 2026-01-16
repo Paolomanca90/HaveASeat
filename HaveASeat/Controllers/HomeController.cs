@@ -24,7 +24,7 @@ namespace HaveASeat.Controllers
 		{
 			try
 			{
-				// Recupera i saloni più popolari (ordinati per valutazione e numero di recensioni)
+				// Recupera i saloni piï¿½ popolari (ordinati per valutazione e numero di recensioni)
 				var saloniPopolari = await _context.Salone
 					.Include(s => s.SalonePersonalizzazione)
 					.Include(s => s.Immagini)
@@ -72,8 +72,8 @@ namespace HaveASeat.Controllers
 					VotiDisplay = s.Recensioni.Any() ? s.Recensioni.Average(r => r.Voto).ToString("F1") : "Nuovo",
 					PrezzoRange = s.Servizi.Any() ?
 						(s.Servizi.Min(serv => serv.PrezzoEffettivo) == s.Servizi.Max(serv => serv.PrezzoEffettivo) ?
-							$"€{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}" :
-							$"€{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}-{s.Servizi.Max(serv => serv.PrezzoEffettivo):F0}") :
+							$"ï¿½{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}" :
+							$"ï¿½{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}-{s.Servizi.Max(serv => serv.PrezzoEffettivo):F0}") :
 						"Su richiesta"
 				}).ToList();
 
@@ -94,7 +94,7 @@ namespace HaveASeat.Controllers
 				ViewBag.TotalePrenotazioni = totalePrenotazioni;
 				ViewBag.TotaleRecensioni = totaleRecensioni;
 
-				// Servizi più richiesti
+				// Servizi piï¿½ richiesti
 				var serviziPopolari = await _context.Servizio
 					.Include(s => s.Salone)
 					.Where(s => s.Salone.Stato == HaveASeat.Utilities.Enum.Stato.Attivo)
@@ -157,6 +157,11 @@ namespace HaveASeat.Controllers
 		}
 
 		public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        public IActionResult ChiSiamo()
         {
             return View();
         }

@@ -154,23 +154,24 @@ namespace HaveASeat.Controllers
 			viewModel.Stats.IsNuoviClientiPositive = viewModel.Stats.PercentualeNuoviClienti >= 0;
 
 			// Incasso giornaliero
-			var serviziOggi = await _context.Appuntamento
-				.Include(a => a.Salone)
-				.ThenInclude(s => s.Servizi)
+			var appuntamentiOggi = await _context.Appuntamento
+				.Include(a => a.Servizio)
 				.Where(a => a.SaloneId == viewModel.SelectedSaloneId &&
 						   a.Data.Date == oggi &&
 						   a.Stato == StatoAppuntamento.Prenotato)
 				.ToListAsync();
 
-			var incassoOggi = 0m;
-			foreach (var app in serviziOggi)
-			{
-				// Assumendo che ci sia una relazione tra appuntamento e servizio
-				// Per ora uso un prezzo fisso, ma dovrebbe essere preso dal servizio
-				incassoOggi += 50; // Placeholder - sostituire con il prezzo reale del servizio
-			}
+			var incassoOggi = appuntamentiOggi.Sum(a => a.Servizio?.PrezzoEffettivo ?? 0);
 
-			var incassoIeri = 0m; // Calcolare allo stesso modo per ieri
+			// Calcola incasso ieri per confronto
+			var appuntamentiIeri = await _context.Appuntamento
+				.Include(a => a.Servizio)
+				.Where(a => a.SaloneId == viewModel.SelectedSaloneId &&
+						   a.Data.Date == ieri &&
+						   a.Stato == StatoAppuntamento.Prenotato)
+				.ToListAsync();
+
+			var incassoIeri = appuntamentiIeri.Sum(a => a.Servizio?.PrezzoEffettivo ?? 0);
 
 			viewModel.Stats.IncassoGiornaliero = incassoOggi;
 			viewModel.Stats.PercentualeIncasso = incassoIeri > 0
@@ -1753,6 +1754,44 @@ namespace HaveASeat.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = "Errore durante il caricamento: " + ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileModel model)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Json(new { success = false, message = "Utente non autorizzato" });
+            }
+
+            try
+            {
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    return Json(new { success = false, message = "Utente non trovato" });
+                }
+
+                // Aggiorna i campi
+                user.Nome = model.Nome;
+                user.Cognome = model.Cognome;
+                user.PhoneNumber = model.PhoneNumber;
+                user.CodiceFiscale = model.CodiceFiscale;
+                user.Indirizzo = model.Indirizzo;
+                user.Città = model.Citta;
+                user.Provincia = model.Provincia;
+                user.CAP = model.CAP;
+                user.AcceptNewsletter = model.AcceptNewsletter;
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Profilo aggiornato con successo" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Errore durante l'aggiornamento: " + ex.Message });
             }
         }
 
