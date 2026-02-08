@@ -308,7 +308,15 @@
 
                                     @if (booking.Stato != "Annullato")
                                     {
-                                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+                                            @if (booking.DataAppuntamento < DateTime.Now)
+                                            {
+                                                <button onclick="openReviewModal('@booking.AppuntamentoId', '@System.Net.WebUtility.HtmlEncode(booking.NomeSalone)', '@System.Net.WebUtility.HtmlEncode(booking.NomeServizio)')"
+                                                        class="w-full text-sm bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                                    <i class="fas fa-star mr-2"></i>
+                                                    Lascia una Recensione
+                                                </button>
+                                            }
                                             <button onclick="rebookService('@booking.SaloneId', '@booking.ServizioId')"
                                                     class="w-full text-sm bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
                                                 <i class="fas fa-redo mr-2"></i>
@@ -388,8 +396,67 @@
     </div>
 </div>
 
+<!-- Modal per la recensione -->
+<div id="reviewModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">Lascia una Recensione</h3>
+            <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div class="mb-4">
+            <p class="text-sm text-gray-600 dark:text-gray-400" id="reviewServiceInfo"></p>
+        </div>
+
+        <form id="reviewForm" onsubmit="submitReview(event)">
+            <input type="hidden" id="reviewAppuntamentoId" />
+
+            <!-- Star Rating -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Valutazione</label>
+                <div class="flex space-x-2" id="starRating">
+                    <button type="button" onclick="setRating(1)" class="star-btn text-3xl text-gray-300 hover:text-yellow-400 transition-colors"><i class="fas fa-star"></i></button>
+                    <button type="button" onclick="setRating(2)" class="star-btn text-3xl text-gray-300 hover:text-yellow-400 transition-colors"><i class="fas fa-star"></i></button>
+                    <button type="button" onclick="setRating(3)" class="star-btn text-3xl text-gray-300 hover:text-yellow-400 transition-colors"><i class="fas fa-star"></i></button>
+                    <button type="button" onclick="setRating(4)" class="star-btn text-3xl text-gray-300 hover:text-yellow-400 transition-colors"><i class="fas fa-star"></i></button>
+                    <button type="button" onclick="setRating(5)" class="star-btn text-3xl text-gray-300 hover:text-yellow-400 transition-colors"><i class="fas fa-star"></i></button>
+                </div>
+                <input type="hidden" id="reviewRating" value="0" />
+            </div>
+
+            <!-- Commento -->
+            <div class="mb-6">
+                <label for="reviewComment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Commento</label>
+                <textarea id="reviewComment" rows="4"
+                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                          placeholder="Racconta la tua esperienza..." maxlength="1000" required></textarea>
+                <p class="text-xs text-gray-500 mt-1"><span id="charCount">0</span>/1000 caratteri</p>
+            </div>
+
+            <!-- Pulsanti -->
+            <div class="flex space-x-3">
+                <button type="submit" id="submitReviewBtn"
+                        class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-paper-plane mr-2"></i>Invia Recensione
+                </button>
+                <button type="button" onclick="closeReviewModal()"
+                        class="flex-1 border border-gray-300 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">
+                    Annulla
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
 @section Scripts {
     <script>
+        // Variabile rating corrente
+        let currentRating = 0;
+
         // Gestione tab
         function showTab(tabName) {
             // Nascondi tutti i contenuti
@@ -528,7 +595,106 @@
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 closeModal();
+                closeReviewModal();
             }
         });
+
+        // === Funzioni Recensione ===
+
+        function openReviewModal(appuntamentoId, nomeSalone, nomeServizio) {
+            document.getElementById('reviewAppuntamentoId').value = appuntamentoId;
+            document.getElementById('reviewServiceInfo').textContent = `${nomeServizio} presso ${nomeSalone}`;
+            document.getElementById('reviewComment').value = '';
+            document.getElementById('charCount').textContent = '0';
+            currentRating = 0;
+            document.getElementById('reviewRating').value = '0';
+            updateStars(0);
+            document.getElementById('reviewModal').classList.remove('hidden');
+        }
+
+        function closeReviewModal() {
+            document.getElementById('reviewModal').classList.add('hidden');
+        }
+
+        function setRating(rating) {
+            currentRating = rating;
+            document.getElementById('reviewRating').value = rating;
+            updateStars(rating);
+        }
+
+        function updateStars(rating) {
+            const stars = document.querySelectorAll('#starRating .star-btn');
+            stars.forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('text-gray-300');
+                    star.classList.add('text-yellow-400');
+                } else {
+                    star.classList.remove('text-yellow-400');
+                    star.classList.add('text-gray-300');
+                }
+            });
+        }
+
+        // Contatore caratteri
+        document.getElementById('reviewComment').addEventListener('input', function() {
+            document.getElementById('charCount').textContent = this.value.length;
+        });
+
+        async function submitReview(event) {
+            event.preventDefault();
+
+            const rating = parseInt(document.getElementById('reviewRating').value);
+            const comment = document.getElementById('reviewComment').value.trim();
+            const appuntamentoId = document.getElementById('reviewAppuntamentoId').value;
+
+            if (rating < 1 || rating > 5) {
+                Swal.fire('Attenzione', 'Seleziona una valutazione da 1 a 5 stelle', 'warning');
+                return;
+            }
+
+            if (!comment) {
+                Swal.fire('Attenzione', 'Scrivi un commento per la recensione', 'warning');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitReviewBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Invio...';
+
+            try {
+                const response = await fetch('/Search/AddReview', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    },
+                    body: JSON.stringify({
+                        appuntamentoId: appuntamentoId,
+                        rating: rating,
+                        comment: comment
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeReviewModal();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Grazie!',
+                        text: 'La tua recensione è stata inviata con successo!',
+                        confirmButtonColor: '#7c3aed'
+                    });
+                } else {
+                    Swal.fire('Errore', data.message || 'Impossibile inviare la recensione', 'error');
+                }
+            } catch (error) {
+                console.error('Errore:', error);
+                Swal.fire('Errore', 'Si è verificato un errore di rete', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Invia Recensione';
+            }
+        }
     </script>
 }

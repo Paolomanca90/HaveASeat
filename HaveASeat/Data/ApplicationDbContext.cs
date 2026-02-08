@@ -1,4 +1,5 @@
 ﻿using HaveASeat.Models;
+using HaveASeat.Utilities.Enum;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Emit;
@@ -15,20 +16,24 @@ namespace HaveASeat.Data
 		public DbSet<Servizio> Servizio { get; set; }
 		public DbSet<Salone> Salone { get; set; }
 		public DbSet<Orario> Orario { get; set; }
-		public DbSet<DipendenteServizio> DipendenteServizio { get; set; } 
+		public DbSet<DipendenteServizio> DipendenteServizio { get; set; }
 		public DbSet<Abbonamento> Abbonamento { get; set; }
 		public DbSet<SaloneAbbonamento> SaloneAbbonamento { get; set; }
-		public DbSet<Dipendente> Dipendente { get; set; } 
+		public DbSet<Dipendente> Dipendente { get; set; }
 		public DbSet<Recensione> Recensione { get; set; }
 		public DbSet<Slot> Slot { get; set; }
 		public DbSet<Immagine> Immagine { get; set; }
 		public DbSet<Appuntamento> Appuntamento { get; set; }
-		public DbSet<OrarioDipendente> OrarioDipendente { get; set; } 
-		public DbSet<Categoria> Categoria { get; set; } 
-		public DbSet<SaloneCategoria> SaloneCategoria { get; set; } 
+		public DbSet<OrarioDipendente> OrarioDipendente { get; set; }
+		public DbSet<Categoria> Categoria { get; set; }
+		public DbSet<SaloneCategoria> SaloneCategoria { get; set; }
 		public DbSet<PianoSelezionato> PianoSelezionato { get; set; }
 		public DbSet<SalonePersonalizzazione> SalonePersonalizzazione { get; set; }
 		public DbSet<GiftCard> GiftCard { get; set; }
+		public DbSet<SlotReservation> SlotReservation { get; set; }
+		public DbSet<PushSubscriptionEntity> PushSubscription { get; set; }
+		public DbSet<PaymentTransaction> PaymentTransaction { get; set; }
+		public DbSet<Preferito> Preferito { get; set; }
 
 		protected override void OnModelCreating(ModelBuilder builder)
 		{
@@ -313,6 +318,143 @@ namespace HaveASeat.Data
 					  .HasForeignKey(e => e.UsedByUserId)
 					  .OnDelete(DeleteBehavior.SetNull) // Se l'utente viene eliminato, mantieni la gift card
 					  .IsRequired(false);
+			});
+
+			// CONFIGURAZIONI per SlotReservation (Sistema di blocco temporaneo slot)
+			builder.Entity<SlotReservation>(entity =>
+			{
+				entity.HasKey(e => e.SlotReservationId);
+
+				// Proprietà
+				entity.Property(e => e.SessionId)
+					  .HasMaxLength(100)
+					  .IsRequired();
+
+				entity.Property(e => e.RowVersion)
+					  .IsRowVersion();
+
+				// UNIQUE INDEX per prevenire doppie reservation sullo stesso slot
+				// Solo per reservation in stato Pending (attive)
+				entity.HasIndex(e => new
+				{
+					e.SaloneId,
+					e.Data,
+					e.OraInizio,
+					e.DipendenteId,
+					e.Status
+				})
+				.HasFilter("[Status] = 0") // Solo Pending
+				.IsUnique()
+				.HasDatabaseName("IX_SlotReservation_UniqueActive");
+
+				// Index per query di cleanup (scadenza)
+				entity.HasIndex(e => e.ExpiresAt)
+					  .HasDatabaseName("IX_SlotReservation_ExpiresAt");
+
+				// Index per lookup per sessione
+				entity.HasIndex(e => new { e.SessionId, e.Status })
+					  .HasDatabaseName("IX_SlotReservation_SessionStatus");
+
+				// Index per lookup per salone e data
+				entity.HasIndex(e => new { e.SaloneId, e.Data, e.Status })
+					  .HasDatabaseName("IX_SlotReservation_SaloneDataStatus");
+
+				// Relazioni
+				entity.HasOne(e => e.Salone)
+					  .WithMany()
+					  .HasForeignKey(e => e.SaloneId)
+					  .OnDelete(DeleteBehavior.NoAction);
+
+				entity.HasOne(e => e.Dipendente)
+					  .WithMany()
+					  .HasForeignKey(e => e.DipendenteId)
+					  .OnDelete(DeleteBehavior.NoAction);
+
+				entity.HasOne(e => e.Servizio)
+					  .WithMany()
+					  .HasForeignKey(e => e.ServizioId)
+					  .OnDelete(DeleteBehavior.NoAction);
+
+				entity.HasOne(e => e.User)
+					  .WithMany()
+					  .HasForeignKey(e => e.UserId)
+					  .OnDelete(DeleteBehavior.NoAction);
+			});
+
+			// Aggiungi RowVersion a Appuntamento per optimistic concurrency
+			builder.Entity<Appuntamento>()
+				.Property<byte[]>("RowVersion")
+				.IsRowVersion();
+
+			// PushSubscription configuration
+			builder.Entity<PushSubscriptionEntity>(entity =>
+			{
+				entity.HasKey(e => e.PushSubscriptionId);
+
+				entity.HasIndex(e => e.Endpoint)
+					  .IsUnique();
+
+				entity.HasIndex(e => new { e.UserId, e.IsActive })
+					  .HasDatabaseName("IX_PushSubscription_UserActive");
+
+				entity.Property(e => e.Endpoint).HasMaxLength(500).IsRequired();
+				entity.Property(e => e.P256dh).HasMaxLength(500).IsRequired();
+				entity.Property(e => e.Auth).HasMaxLength(500).IsRequired();
+
+				entity.HasOne(e => e.ApplicationUser)
+					  .WithMany()
+					  .HasForeignKey(e => e.UserId)
+					  .OnDelete(DeleteBehavior.SetNull);
+			});
+
+			// PaymentTransaction configuration
+			builder.Entity<PaymentTransaction>(entity =>
+			{
+				entity.HasKey(e => e.PaymentTransactionId);
+
+				entity.HasIndex(e => e.SaloneId)
+					  .HasDatabaseName("IX_PaymentTransaction_SaloneId");
+
+				entity.HasIndex(e => e.UserId)
+					  .HasDatabaseName("IX_PaymentTransaction_UserId");
+
+				entity.HasIndex(e => e.StripeSessionId)
+					  .HasDatabaseName("IX_PaymentTransaction_StripeSessionId");
+
+				entity.Property(e => e.Importo).HasColumnType("decimal(18,2)");
+				entity.Property(e => e.Valuta).HasMaxLength(10);
+				entity.Property(e => e.Tipo).HasMaxLength(50);
+				entity.Property(e => e.Stato).HasMaxLength(30);
+
+				entity.HasOne(e => e.Salone)
+					  .WithMany()
+					  .HasForeignKey(e => e.SaloneId)
+					  .OnDelete(DeleteBehavior.NoAction);
+
+				entity.HasOne(e => e.ApplicationUser)
+					  .WithMany()
+					  .HasForeignKey(e => e.UserId)
+					  .OnDelete(DeleteBehavior.NoAction);
+			});
+
+			// Preferito configuration
+			builder.Entity<Preferito>(entity =>
+			{
+				entity.HasKey(e => e.PreferitoId);
+
+				entity.HasIndex(e => new { e.ApplicationUserId, e.SaloneId })
+					  .IsUnique()
+					  .HasDatabaseName("IX_Preferito_UserSalone");
+
+				entity.HasOne(e => e.ApplicationUser)
+					  .WithMany()
+					  .HasForeignKey(e => e.ApplicationUserId)
+					  .OnDelete(DeleteBehavior.Cascade);
+
+				entity.HasOne(e => e.Salone)
+					  .WithMany()
+					  .HasForeignKey(e => e.SaloneId)
+					  .OnDelete(DeleteBehavior.NoAction);
 			});
 		}
     }

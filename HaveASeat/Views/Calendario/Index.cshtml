@@ -56,6 +56,12 @@
             </div>
         }
 
+        <!-- Pulsante Nuovo Appuntamento -->
+        <button onclick="nuovoAppuntamento()" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm">
+            <i class="fas fa-plus mr-2"></i>
+            Nuovo
+        </button>
+
         <!-- Navigation Controls -->
         <div class="flex items-center space-x-2">
             <button class="inline-flex items-center justify-center w-10 h-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="cambiaGiorno(-1)">
@@ -310,6 +316,114 @@
     </div>
 </div>
 
+<!-- Modal Nuovo Appuntamento -->
+<div id="modalNuovoAppuntamento" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg border border-gray-200 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                    <i class="fas fa-plus-circle mr-2 text-purple-600 dark:text-purple-400"></i>
+                    Nuovo Appuntamento
+                </h3>
+                <button onclick="chiudiModalNuovo()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <!-- Info data/ora selezionata -->
+            <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
+                <p class="text-sm font-medium text-purple-800 dark:text-purple-200">
+                    <i class="fas fa-calendar-day mr-1"></i> <span id="nuovoAppData"></span>
+                    <i class="fas fa-clock ml-3 mr-1"></i> <span id="nuovoAppOra"></span>
+                </p>
+            </div>
+
+            <!-- Ricerca Cliente -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cliente *</label>
+                <div class="relative">
+                    <input type="text" id="searchClienteInput"
+                           class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                           placeholder="Cerca per nome, cognome o email..." autocomplete="off" />
+                    <div id="clienteResults" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg hidden max-h-48 overflow-y-auto"></div>
+                </div>
+                <input type="hidden" id="selectedClienteId" />
+                <p id="selectedClienteInfo" class="text-sm text-green-600 dark:text-green-400 mt-1 hidden">
+                    <i class="fas fa-check-circle mr-1"></i><span></span>
+                </p>
+            </div>
+
+            <!-- Dipendente -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dipendente *</label>
+                <select id="nuovoDipendenteId" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500">
+                    @{
+                        var isDipendenteView = ViewBag.IsDipendente as bool? ?? false;
+                        var dipendenteCorrenteId = ViewBag.DipendenteCorrenteId as Guid?;
+                    }
+                    @if (isDipendenteView && dipendenteCorrenteId.HasValue)
+                    {
+                        @foreach (var dip in Model.Dipendenti.Where(d => d.DipendenteId == dipendenteCorrenteId.Value))
+                        {
+                            <option value="@dip.DipendenteId">@dip.ApplicationUser.Nome @dip.ApplicationUser.Cognome</option>
+                        }
+                    }
+                    else
+                    {
+                        <option value="">Seleziona dipendente</option>
+                        @foreach (var dip in Model.Dipendenti)
+                        {
+                            <option value="@dip.DipendenteId">@dip.ApplicationUser.Nome @dip.ApplicationUser.Cognome</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- Slot -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Orario *</label>
+                <select id="nuovoSlotId" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500">
+                    <option value="">Caricamento slot...</option>
+                </select>
+            </div>
+
+            <!-- Servizio -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Servizio</label>
+                <select id="nuovoServizioId" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500">
+                    <option value="">Seleziona servizio (opzionale)</option>
+                    @foreach (var servizio in Model.Servizi)
+                    {
+                        <option value="@servizio.ServizioId">@servizio.Nome - @servizio.PrezzoEffettivo.ToString("C", new System.Globalization.CultureInfo("it-IT")) (@servizio.Durata min)</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Note -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Note</label>
+                <textarea id="nuovoNote" rows="2"
+                          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500"
+                          placeholder="Note aggiuntive..."></textarea>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+            <button class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" onclick="chiudiModalNuovo()">
+                Annulla
+            </button>
+            <button id="btnCreaAppuntamento" class="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg hover:from-purple-700 hover:to-purple-800 transition-all duration-200 flex items-center gap-2" onclick="creaAppuntamento()">
+                <i class="fas fa-check"></i>
+                Crea Appuntamento
+            </button>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
 <!-- Modal Dettagli Appuntamento -->
 <div id="modalDettagliAppuntamento" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg mx-4 border border-gray-200 dark:border-gray-700">
@@ -379,48 +493,212 @@ function ricaricaCalendario() {
     window.location.href = '@Url.Action("Index")?saloneId=' + saloneCorrente + '&data=' + dataStr;
 }
 
-// Gestione appuntamenti
+// Gestione nuovo appuntamento con modal
+let searchTimeout = null;
+
 function nuovoAppuntamento() {
-    // Implementa modal per nuovo appuntamento o redirect
-    Swal.fire({
-        title: '📅 Nuovo Appuntamento',
-        text: 'Vuoi creare un nuovo appuntamento?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Crea Appuntamento',
-        cancelButtonText: 'Annulla',
-        confirmButtonColor: '#7c3aed'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Redirect alla pagina di creazione appuntamento
-            window.location.href = '/Appuntamento/Create?saloneId=' + saloneCorrente + '&data=' + dataCorrente.toISOString().split('T')[0];
-        }
-    });
+    apriModalNuovo(dataCorrente.toISOString().split('T')[0], null, null);
 }
 
 function nuovoAppuntamentoSlot(data, orario, dipendenteId) {
-    Swal.fire({
-        title: '⏰ Nuovo Appuntamento',
-        html: `
-            <div class="text-left space-y-3">
-                <p class="text-gray-600 dark:text-gray-400">Stai per creare un appuntamento per:</p>
-                <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-3">
-                    <p class="font-medium text-purple-800 dark:text-purple-200">📅 ${new Date(data).toLocaleDateString('it-IT')}</p>
-                    <p class="font-medium text-purple-800 dark:text-purple-200">🕐 ${orario}</p>
-                </div>
-            </div>
-        `,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: '<i class="fas fa-plus mr-2"></i>Crea Appuntamento',
-        cancelButtonText: 'Annulla',
-        confirmButtonColor: '#7c3aed'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Redirect alla pagina di creazione con parametri
-            window.location.href = `/Appuntamento/Create?saloneId=${saloneCorrente}&data=${data}&orario=${orario}&dipendenteId=${dipendenteId}`;
-        }
+    apriModalNuovo(data, orario, dipendenteId);
+}
+
+function apriModalNuovo(data, orario, dipendenteId) {
+    // Reset form
+    document.getElementById('searchClienteInput').value = '';
+    document.getElementById('selectedClienteId').value = '';
+    document.getElementById('selectedClienteInfo').classList.add('hidden');
+    document.getElementById('clienteResults').classList.add('hidden');
+    document.getElementById('nuovoNote').value = '';
+    document.getElementById('nuovoServizioId').value = '';
+
+    // Imposta data e ora
+    const dataObj = new Date(data);
+    document.getElementById('nuovoAppData').textContent = dataObj.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    document.getElementById('nuovoAppOra').textContent = orario || 'Da selezionare';
+
+    // Pre-seleziona dipendente se cliccato sulla colonna
+    if (dipendenteId) {
+        document.getElementById('nuovoDipendenteId').value = dipendenteId;
+    }
+
+    // Carica slot disponibili
+    caricaSlotDisponibili(data, dipendenteId, orario);
+
+    document.getElementById('modalNuovoAppuntamento').classList.remove('hidden');
+}
+
+function chiudiModalNuovo() {
+    document.getElementById('modalNuovoAppuntamento').classList.add('hidden');
+}
+
+// Ricerca clienti con debounce
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchClienteInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const termine = this.value.trim();
+
+            if (termine.length < 2) {
+                document.getElementById('clienteResults').classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`@Url.Action("SearchClienti")?termine=${encodeURIComponent(termine)}`);
+                    const data = await response.json();
+
+                    if (data.success && data.clienti.length > 0) {
+                        const resultsDiv = document.getElementById('clienteResults');
+                        resultsDiv.innerHTML = data.clienti.map(c => `
+                            <div class="px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0"
+                                 onclick="selezionaCliente('${c.id}', '${c.nome}', '${c.email}')">
+                                <div class="font-medium text-sm text-gray-900 dark:text-white">${c.nome}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">${c.email} - ${c.telefono}</div>
+                            </div>
+                        `).join('');
+                        resultsDiv.classList.remove('hidden');
+                    } else {
+                        document.getElementById('clienteResults').classList.add('hidden');
+                    }
+                } catch (e) {
+                    console.error('Errore ricerca clienti:', e);
+                }
+            }, 300);
+        });
+
+        // Chiudi risultati quando si clicca fuori
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#searchClienteInput') && !e.target.closest('#clienteResults')) {
+                document.getElementById('clienteResults').classList.add('hidden');
+            }
+        });
+    }
+
+    // Aggiorna slot quando cambia il dipendente
+    const dipSelect = document.getElementById('nuovoDipendenteId');
+    if (dipSelect) {
+        dipSelect.addEventListener('change', function() {
+            const dataStr = dataCorrente.toISOString().split('T')[0];
+            caricaSlotDisponibili(dataStr, this.value || null, null);
+        });
+    }
+
+    // Aggiungi click handler alle celle vuote della griglia
+    document.querySelectorAll('[data-dipendente][data-ora]').forEach(cell => {
+        cell.addEventListener('click', function() {
+            const dipId = this.getAttribute('data-dipendente');
+            const ora = this.getAttribute('data-ora');
+            const dataStr = dataCorrente.toISOString().split('T')[0];
+            nuovoAppuntamentoSlot(dataStr, ora, dipId);
+        });
     });
+});
+
+function selezionaCliente(id, nome, email) {
+    document.getElementById('selectedClienteId').value = id;
+    document.getElementById('searchClienteInput').value = nome;
+    document.getElementById('clienteResults').classList.add('hidden');
+
+    const info = document.getElementById('selectedClienteInfo');
+    info.querySelector('span').textContent = `${nome} (${email})`;
+    info.classList.remove('hidden');
+}
+
+async function caricaSlotDisponibili(data, dipendenteId, oraPreselezionata) {
+    const slotSelect = document.getElementById('nuovoSlotId');
+    slotSelect.innerHTML = '<option value="">Caricamento...</option>';
+
+    try {
+        let url = `@Url.Action("GetSlotDisponibili")?saloneId=${saloneCorrente}&data=${data}`;
+        if (dipendenteId) url += `&dipendenteId=${dipendenteId}`;
+
+        const response = await fetch(url);
+        const result = await response.json();
+
+        if (result.success && result.slots.length > 0) {
+            slotSelect.innerHTML = '<option value="">Seleziona orario</option>' +
+                result.slots.map(s =>
+                    `<option value="${s.id}" ${oraPreselezionata && s.oraInizio === oraPreselezionata ? 'selected' : ''}>${s.display}</option>`
+                ).join('');
+        } else {
+            slotSelect.innerHTML = '<option value="">Nessuno slot disponibile</option>';
+        }
+    } catch (e) {
+        console.error('Errore caricamento slot:', e);
+        slotSelect.innerHTML = '<option value="">Errore caricamento</option>';
+    }
+}
+
+async function creaAppuntamento() {
+    const clienteId = document.getElementById('selectedClienteId').value;
+    const dipendenteId = document.getElementById('nuovoDipendenteId').value;
+    const slotId = document.getElementById('nuovoSlotId').value;
+    const servizioId = document.getElementById('nuovoServizioId').value;
+    const note = document.getElementById('nuovoNote').value;
+
+    if (!clienteId) {
+        Swal.fire('Attenzione', 'Seleziona un cliente', 'warning');
+        return;
+    }
+    if (!dipendenteId) {
+        Swal.fire('Attenzione', 'Seleziona un dipendente', 'warning');
+        return;
+    }
+    if (!slotId) {
+        Swal.fire('Attenzione', 'Seleziona un orario', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('btnCreaAppuntamento');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creazione...';
+
+    try {
+        const response = await fetch('@Url.Action("CreateAppuntamento")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+            },
+            body: JSON.stringify({
+                saloneId: saloneCorrente,
+                clienteId: clienteId,
+                slotId: slotId,
+                dipendenteId: dipendenteId || null,
+                servizioId: servizioId || null,
+                data: dataCorrente.toISOString().split('T')[0],
+                note: note
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            chiudiModalNuovo();
+            Swal.fire({
+                icon: 'success',
+                title: 'Appuntamento Creato',
+                text: result.message,
+                confirmButtonColor: '#7c3aed',
+                timer: 2000,
+                timerProgressBar: true
+            }).then(() => {
+                ricaricaCalendario();
+            });
+        } else {
+            Swal.fire('Errore', result.message, 'error');
+        }
+    } catch (e) {
+        console.error('Errore creazione appuntamento:', e);
+        Swal.fire('Errore', 'Errore di rete durante la creazione', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check"></i> Crea Appuntamento';
+    }
 }
 
 function apriAppuntamento(appuntamentoId) {
@@ -676,11 +954,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Chiudi modal con tasto ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            const modal = document.getElementById('modalDettagliAppuntamento');
-            if (!modal.classList.contains('hidden')) {
+            const modalDettagli = document.getElementById('modalDettagliAppuntamento');
+            if (!modalDettagli.classList.contains('hidden')) {
                 chiudiModalDettagli();
             }
+            const modalNuovo = document.getElementById('modalNuovoAppuntamento');
+            if (!modalNuovo.classList.contains('hidden')) {
+                chiudiModalNuovo();
+            }
         }
+    });
+
+    // Chiudi modal cliccando fuori
+    document.getElementById('modalNuovoAppuntamento')?.addEventListener('click', function(e) {
+        if (e.target === this) chiudiModalNuovo();
     });
     
     // Auto-dismiss delle notifiche dopo 5 secondi

@@ -6,6 +6,7 @@
 		public string ClienteId { get; set; }
 		public Guid SlotId { get; set; }
 		public Guid? DipendenteId { get; set; }
+		public Guid? ServizioId { get; set; }
 		public DateTime Data { get; set; }
 		public string Note { get; set; }
 	}

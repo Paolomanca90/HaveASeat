@@ -24,6 +24,10 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<ISlotService, SlotService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IGiftCardPdfService, GiftCardPdfService>();
+builder.Services.AddScoped<ISlotReservationService, SlotReservationService>();
+builder.Services.AddScoped<IPushNotificationService, PushNotificationService>();
+builder.Services.AddHostedService<SlotReservationCleanupService>();
+builder.Services.AddHostedService<BookingReminderService>();
 
 builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 {

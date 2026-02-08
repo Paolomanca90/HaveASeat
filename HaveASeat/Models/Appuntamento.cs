@@ -1,4 +1,5 @@
-﻿using HaveASeat.Utilities.Enum;
+﻿using System.ComponentModel.DataAnnotations;
+using HaveASeat.Utilities.Enum;
 
 namespace HaveASeat.Models
 {
@@ -18,6 +19,17 @@ namespace HaveASeat.Models
 		public DateTime Data { get; set; } // Data dell'appuntamento
 		public StatoAppuntamento Stato { get; set; } // Stato dell'appuntamento (in attesa, confermato, annullato, ecc.)
 		public Guid? ServizioId { get; set; }
+
+		/// <summary>
+		/// Indica se il promemoria è stato inviato per questo appuntamento
+		/// </summary>
+		public bool ReminderInviato { get; set; } = false;
+
+		/// <summary>
+		/// Token di concorrenza per optimistic locking - previene conflitti in scrittura
+		/// </summary>
+		[Timestamp]
+		public byte[] RowVersion { get; set; } = Array.Empty<byte>();
 
 		// Relazioni di navigazione
 		public Servizio? Servizio { get; set; }

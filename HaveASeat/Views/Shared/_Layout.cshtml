@@ -22,6 +22,12 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet"/>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#6366f1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="HaveASeat" />
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
@@ -247,6 +253,101 @@
             const theme = initTheme();
             updateToggleIcons(theme);
         });
+    </script>
+    <!-- Service Worker & Push Notifications -->
+    <script>
+        // Registra Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('SW registrato:', registration.scope);
+
+                    // Dopo la registrazione, verifica se l'utente ha già sottoscritto le push
+                    if ('PushManager' in window) {
+                        const subscription = await registration.pushManager.getSubscription();
+                        if (subscription) {
+                            window.__pushSubscription = subscription;
+                        }
+                    }
+                } catch (error) {
+                    console.log('SW registrazione fallita:', error);
+                }
+            });
+        }
+
+        // Funzioni Push Notification globali
+        window.HaveASeatPush = {
+            // Verifica se le push sono supportate
+            isSupported: function() {
+                return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+            },
+
+            // Richiedi permesso e sottoscrivi
+            subscribe: async function() {
+                if (!this.isSupported()) {
+                    console.warn('Push notifications non supportate');
+                    return null;
+                }
+
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.log('Permesso notifiche negato');
+                    return null;
+                }
+
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+
+                    // Recupera la VAPID public key dal server
+                    const response = await fetch('/api/PushNotification/vapid-public-key');
+                    const data = await response.json();
+
+                    const subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: this._urlBase64ToUint8Array(data.publicKey)
+                    });
+
+                    // Invia la sottoscrizione al server
+                    await fetch('/api/PushNotification/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(subscription)
+                    });
+
+                    window.__pushSubscription = subscription;
+                    return subscription;
+                } catch (error) {
+                    console.error('Errore sottoscrizione push:', error);
+                    return null;
+                }
+            },
+
+            // Annulla sottoscrizione
+            unsubscribe: async function() {
+                if (window.__pushSubscription) {
+                    try {
+                        await fetch('/api/PushNotification/unsubscribe', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(window.__pushSubscription)
+                        });
+                        await window.__pushSubscription.unsubscribe();
+                        window.__pushSubscription = null;
+                    } catch (error) {
+                        console.error('Errore annullamento push:', error);
+                    }
+                }
+            },
+
+            // Helper: converti VAPID key
+            _urlBase64ToUint8Array: function(base64String) {
+                const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+                const rawData = window.atob(base64);
+                return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+            }
+        };
     </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

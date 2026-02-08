@@ -4,6 +4,7 @@ using HaveASeat.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HaveASeat.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260208183045_AddPushSubscriptionAndReminder")]
+    partial class AddPushSubscriptionAndReminder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -447,70 +450,6 @@ namespace HaveASeat.Data.Migrations
                     b.ToTable("OrarioDipendente");
                 });
 
-            modelBuilder.Entity("HaveASeat.Models.PaymentTransaction", b =>
-                {
-                    b.Property<Guid>("PaymentTransactionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("DataCreazione")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Descrizione")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Importo")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid>("SaloneId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Stato")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
-
-                    b.Property<string>("StripeCustomerId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StripePaymentIntentId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StripeSessionId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("StripeSubscriptionId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Tipo")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Valuta")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
-
-                    b.HasKey("PaymentTransactionId");
-
-                    b.HasIndex("SaloneId")
-                        .HasDatabaseName("IX_PaymentTransaction_SaloneId");
-
-                    b.HasIndex("StripeSessionId")
-                        .HasDatabaseName("IX_PaymentTransaction_StripeSessionId");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_PaymentTransaction_UserId");
-
-                    b.ToTable("PaymentTransaction");
-                });
-
             modelBuilder.Entity("HaveASeat.Models.PianoSelezionato", b =>
                 {
                     b.Property<Guid>("PianoSelezionatoId")
@@ -530,33 +469,6 @@ namespace HaveASeat.Data.Migrations
                     b.HasKey("PianoSelezionatoId");
 
                     b.ToTable("PianoSelezionato");
-                });
-
-            modelBuilder.Entity("HaveASeat.Models.Preferito", b =>
-                {
-                    b.Property<Guid>("PreferitoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ApplicationUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("DataAggiunta")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("SaloneId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("PreferitoId");
-
-                    b.HasIndex("SaloneId");
-
-                    b.HasIndex("ApplicationUserId", "SaloneId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Preferito_UserSalone");
-
-                    b.ToTable("Preferito");
                 });
 
             modelBuilder.Entity("HaveASeat.Models.PushSubscriptionEntity", b =>
@@ -1268,44 +1180,6 @@ namespace HaveASeat.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Dipendente");
-                });
-
-            modelBuilder.Entity("HaveASeat.Models.PaymentTransaction", b =>
-                {
-                    b.HasOne("HaveASeat.Models.Salone", "Salone")
-                        .WithMany()
-                        .HasForeignKey("SaloneId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("HaveASeat.Models.ApplicationUser", "ApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-
-                    b.Navigation("Salone");
-                });
-
-            modelBuilder.Entity("HaveASeat.Models.Preferito", b =>
-                {
-                    b.HasOne("HaveASeat.Models.ApplicationUser", "ApplicationUser")
-                        .WithMany()
-                        .HasForeignKey("ApplicationUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("HaveASeat.Models.Salone", "Salone")
-                        .WithMany()
-                        .HasForeignKey("SaloneId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-
-                    b.Navigation("Salone");
                 });
 
             modelBuilder.Entity("HaveASeat.Models.PushSubscriptionEntity", b =>

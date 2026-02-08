@@ -28,17 +28,20 @@ namespace HaveASeat.Services
 		private readonly ILogger<BookingService> _logger;
 		private readonly IEmailService _emailService;
 		private readonly UserManager<ApplicationUser> _userManager;
+		private readonly IPushNotificationService _pushService;
 
 		public BookingService(
 			ApplicationDbContext context,
 			ILogger<BookingService> logger,
 			IEmailService emailService,
-			UserManager<ApplicationUser> userManager)
+			UserManager<ApplicationUser> userManager,
+			IPushNotificationService pushService)
 		{
 			_context = context;
 			_logger = logger;
 			_emailService = emailService;
 			_userManager = userManager;
+			_pushService = pushService;
 		}
 
 		public async Task<bool> IsSlotAvailableAsync(Guid saloneId, Guid slotId, DateTime data, Guid? dipendenteId = null)
@@ -196,6 +199,28 @@ namespace HaveASeat.Services
 					{
 						_logger.LogError(ex, "Errore invio notifica prenotazione {AppuntamentoId}", appuntamento.AppuntamentoId);
 					}
+
+					// Notifica push al proprietario del salone
+					try
+					{
+						var salone = await _context.Salone
+							.Include(s => s.Servizi)
+							.FirstOrDefaultAsync(s => s.SaloneId == appuntamento.SaloneId);
+						if (salone != null && !string.IsNullOrEmpty(salone.ApplicationUserId))
+						{
+							var servizioNome = salone.Servizi?.FirstOrDefault(s => s.ServizioId == appuntamento.ServizioId)?.Nome ?? "Servizio";
+							await _pushService.SendNotificationAsync(
+								salone.ApplicationUserId,
+								"Nuova Prenotazione",
+								$"Nuovo appuntamento per {servizioNome} il {appuntamento.Data:dd/MM/yyyy}",
+								"/Partner/Appuntamenti",
+								$"booking-{appuntamento.AppuntamentoId}");
+						}
+					}
+					catch (Exception ex)
+					{
+						_logger.LogError(ex, "Errore invio push al salone per appuntamento {AppuntamentoId}", appuntamento.AppuntamentoId);
+					}
 				});
 
 				return new BookingResponseDto
@@ -275,6 +300,25 @@ namespace HaveASeat.Services
 					catch (Exception ex)
 					{
 						_logger.LogError(ex, "Errore invio notifica cancellazione {AppuntamentoId}", appuntamentoId);
+					}
+
+					// Notifica push al proprietario del salone
+					try
+					{
+						if (!string.IsNullOrEmpty(appuntamento.Salone?.ApplicationUserId))
+						{
+							var servizioNome = appuntamento.Servizio?.Nome ?? "Servizio";
+							await _pushService.SendNotificationAsync(
+								appuntamento.Salone.ApplicationUserId,
+								"Prenotazione Cancellata",
+								$"L'appuntamento per {servizioNome} del {appuntamento.Data:dd/MM/yyyy} è stato cancellato",
+								"/Partner/Appuntamenti",
+								$"cancel-{appuntamento.AppuntamentoId}");
+						}
+					}
+					catch (Exception ex)
+					{
+						_logger.LogError(ex, "Errore invio push cancellazione al salone per {AppuntamentoId}", appuntamentoId);
 					}
 				});
 

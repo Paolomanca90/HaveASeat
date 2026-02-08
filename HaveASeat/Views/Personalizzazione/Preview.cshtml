@@ -111,26 +111,32 @@
         .border-accent { border-color: @coloreAccento; }
         
         /* Layout Styles */
+        .section {
+            padding-top: 5rem;
+            padding-bottom: 5rem;
+        }
+
         @if (layoutTipo == "classico")
         {
             <text>
-            .layout-classic .section { padding: 4rem 0; }
-            .layout-classic .container { max-width: 1200px; margin: 0 auto; }
+            .layout-classic .section { padding: 5rem 0; }
+            .layout-classic .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
             .layout-classic h2 { text-align: center; margin-bottom: 3rem; }
             </text>
         }
         else if (layoutTipo == "magazine")
         {
             <text>
-            .layout-magazine .section { padding: 2rem 0; }
+            .layout-magazine .section { padding: 4rem 0; }
+            .layout-magazine .container { padding: 0 1rem; }
             .layout-magazine .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
             </text>
         }
         else
         {
             <text>
-            .layout-modern .section { padding: 5rem 0; }
-            .layout-modern .container { max-width: 1400px; margin: 0 auto; }
+            .layout-modern .section { padding: 6rem 0; }
+            .layout-modern .container { max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
             </text>
         }
     </style>
@@ -162,12 +168,15 @@
                 </div>
                 
                 <div class="hidden md:flex items-center space-x-6">
-                    <a href="#servizi" class="text-gray-700 hover:text-primary transition-colors">Servizi</a>
-                    @if (mostraTeam)
+                    @if (mostraServizi && Model.Servizi.Any())
+                    {
+                        <a href="#servizi" class="text-gray-700 hover:text-primary transition-colors">Servizi</a>
+                    }
+                    @if (mostraTeam && Model.Dipendenti.Any())
                     {
                         <a href="#team" class="text-gray-700 hover:text-primary transition-colors">Team</a>
                     }
-                    @if (mostraGalleria)
+                    @if (mostraGalleria && galleryImages.Any())
                     {
                         <a href="#galleria" class="text-gray-700 hover:text-primary transition-colors">Galleria</a>
                     }
@@ -175,9 +184,9 @@
                     {
                         <a href="#contatti" class="text-gray-700 hover:text-primary transition-colors">Contatti</a>
                     }
-                    <button class="btn-primary text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transition-all">
+                    <a href="/Search/Details/@Model.SaloneId" class="btn-primary text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transition-all">
                         Prenota Ora
-                    </button>
+                    </a>
                 </div>
                 
                 <button class="md:hidden text-gray-700">
@@ -214,11 +223,11 @@
                 }
                 
                 <div class="flex flex-col sm:flex-row gap-4">
-                    <button class="btn-primary text-white px-8 py-4 rounded-full text-lg font-medium hover:shadow-xl transition-all">
+                    <a href="/Search/Details/@Model.SaloneId" class="btn-primary text-white px-8 py-4 rounded-full text-lg font-medium hover:shadow-xl transition-all inline-flex items-center justify-center">
                         <i class="fas fa-calendar-alt mr-2"></i>
                         Prenota Appuntamento
-                    </button>
-                    @if (mostraServizi)
+                    </a>
+                    @if (mostraServizi && Model.Servizi.Any())
                     {
                         <a href="#servizi" class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-white hover:text-primary transition-all text-center">
                             Scopri i Servizi
@@ -257,7 +266,7 @@
     <!-- Servizi Section -->
     @if (mostraServizi && Model.Servizi.Any())
     {
-        <section id="servizi" class="section bg-gray-50">
+        <section id="servizi" class="section bg-gray-50 mt-0">
             <div class="container mx-auto px-4">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">I Nostri Servizi</h2>
@@ -297,9 +306,9 @@
                                     <span class="text-sm text-gray-500">@servizio.Durata min</span>
                                 </div>
                                 
-                                <button class="w-full mt-4 btn-primary text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all">
+                                <a href="/Search/Details/@Model.SaloneId?servizioId=@servizio.ServizioId" class="w-full mt-4 btn-primary text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all block text-center">
                                     Prenota Servizio
-                                </button>
+                                </a>
                             </div>
                         </div>
                     }
@@ -311,7 +320,7 @@
     <!-- Team Section -->
     @if (mostraTeam && Model.Dipendenti.Any())
     {
-        <section id="team" class="section">
+        <section id="team" class="section bg-white">
             <div class="container mx-auto px-4">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Il Nostro Team</h2>
@@ -343,9 +352,9 @@
                                     Specialista in @string.Join(", ", dipendente.ServiziOfferti.Take(3).Select(s => s.Servizio.Nome))
                                 </p>
                             }
-                            <button class="btn-primary text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transition-all">
+                            <a href="/Search/Details/@Model.SaloneId?dipendenteId=@dipendente.DipendenteId" class="btn-primary text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transition-all inline-block">
                                 Prenota con @dipendente.ApplicationUser.Nome
-                            </button>
+                            </a>
                         </div>
                     }
                 </div>
@@ -378,7 +387,7 @@
     <!-- Recensioni Section -->
     @if (mostraRecensioni && Model.Recensioni.Any())
     {
-        <section id="recensioni" class="section">
+        <section id="recensioni" class="section bg-white">
             <div class="container mx-auto px-4">
                 <div class="text-center mb-12">
                     <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Cosa Dicono i Nostri Clienti</h2>

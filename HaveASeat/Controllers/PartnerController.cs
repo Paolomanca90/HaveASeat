@@ -1191,10 +1191,14 @@ namespace HaveASeat.Controllers
 
 			var customerId = CreateOrGetStripeCustomer();
 
+			// Calcola l'intervallo di ricorrenza basato sulla durata dell'abbonamento
+			var intervalCount = piano.Durata >= 365 ? piano.Durata / 365 : (piano.Durata >= 30 ? piano.Durata / 30 : 1);
+			var interval = piano.Durata >= 365 ? "year" : "month";
+
 			var options = new SessionCreateOptions
 			{
 				Customer = customerId,
-				PaymentMethodTypes = new List<string> { "card", "klarna", "paypal", "samsung_pay", "sepa_debit" },
+				PaymentMethodTypes = new List<string> { "card", "sepa_debit" },
 				LineItems = new List<SessionLineItemOptions>
 				{
 					new SessionLineItemOptions
@@ -1203,9 +1207,14 @@ namespace HaveASeat.Controllers
 						{
 							UnitAmount = Convert.ToInt64(total * 100),
 							Currency = "eur",
+							Recurring = new SessionLineItemPriceDataRecurringOptions
+							{
+								Interval = interval,
+								IntervalCount = intervalCount
+							},
 							ProductData = new SessionLineItemPriceDataProductDataOptions
 							{
-								Name = "Registrazione Have A Seat",
+								Name = $"Abbonamento Have A Seat - {piano.Nome}",
 								Metadata = new Dictionary<string, string>
 								{
 									{"P_IVA", GetCustomerMetadata("P_IVA")},
@@ -1216,15 +1225,17 @@ namespace HaveASeat.Controllers
 						Quantity = 1,
 					},
 				},
-				Mode = "payment",
+				Mode = "subscription",
 				SuccessUrl = $"{Request.Scheme}://{Request.Host}/Partner/PaymentSuccess?sessionId={{CHECKOUT_SESSION_ID}}",
 				CancelUrl = Url.Action("PaymentCancel", "Partner", null, Request.Scheme),
-				PaymentIntentData = new SessionPaymentIntentDataOptions
+				SubscriptionData = new SessionSubscriptionDataOptions
 				{
 					Metadata = new Dictionary<string, string>
 					{
 						{"P_IVA", GetCustomerMetadata("P_IVA")},
-						{"SaloneId", saloneId.ToString()}
+						{"SaloneId", saloneId.ToString()},
+						{"AbbonamentoId", checkPiano.AbbonamentoId.ToString()},
+						{"UserId", userId}
 					}
 				}
 			};
@@ -1285,58 +1296,110 @@ namespace HaveASeat.Controllers
 			};
 		}
 
-		public IActionResult PaymentSuccess(string sessionId)
+		public async Task<IActionResult> PaymentSuccess(string sessionId)
 		{
-			var service = new SessionService();
-			Session session = service.Get(sessionId);
-
-			if (session.PaymentStatus == "paid")
+			try
 			{
-				var paymentIntentService = new PaymentIntentService();
-				PaymentIntent paymentIntent = paymentIntentService.Get(session.PaymentIntentId);
-				var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-				var salone = _context.Salone.FirstOrDefault(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
-				if (salone != null)
+				var service = new SessionService();
+				var session = await service.GetAsync(sessionId, new SessionGetOptions
 				{
-					salone.Stato = Stato.Attivo;
-					_context.Salone.Update(salone);
-					var pianoSelezionato = _context.PianoSelezionato.FirstOrDefault(x => x.ApplicationUserId == userId && x.Confermato == false);
-					if (pianoSelezionato == null)
+					Expand = new List<string> { "subscription" }
+				});
+
+				// Per subscription mode, lo status è 'complete' e PaymentStatus 'paid'
+				if (session.PaymentStatus == "paid" || session.Status == "complete")
+				{
+					var stripeSubscriptionId = session.SubscriptionId ?? session.Subscription?.Id;
+					var stripeCustomerId = session.CustomerId;
+					var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+					// Verifica se il pagamento è già stato elaborato (idempotenza)
+					if (!string.IsNullOrEmpty(stripeSubscriptionId))
 					{
-						ViewBag.Errore = "Errore: Piano selezionato non trovato.";
-						return RedirectToAction("Index");
+						var alreadyProcessed = await _context.SaloneAbbonamento
+							.AnyAsync(sa => sa.StripeSubscriptionId == stripeSubscriptionId);
+
+						if (alreadyProcessed)
+						{
+							ViewBag.Messaggio = "Registrazione effettuata con successo!";
+							return RedirectToAction("Index");
+						}
 					}
 
-					pianoSelezionato.Confermato = true;
-					_context.PianoSelezionato.Update(pianoSelezionato);
+					var salone = await _context.Salone
+						.FirstOrDefaultAsync(x => x.ApplicationUserId == userId && x.Stato == Stato.InAttesaDiApprovazione);
 
-					var saloneAbbonamento = new SaloneAbbonamento
+					if (salone != null)
 					{
-						SaloneAbbonamentoId = Guid.NewGuid(),
-						SaloneId = salone.SaloneId,
-						Salone = salone,
-						AbbonamentoId = pianoSelezionato.AbbonamentoId,
-						Abbonamento = _context.Abbonamento.Find(pianoSelezionato.AbbonamentoId),
-						DataInizio = DateTime.Now,
-						DataFine = DateTime.Now.AddMonths(1),
-						Stato = Stato.Attivo,
-						StripeCustomerId = paymentIntent.CustomerId,
-						StripeSubscriptionId = paymentIntent.Id,
-						IsTrial = false
-					};
-					_context.SaloneAbbonamento.Add(saloneAbbonamento);
-					_context.SaveChanges();
-					ViewBag.Messaggio = "Registrazione effettuata con successo!";
-					return RedirectToAction("Index");
+						salone.Stato = Stato.Attivo;
+						_context.Salone.Update(salone);
+
+						var pianoSelezionato = await _context.PianoSelezionato
+							.FirstOrDefaultAsync(x => x.ApplicationUserId == userId && !x.Confermato);
+
+						if (pianoSelezionato == null)
+						{
+							ViewBag.Errore = "Errore: Piano selezionato non trovato.";
+							return RedirectToAction("Index");
+						}
+
+						pianoSelezionato.Confermato = true;
+						_context.PianoSelezionato.Update(pianoSelezionato);
+
+						var abbonamento = await _context.Abbonamento.FindAsync(pianoSelezionato.AbbonamentoId);
+						var durataGiorni = abbonamento?.Durata ?? 30;
+
+						var saloneAbbonamento = new SaloneAbbonamento
+						{
+							SaloneAbbonamentoId = Guid.NewGuid(),
+							SaloneId = salone.SaloneId,
+							AbbonamentoId = pianoSelezionato.AbbonamentoId,
+							DataInizio = DateTime.Now,
+							DataFine = DateTime.Now.AddDays(durataGiorni),
+							Stato = Stato.Attivo,
+							StripeCustomerId = stripeCustomerId,
+							StripeSubscriptionId = stripeSubscriptionId ?? session.Id,
+							IsTrial = false
+						};
+
+						_context.SaloneAbbonamento.Add(saloneAbbonamento);
+
+						// Log transazione
+						var paymentTransaction = new PaymentTransaction
+						{
+							PaymentTransactionId = Guid.NewGuid(),
+							SaloneId = salone.SaloneId,
+							UserId = userId!,
+							StripeSessionId = session.Id,
+							StripeSubscriptionId = stripeSubscriptionId,
+							StripeCustomerId = stripeCustomerId,
+							Importo = abbonamento?.Prezzo ?? 0,
+							Valuta = "EUR",
+							Tipo = "subscription_created",
+							Stato = "paid",
+							Descrizione = $"Abbonamento {abbonamento?.Nome} - {salone.Nome}",
+							DataCreazione = DateTime.UtcNow
+						};
+						_context.PaymentTransaction.Add(paymentTransaction);
+
+						await _context.SaveChangesAsync();
+						ViewBag.Messaggio = "Registrazione effettuata con successo!";
+						return RedirectToAction("Index");
+					}
+					else
+					{
+						ViewBag.Errore = "Errore: Salone non trovato.";
+					}
 				}
 				else
 				{
-					ViewBag.Errore = "Errore: Salone non trovato.";
+					ViewBag.Errore = "Errore: Il pagamento non è stato completato.";
 				}
 			}
-			else
+			catch (Exception ex)
 			{
-				ViewBag.Errore = "Errore: Il pagamento non è stato completato.";
+				_logger.LogError(ex, "Errore durante l'elaborazione del pagamento per sessione {SessionId}", sessionId);
+				ViewBag.Errore = "Si è verificato un errore durante l'elaborazione del pagamento. Contatta il supporto.";
 			}
 
 			return View("Index");

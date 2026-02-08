@@ -28,16 +28,32 @@ namespace HaveASeat.Controllers
 					return RedirectToAction("Login", "Account");
 				}
 
-				// Ottieni tutti i saloni dell'utente
+				// Ottieni saloni dell'utente (come proprietario)
 				var saloni = await _context.Salone
 					.Include(x => x.SaloneAbbonamenti)
 					.Where(s => s.ApplicationUserId == userId)
 					.ToListAsync();
 
+				// Se non è proprietario, cerca se è dipendente
+				var isDipendente = false;
+				Guid? dipendenteCorrenteId = null;
 				if (!saloni.Any())
 				{
-					// Reindirizza alla creazione del primo salone
-					return RedirectToAction("Create", "Salone");
+					var dipendente = await _context.Dipendente
+						.Include(d => d.Salone)
+							.ThenInclude(s => s.SaloneAbbonamenti)
+						.FirstOrDefaultAsync(d => d.ApplicationUserId == userId);
+
+					if (dipendente != null)
+					{
+						saloni = new List<Salone> { dipendente.Salone };
+						isDipendente = true;
+						dipendenteCorrenteId = dipendente.DipendenteId;
+					}
+					else
+					{
+						return RedirectToAction("Create", "Salone");
+					}
 				}
 
 				// Determina il salone corrente
@@ -49,6 +65,9 @@ namespace HaveASeat.Controllers
 				{
 					saloneCorrente = saloni.First();
 				}
+
+				ViewBag.IsDipendente = isDipendente;
+				ViewBag.DipendenteCorrenteId = dipendenteCorrenteId;
 
 				var abbonamentoStandard = saloneCorrente.SaloneAbbonamenti.Any(x => x.AbbonamentoId == SubscriptionsConstants.Basic);
 				if (abbonamentoStandard)
@@ -170,13 +189,33 @@ namespace HaveASeat.Controllers
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-			// Verifica autorizzazione
+			// Verifica autorizzazione: proprietario del salone O dipendente del salone
 			var salone = await _context.Salone
-				.FirstOrDefaultAsync(s => s.SaloneId == dto.SaloneId && s.ApplicationUserId == userId);
+				.FirstOrDefaultAsync(s => s.SaloneId == dto.SaloneId);
 
 			if (salone == null)
 			{
-				return Json(new { success = false, message = "Salone non autorizzato" });
+				return Json(new { success = false, message = "Salone non trovato" });
+			}
+
+			var isProprietario = salone.ApplicationUserId == userId;
+			var dipendenteCorrente = await _context.Dipendente
+				.FirstOrDefaultAsync(d => d.SaloneId == dto.SaloneId && d.ApplicationUserId == userId);
+			var isDipendente = dipendenteCorrente != null;
+
+			if (!isProprietario && !isDipendente)
+			{
+				return Json(new { success = false, message = "Non autorizzato" });
+			}
+
+			// Se è un dipendente, può creare appuntamenti solo per sé stesso
+			if (isDipendente && !isProprietario)
+			{
+				if (dto.DipendenteId.HasValue && dto.DipendenteId.Value != dipendenteCorrente!.DipendenteId)
+				{
+					return Json(new { success = false, message = "Come dipendente puoi inserire appuntamenti solo per te stesso" });
+				}
+				dto.DipendenteId = dipendenteCorrente!.DipendenteId;
 			}
 
 			// Verifica che il cliente esista
@@ -193,27 +232,31 @@ namespace HaveASeat.Controllers
 				return Json(new { success = false, message = "Slot non valido" });
 			}
 
-			// Verifica disponibilità
-			var esisteAppuntamento = await _context.Appuntamento
-				.AnyAsync(a => a.Data.Date == dto.Data.Date &&
-							  a.SlotId == dto.SlotId &&
-							  a.Stato != StatoAppuntamento.Annullato);
+			// Verifica disponibilità per dipendente specifico
+			var queryDisponibilita = _context.Appuntamento
+				.Where(a => a.Data.Date == dto.Data.Date &&
+							a.SlotId == dto.SlotId &&
+							a.SaloneId == dto.SaloneId &&
+							a.Stato != StatoAppuntamento.Annullato);
 
-			if (esisteAppuntamento)
+			if (dto.DipendenteId.HasValue)
 			{
-				return Json(new { success = false, message = "Slot già occupato" });
+				queryDisponibilita = queryDisponibilita.Where(a => a.DipendenteId == dto.DipendenteId);
+			}
+
+			if (await queryDisponibilita.AnyAsync())
+			{
+				return Json(new { success = false, message = "Slot già occupato per questo dipendente" });
 			}
 
 			var appuntamento = new Appuntamento
 			{
 				AppuntamentoId = Guid.NewGuid(),
 				SaloneId = dto.SaloneId,
-				Salone = salone,
 				ApplicationUserId = dto.ClienteId,
-				ApplicationUser = cliente,
 				SlotId = dto.SlotId,
 				DipendenteId = dto.DipendenteId,
-				Dipendente = _context.Dipendente.Find(dto.DipendenteId),
+				ServizioId = dto.ServizioId,
 				Data = dto.Data,
 				Note = dto.Note ?? "",
 				Stato = StatoAppuntamento.Prenotato
@@ -222,7 +265,7 @@ namespace HaveASeat.Controllers
 			_context.Appuntamento.Add(appuntamento);
 			await _context.SaveChangesAsync();
 
-			return Json(new { success = true, message = "Appuntamento creato con successo" });
+			return Json(new { success = true, message = "Appuntamento creato con successo", id = appuntamento.AppuntamentoId });
 		}
 
 		[HttpPut]
@@ -261,7 +304,9 @@ namespace HaveASeat.Controllers
 
 			var appuntamento = await _context.Appuntamento
 				.Include(a => a.Salone)
-				.FirstOrDefaultAsync(a => a.AppuntamentoId == id && a.Salone.ApplicationUserId == userId);
+				.FirstOrDefaultAsync(a => a.AppuntamentoId == id &&
+					(a.Salone.ApplicationUserId == userId ||
+					 _context.Dipendente.Any(d => d.SaloneId == a.SaloneId && d.ApplicationUserId == userId)));
 
 			if (appuntamento == null)
 			{
@@ -289,7 +334,9 @@ namespace HaveASeat.Controllers
 				.Include(a => a.Slot)
 				.Include(a => a.Salone)
 				.Include(a => a.Servizio)
-				.FirstOrDefaultAsync(a => a.AppuntamentoId == id && a.Salone.ApplicationUserId == userId);
+				.FirstOrDefaultAsync(a => a.AppuntamentoId == id &&
+					(a.Salone.ApplicationUserId == userId ||
+					 _context.Dipendente.Any(d => d.SaloneId == a.SaloneId && d.ApplicationUserId == userId)));
 
 			if (appuntamento == null)
 			{
@@ -326,10 +373,23 @@ namespace HaveASeat.Controllers
 
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-			// Cerca tra gli utenti che hanno già fatto appuntamenti nei saloni dell'utente
+			// Trova i saloni a cui l'utente ha accesso (come proprietario o dipendente)
+			var saloniIds = await _context.Salone
+				.Where(s => s.ApplicationUserId == userId)
+				.Select(s => s.SaloneId)
+				.ToListAsync();
+
+			var saloniDipendente = await _context.Dipendente
+				.Where(d => d.ApplicationUserId == userId)
+				.Select(d => d.SaloneId)
+				.ToListAsync();
+
+			saloniIds.AddRange(saloniDipendente);
+
+			// Cerca tra gli utenti che hanno già fatto appuntamenti nei saloni accessibili
 			var clienti = await _context.Users
 				.Where(u => _context.Appuntamento.Any(a => a.ApplicationUserId == u.Id &&
-							_context.Salone.Any(s => s.SaloneId == a.SaloneId && s.ApplicationUserId == userId)) &&
+							saloniIds.Contains(a.SaloneId)) &&
 						   (u.Nome.Contains(termine) ||
 							u.Cognome.Contains(termine) ||
 							u.Email.Contains(termine)))
@@ -347,17 +407,23 @@ namespace HaveASeat.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> GetSlotDisponibili(Guid saloneId, DateTime data)
+		public async Task<IActionResult> GetSlotDisponibili(Guid saloneId, DateTime data, Guid? dipendenteId = null)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-			// Verifica autorizzazione
-			var salone = await _context.Salone
-				.FirstOrDefaultAsync(s => s.SaloneId == saloneId && s.ApplicationUserId == userId);
-
+			// Verifica autorizzazione (proprietario o dipendente)
+			var salone = await _context.Salone.FindAsync(saloneId);
 			if (salone == null)
 			{
-				return Json(new { success = false, message = "Salone non autorizzato" });
+				return Json(new { success = false, message = "Salone non trovato" });
+			}
+
+			var isAuthorized = salone.ApplicationUserId == userId ||
+				await _context.Dipendente.AnyAsync(d => d.SaloneId == saloneId && d.ApplicationUserId == userId);
+
+			if (!isAuthorized)
+			{
+				return Json(new { success = false, message = "Non autorizzato" });
 			}
 
 			// Recupera tutti gli slot del salone
@@ -367,10 +433,17 @@ namespace HaveASeat.Controllers
 				.ToListAsync();
 
 			// Verifica quali slot sono già occupati per la data specificata
-			var slotsOccupati = await _context.Appuntamento
+			var queryOccupati = _context.Appuntamento
 				.Where(a => a.SaloneId == saloneId &&
 						   a.Data.Date == data.Date &&
-						   a.Stato != StatoAppuntamento.Annullato)
+						   a.Stato != StatoAppuntamento.Annullato);
+
+			if (dipendenteId.HasValue)
+			{
+				queryOccupati = queryOccupati.Where(a => a.DipendenteId == dipendenteId);
+			}
+
+			var slotsOccupati = await queryOccupati
 				.Select(a => a.SlotId)
 				.ToListAsync();
 

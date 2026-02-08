@@ -199,6 +199,126 @@
             background: linear-gradient(135deg, rgba(31,41,55,0.9) 0%, rgba(17,24,39,0.9) 100%);
             border: 1px solid rgba(75,85,99,0.3);
         }
+
+        /* Stili per il sistema di reservation con countdown */
+        .countdown-container {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            animation: pulse-border 2s infinite;
+        }
+
+        .dark .countdown-container {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%);
+            border-color: #f59e0b;
+        }
+
+        @@keyframes pulse-border {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+        }
+
+        .countdown-timer {
+            font-family: 'Courier New', monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #b45309;
+        }
+
+        .dark .countdown-timer {
+            color: #fbbf24;
+        }
+
+        .countdown-warning {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @@keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .slot-reserved {
+            background-color: #fef3c7 !important;
+            border-color: #f59e0b !important;
+            opacity: 0.7;
+            cursor: not-allowed !important;
+            position: relative;
+        }
+
+        .slot-reserved::after {
+            content: 'In uso';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(245, 158, 11, 0.9);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .slot-own-reservation {
+            background-color: #d1fae5 !important;
+            border-color: #10b981 !important;
+        }
+
+        .slot-booked {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            opacity: 0.6;
+            cursor: not-allowed !important;
+        }
+
+        .slot-booked::after {
+            content: 'Occupato';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .reservation-expired-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reservation-expired-modal {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 400px;
+            text-align: center;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .dark .reservation-expired-modal {
+            background: #1f2937;
+        }
+
+        @@keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
 }
 
@@ -225,8 +345,17 @@
                     {
                         <img src="@Model.Salone.SalonePersonalizzazione.LogoUrl" alt="@Model.Salone.Nome" class="w-16 h-16 rounded-xl bg-white p-2 shadow-lg">
                     }
-                    <div>
-                        <h1 class="text-4xl font-bold mb-2">@Model.Salone.Nome</h1>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3">
+                            <h1 class="text-4xl font-bold mb-2">@Model.Salone.Nome</h1>
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <button id="btnPreferito" onclick="togglePreferito('@Model.Salone.SaloneId')"
+                                        class="text-3xl transition-transform hover:scale-110 mb-2" title="Aggiungi ai preferiti">
+                                    <i class="far fa-heart" id="iconPreferito"></i>
+                                </button>
+                            }
+                        </div>
                         @if (!string.IsNullOrEmpty(Model.Salone.SalonePersonalizzazione?.Slogan))
                         {
                             <p class="text-xl opacity-90">@Model.Salone.SalonePersonalizzazione.Slogan</p>
@@ -647,6 +776,25 @@
         <!-- Sidebar Riepilogo - 1 colonna -->
         <div class="lg:col-span-1">
             <div class="booking-summary">
+                <!-- Countdown Timer per Reservation (nascosto di default) -->
+                <div id="reservationCountdown" class="countdown-container hidden mb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-clock text-amber-600 dark:text-amber-400 text-xl mr-3"></i>
+                            <div>
+                                <p class="text-sm font-medium text-amber-800 dark:text-amber-200">Slot riservato per te</p>
+                                <p class="text-xs text-amber-600 dark:text-amber-400">Completa la prenotazione entro:</p>
+                            </div>
+                        </div>
+                        <div id="countdownTimer" class="countdown-timer">10:00</div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="w-full bg-amber-200 dark:bg-amber-800 rounded-full h-2">
+                            <div id="countdownProgress" class="bg-amber-500 h-2 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Riepilogo Prenotazione -->
                 <div class="summary-card rounded-xl shadow-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
                     <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
@@ -811,7 +959,49 @@
 
 @section Scripts {
     <script>
-        // Stato della prenotazione
+        // === Preferiti ===
+        async function checkPreferito(saloneId) {
+            try {
+                const response = await fetch(`/Preferiti/Check?saloneId=${saloneId}`);
+                const data = await response.json();
+                updatePreferitoIcon(data.isFavorite);
+            } catch (e) { }
+        }
+
+        async function togglePreferito(saloneId) {
+            try {
+                const response = await fetch('/Preferiti/Toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ saloneId: saloneId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    updatePreferitoIcon(data.isFavorite);
+                    const icon = document.getElementById('iconPreferito');
+                    icon.classList.add('animate-bounce');
+                    setTimeout(() => icon.classList.remove('animate-bounce'), 500);
+                }
+            } catch (e) { console.error('Errore toggle preferito:', e); }
+        }
+
+        function updatePreferitoIcon(isFavorite) {
+            const icon = document.getElementById('iconPreferito');
+            if (!icon) return;
+            if (isFavorite) {
+                icon.className = 'fas fa-heart text-red-500';
+            } else {
+                icon.className = 'far fa-heart text-white';
+            }
+        }
+
+        // Verifica stato preferito al caricamento
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('btnPreferito');
+            if (btn) checkPreferito('@Model.Salone.SaloneId');
+        });
+
+        // Stato della prenotazione con supporto per reservation
         let bookingState = {
             currentStep: 1,
             saloneId: '@Model.Salone.SaloneId',
@@ -825,8 +1015,18 @@
             selectedTimeSlot: null,
             slotTime: '',
             showStaffSelection: @Model.MostraSceltaDipendente.ToString().ToLower(),
-            maxSteps: '@Model.MostraSceltaDipendente' == 'True' ? 4 : 3
+            maxSteps: '@Model.MostraSceltaDipendente' == 'True' ? 4 : 3,
+            // Nuovi campi per il sistema di reservation
+            reservationId: null,
+            reservationExpiresAt: null,
+            sessionId: null,
+            oraInizio: null,
+            oraFine: null
         };
+
+        // Variabili per il countdown
+        let countdownInterval = null;
+        const RESERVATION_MINUTES = 10;
 
         // Inizializzazione
         document.addEventListener('DOMContentLoaded', function() {
@@ -1002,12 +1202,12 @@
             }
         }
 
-        // Caricamento slot disponibili
+        // Caricamento slot disponibili CON stato reservation
         function loadAvailableSlots() {
             const date = document.getElementById('bookingDate').value;
             if (!date) return;
 
-            console.log('Loading slots for:', {
+            console.log('Loading slots with reservation status for:', {
                 date,
                 saloneId: bookingState.saloneId,
                 servizioId: bookingState.servizioId,
@@ -1015,8 +1215,11 @@
             });
 
             bookingState.selectedDate = date;
-            bookingState.selectedTimeSlot = null;
-            bookingState.slotTime = '';
+            // Non resettare la reservation se esiste
+            if (!bookingState.reservationId) {
+                bookingState.selectedTimeSlot = null;
+                bookingState.slotTime = '';
+            }
 
             const slotsContainer = document.getElementById('slotsContainer');
             const slotsGrid = document.getElementById('availableSlots');
@@ -1030,8 +1233,8 @@
                 slotsContainer.classList.add('hidden');
             }
 
-            // Costruisci URL con tutti i parametri necessari
-            let url = `/Search/GetAvailableSlots?saloneId=${bookingState.saloneId}&data=${date}`;
+            // USA IL NUOVO ENDPOINT con stato reservation
+            let url = `/Search/GetSlotsWithStatus?saloneId=${bookingState.saloneId}&data=${date}`;
 
             if (bookingState.servizioId) {
                 url += `&servizioId=${bookingState.servizioId}`;
@@ -1043,11 +1246,16 @@
 
             console.log('Fetching slots from:', url);
 
-            // Chiamata AJAX per caricare gli slot
+            // Chiamata AJAX per caricare gli slot con stato
             fetch(url)
                 .then(response => response.json())
                 .then(data => {
-                    console.log('Slots response:', data);
+                    console.log('Slots with status response:', data);
+
+                    // Salva sessionId se presente
+                    if (data.sessionId) {
+                        bookingState.sessionId = data.sessionId;
+                    }
 
                     // Nascondi loading
                     if (loadingIndicator) {
@@ -1055,15 +1263,50 @@
                     }
 
                     if (data.success && data.slots && data.slots.length > 0) {
-                        slotsGrid.innerHTML = data.slots.map(slot => `
-                            <button onclick="selectSlot('${slot.slotId}', '${slot.display}')"
-                                    class="slot-option p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:border-salon-primary transition-colors bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20"
-                                    data-slot-id="${slot.slotId}"
-                                    data-time="${slot.display}">
-                                <div class="font-medium">${slot.display}</div>
-                                <div class="text-xs text-gray-500 mt-1">${slot.serviceDurationMinutes || bookingState.serviceDuration} min</div>
-                            </button>
-                        `).join('');
+                        slotsGrid.innerHTML = data.slots.map(slot => {
+                            // Determina lo stato dello slot
+                            let statusClass = '';
+                            let isDisabled = false;
+                            let statusBadge = '';
+
+                            switch (slot.status) {
+                                case 1: // Reserved (da altri)
+                                    statusClass = 'slot-reserved';
+                                    isDisabled = true;
+                                    break;
+                                case 2: // OwnReservation (mia)
+                                    statusClass = 'slot-own-reservation';
+                                    // Ripristina lo stato se c'è una reservation attiva
+                                    if (slot.reservationId) {
+                                        bookingState.reservationId = slot.reservationId;
+                                        bookingState.selectedTimeSlot = slot.slotId;
+                                        bookingState.slotTime = slot.timeSlot;
+                                        if (slot.secondsRemaining) {
+                                            startCountdown(slot.secondsRemaining);
+                                        }
+                                    }
+                                    break;
+                                case 3: // Booked (appuntamento confermato)
+                                    statusClass = 'slot-booked';
+                                    isDisabled = true;
+                                    break;
+                                default: // Available
+                                    statusClass = '';
+                                    break;
+                            }
+
+                            return `
+                                <button onclick="${isDisabled ? '' : `reserveSlot('${slot.slotId}', '${slot.timeSlot}', '${slot.oraInizio}', '${slot.oraFine}')`}"
+                                        class="slot-option p-3 text-sm border border-gray-300 dark:border-gray-600 rounded-lg transition-colors bg-white dark:bg-gray-800 ${statusClass} ${isDisabled ? '' : 'hover:border-salon-primary hover:bg-purple-50 dark:hover:bg-purple-900/20'}"
+                                        data-slot-id="${slot.slotId}"
+                                        data-time="${slot.timeSlot}"
+                                        data-status="${slot.status}"
+                                        ${isDisabled ? 'disabled' : ''}>
+                                    <div class="font-medium">${slot.timeSlot}</div>
+                                    <div class="text-xs text-gray-500 mt-1">${bookingState.serviceDuration} min</div>
+                                </button>
+                            `;
+                        }).join('');
 
                         slotsContainer.classList.remove('hidden');
                     } else {
@@ -1102,27 +1345,301 @@
                 });
         }
 
-        // Selezione slot
-        function selectSlot(slotId, slotTime) {
-            bookingState.selectedTimeSlot = slotId;
-            bookingState.slotTime = slotTime;
+        // NUOVA FUNZIONE: Blocca temporaneamente uno slot (reservation)
+        async function reserveSlot(slotId, slotTime, oraInizio, oraFine) {
+            console.log('Reserving slot:', { slotId, slotTime, oraInizio, oraFine });
 
-            console.log('Slot selected:', { slotId, slotTime });
-
-            // Evidenzia lo slot selezionato
-            document.querySelectorAll('.slot-option').forEach(el => {
-                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
-                el.classList.add('border-gray-300', 'dark:border-gray-600');
-            });
-
-            const selectedSlot = event.target.closest('.slot-option');
-            if (selectedSlot) {
-                selectedSlot.classList.remove('border-gray-300', 'dark:border-gray-600');
-                selectedSlot.classList.add('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20');
+            // Se c'è già una reservation attiva, rilasciala prima
+            if (bookingState.reservationId) {
+                await releaseCurrentReservation();
             }
 
-            updateSummary();
-            updateContinueButton();
+            // Mostra indicatore di caricamento
+            const slotButton = document.querySelector(`[data-slot-id="${slotId}"]`);
+            if (slotButton) {
+                slotButton.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
+                slotButton.disabled = true;
+            }
+
+            // Prepara i dati per la reservation
+            const reserveData = {
+                saloneId: bookingState.saloneId,
+                data: bookingState.selectedDate,
+                oraInizio: oraInizio,
+                oraFine: oraFine,
+                dipendenteId: bookingState.dipendenteId,
+                servizioId: bookingState.servizioId
+            };
+
+            console.log('Sending reserve request:', reserveData);
+
+            try {
+                const response = await fetch('/Search/ReserveSlot', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(reserveData)
+                });
+
+                const result = await response.json();
+                console.log('Reserve response:', result);
+
+                if (result.success) {
+                    // Salva i dati della reservation
+                    bookingState.reservationId = result.reservationId;
+                    bookingState.reservationExpiresAt = result.expiresAt;
+                    bookingState.selectedTimeSlot = slotId;
+                    bookingState.slotTime = slotTime;
+                    bookingState.oraInizio = oraInizio;
+                    bookingState.oraFine = oraFine;
+
+                    // Avvia il countdown
+                    startCountdown(result.remainingSeconds);
+
+                    // Evidenzia lo slot selezionato
+                    highlightSelectedSlot(slotId);
+
+                    // Aggiorna UI
+                    updateSummary();
+                    updateContinueButton();
+
+                    console.log('Slot reserved successfully. ID:', result.reservationId);
+                } else {
+                    // Gestisci errore
+                    handleReservationError(result);
+                    // Ricarica gli slot per mostrare lo stato aggiornato
+                    loadAvailableSlots();
+                }
+            } catch (error) {
+                console.error('Error reserving slot:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Errore di rete',
+                    text: 'Impossibile riservare lo slot. Riprova.',
+                    confirmButtonColor: '#ef4444'
+                });
+                loadAvailableSlots();
+            }
+        }
+
+        // Evidenzia lo slot selezionato
+        function highlightSelectedSlot(slotId) {
+            document.querySelectorAll('.slot-option').forEach(el => {
+                el.classList.remove('border-salon-primary', 'bg-purple-50', 'dark:bg-purple-900/20', 'slot-own-reservation');
+                if (!el.classList.contains('slot-reserved') && !el.classList.contains('slot-booked')) {
+                    el.classList.add('border-gray-300', 'dark:border-gray-600');
+                }
+            });
+
+            const selectedSlot = document.querySelector(`[data-slot-id="${slotId}"]`);
+            if (selectedSlot) {
+                selectedSlot.classList.remove('border-gray-300', 'dark:border-gray-600');
+                selectedSlot.classList.add('slot-own-reservation');
+            }
+        }
+
+        // Gestisce errori di reservation
+        function handleReservationError(result) {
+            let message = result.message || 'Errore durante la prenotazione';
+            let icon = 'warning';
+
+            switch (result.errorCode) {
+                case 0: // SlotNotAvailable
+                    message = 'Questo orario non è più disponibile. È stato appena prenotato.';
+                    icon = 'info';
+                    break;
+                case 1: // SlotAlreadyReserved
+                    message = 'Qualcuno sta già prenotando questo orario. Prova un altro slot.';
+                    icon = 'info';
+                    break;
+                case 2: // InvalidRequest
+                    message = 'Richiesta non valida. Riprova.';
+                    icon = 'error';
+                    break;
+            }
+
+            Swal.fire({
+                icon: icon,
+                title: 'Slot non disponibile',
+                text: message,
+                confirmButtonColor: '#7c3aed'
+            });
+        }
+
+        // Rilascia la reservation corrente
+        async function releaseCurrentReservation() {
+            if (!bookingState.reservationId) return;
+
+            console.log('Releasing reservation:', bookingState.reservationId);
+
+            try {
+                await fetch('/Search/ReleaseReservation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        reservationId: bookingState.reservationId,
+                        sessionId: bookingState.sessionId
+                    })
+                });
+
+                // Reset stato
+                clearReservationState();
+            } catch (error) {
+                console.error('Error releasing reservation:', error);
+            }
+        }
+
+        // Resetta lo stato della reservation
+        function clearReservationState() {
+            bookingState.reservationId = null;
+            bookingState.reservationExpiresAt = null;
+            bookingState.selectedTimeSlot = null;
+            bookingState.slotTime = '';
+            bookingState.oraInizio = null;
+            bookingState.oraFine = null;
+
+            // Ferma il countdown
+            stopCountdown();
+        }
+
+        // === GESTIONE COUNTDOWN ===
+
+        function startCountdown(seconds) {
+            console.log('Starting countdown:', seconds, 'seconds');
+
+            // Ferma eventuali countdown precedenti
+            stopCountdown();
+
+            // Mostra il container del countdown
+            const countdownContainer = document.getElementById('reservationCountdown');
+            if (countdownContainer) {
+                countdownContainer.classList.remove('hidden');
+            }
+
+            let remainingSeconds = seconds;
+            const totalSeconds = RESERVATION_MINUTES * 60;
+
+            // Aggiorna subito
+            updateCountdownDisplay(remainingSeconds, totalSeconds);
+
+            // Avvia intervallo
+            countdownInterval = setInterval(() => {
+                remainingSeconds--;
+
+                if (remainingSeconds <= 0) {
+                    // Tempo scaduto!
+                    handleReservationExpired();
+                } else {
+                    updateCountdownDisplay(remainingSeconds, totalSeconds);
+
+                    // Avviso quando rimane poco tempo (ultimo minuto)
+                    if (remainingSeconds === 60) {
+                        showLowTimeWarning();
+                    }
+                }
+            }, 1000);
+        }
+
+        function stopCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+
+            // Nascondi il container
+            const countdownContainer = document.getElementById('reservationCountdown');
+            if (countdownContainer) {
+                countdownContainer.classList.add('hidden');
+            }
+        }
+
+        function updateCountdownDisplay(seconds, totalSeconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            const timerElement = document.getElementById('countdownTimer');
+            const progressElement = document.getElementById('countdownProgress');
+
+            if (timerElement) {
+                timerElement.textContent = timeString;
+
+                // Cambia colore quando rimane poco tempo
+                if (seconds <= 60) {
+                    timerElement.classList.add('text-red-600', 'countdown-warning');
+                    timerElement.classList.remove('text-amber-600');
+                }
+            }
+
+            if (progressElement) {
+                const percentage = (seconds / totalSeconds) * 100;
+                progressElement.style.width = `${percentage}%`;
+
+                // Cambia colore della barra
+                if (seconds <= 60) {
+                    progressElement.classList.remove('bg-amber-500');
+                    progressElement.classList.add('bg-red-500');
+                }
+            }
+        }
+
+        function showLowTimeWarning() {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Tempo quasi scaduto!',
+                text: 'Hai ancora 1 minuto per completare la prenotazione.',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end'
+            });
+        }
+
+        function handleReservationExpired() {
+            console.log('Reservation expired!');
+
+            // Ferma il countdown
+            stopCountdown();
+
+            // Reset stato
+            clearReservationState();
+
+            // Mostra messaggio "Tempo scaduto"
+            Swal.fire({
+                icon: 'info',
+                title: 'Tempo scaduto',
+                html: `
+                    <div class="text-center">
+                        <i class="fas fa-clock text-5xl text-amber-500 mb-4"></i>
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">
+                            Il tempo per completare la prenotazione è scaduto.
+                        </p>
+                        <p class="text-sm text-gray-500">
+                            Lo slot è stato liberato e potrebbe essere disponibile per altri utenti.
+                        </p>
+                    </div>
+                `,
+                confirmButtonText: 'Seleziona un altro orario',
+                confirmButtonColor: '#7c3aed',
+                allowOutsideClick: false
+            }).then(() => {
+                // Ricarica gli slot
+                loadAvailableSlots();
+                updateSummary();
+                updateContinueButton();
+            });
+        }
+
+        // Vecchia funzione selectSlot per compatibilità (ora usa reserveSlot)
+        function selectSlot(slotId, slotTime) {
+            // Questa funzione non dovrebbe più essere chiamata direttamente
+            // Ma la manteniamo per compatibilità
+            console.warn('selectSlot called directly - should use reserveSlot');
+            reserveSlot(slotId, slotTime, null, null);
         }
 
         // FUNZIONI CORRETTE per la navigazione tra i passi
@@ -1171,8 +1688,15 @@
             }, 100);
         }
 
-        function prevStep() {
+        async function prevStep() {
             console.log('Moving back from step', bookingState.currentStep);
+
+            // Se si torna indietro dallo step di data/ora, rilascia la reservation
+            const dateTimeStep = bookingState.showStaffSelection ? 3 : 2;
+            if (bookingState.currentStep === dateTimeStep && bookingState.reservationId) {
+                console.log('Releasing reservation due to navigation back');
+                await releaseCurrentReservation();
+            }
 
             // Nascondi step corrente
             const currentStepElement = document.getElementById(`booking-step-${bookingState.currentStep}`);
@@ -1307,13 +1831,102 @@
             });
         }
 
-        // Conferma prenotazione
-        function confirmBooking() {
+        // Conferma prenotazione (usa ConfirmReservation se c'è una reservation attiva)
+        async function confirmBooking() {
             if (!canProceed()) {
                 Swal.fire('Attenzione', 'Completa tutti i campi richiesti', 'warning');
                 return;
             }
 
+            // Disabilita il pulsante
+            const confirmBtn = document.getElementById('confirmBooking');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Prenotando...';
+
+            // Se c'è una reservation attiva, usa il nuovo endpoint ConfirmReservation
+            if (bookingState.reservationId) {
+                await confirmWithReservation();
+            } else {
+                // Fallback al metodo tradizionale (non dovrebbe accadere con il nuovo sistema)
+                await confirmTraditional();
+            }
+        }
+
+        // Conferma usando il sistema di reservation
+        async function confirmWithReservation() {
+            const confirmData = {
+                reservationId: bookingState.reservationId,
+                note: document.getElementById('bookingNotes')?.value || ''
+            };
+
+            // Aggiungi dati cliente se non autenticato
+            if (!@User.Identity.IsAuthenticated.ToString().ToLower()) {
+                confirmData.nome = document.getElementById('customerName').value;
+                confirmData.cognome = document.getElementById('customerSurname').value;
+                confirmData.email = document.getElementById('customerEmail').value;
+                confirmData.telefono = document.getElementById('customerPhone').value;
+            }
+
+            console.log('Confirming reservation:', confirmData);
+
+            try {
+                const response = await fetch('/Search/ConfirmReservation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(confirmData)
+                });
+
+                const data = await response.json();
+                console.log('Confirm reservation response:', data);
+
+                if (data.success) {
+                    // Ferma il countdown
+                    stopCountdown();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Prenotazione Confermata!',
+                        html: `
+                            <div class="text-left space-y-3">
+                                <div class="bg-green-50 p-4 rounded-lg">
+                                    <p class="font-medium text-green-800 mb-2">Dettagli della prenotazione:</p>
+                                    <ul class="text-sm text-green-700 space-y-1">
+                                        <li><strong>Servizio:</strong> ${bookingState.serviceName}</li>
+                                        <li><strong>Data:</strong> ${document.getElementById('summaryDate')?.textContent || bookingState.selectedDate}</li>
+                                        <li><strong>Orario:</strong> ${bookingState.slotTime}</li>
+                                        <li><strong>Presso:</strong> @Model.Salone.Nome</li>
+                                        ${bookingState.staffName ? `<li><strong>Con:</strong> ${bookingState.staffName}</li>` : ''}
+                                    </ul>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-4">
+                                    <i class="fas fa-envelope mr-2"></i>
+                                    Riceverai una conferma via email con tutti i dettagli.
+                                </p>
+                            </div>
+                        `,
+                        confirmButtonText: 'Perfetto!',
+                        confirmButtonColor: getComputedStyle(document.documentElement).getPropertyValue('--primary-color') || '#7c3aed',
+                        allowOutsideClick: false
+                    }).then(() => {
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            window.location.reload();
+                        }
+                    });
+                } else {
+                    handleBookingError(data);
+                }
+            } catch (error) {
+                console.error('Errore conferma reservation:', error);
+                handleNetworkError();
+            }
+        }
+
+        // Metodo tradizionale (fallback)
+        async function confirmTraditional() {
             const bookingData = {
                 saloneId: bookingState.saloneId,
                 servizioId: bookingState.servizioId,
@@ -1331,24 +1944,19 @@
                 bookingData.telefono = document.getElementById('customerPhone').value;
             }
 
-            console.log('Sending booking request:', bookingData);
+            console.log('Sending traditional booking request:', bookingData);
 
-            // Disabilita il pulsante
-            const confirmBtn = document.getElementById('confirmBooking');
-            confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Prenotando...';
+            try {
+                const response = await fetch('/Search/CreateBooking', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                    },
+                    body: JSON.stringify(bookingData)
+                });
 
-            // Invia la prenotazione
-            fetch('/Search/CreateBooking', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-                },
-                body: JSON.stringify(bookingData)
-            })
-            .then(response => response.json())
-            .then(data => {
+                const data = await response.json();
                 console.log('Booking response:', data);
 
                 if (data.success) {
@@ -1384,31 +1992,47 @@
                         }
                     });
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Errore nella prenotazione',
-                        text: data.message || 'Si è verificato un errore. Riprova.',
-                        confirmButtonColor: '#ef4444'
-                    });
-
-                    // Riabilita il pulsante
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Conferma Prenotazione';
+                    handleBookingError(data);
                 }
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Errore prenotazione:', error);
+                handleNetworkError();
+            }
+        }
+
+        function handleBookingError(data) {
+            const confirmBtn = document.getElementById('confirmBooking');
+
+            // Controlla se la reservation è scaduta
+            if (data.errorCode === 3) { // ReservationExpired
+                handleReservationExpired();
+            } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Errore di rete',
-                    text: 'Verifica la connessione e riprova.',
+                    title: 'Errore nella prenotazione',
+                    text: data.message || 'Si è verificato un errore. Riprova.',
                     confirmButtonColor: '#ef4444'
                 });
+            }
 
-                // Riabilita il pulsante
-                confirmBtn.disabled = false;
-                confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Conferma Prenotazione';
+            // Riabilita il pulsante
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Conferma Prenotazione';
+        }
+
+        function handleNetworkError() {
+            const confirmBtn = document.getElementById('confirmBooking');
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Errore di rete',
+                text: 'Verifica la connessione e riprova.',
+                confirmButtonColor: '#ef4444'
             });
+
+            // Riabilita il pulsante
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Conferma Prenotazione';
         }
 
         // Funzioni per la galleria
@@ -1459,5 +2083,25 @@
                 document.getElementById('bookingFlow')?.scrollIntoView({ behavior: 'smooth' });
             }, 500);
         }
+
+        // Rilascia la reservation quando l'utente lascia la pagina
+        window.addEventListener('beforeunload', function(e) {
+            if (bookingState.reservationId) {
+                // Usa sendBeacon per garantire che la richiesta venga inviata
+                const data = JSON.stringify({
+                    reservationId: bookingState.reservationId,
+                    sessionId: bookingState.sessionId
+                });
+
+                navigator.sendBeacon('/Search/ReleaseReservation', new Blob([data], { type: 'application/json' }));
+            }
+        });
+
+        // Gestisci anche il pulsante indietro del browser
+        window.addEventListener('popstate', async function(e) {
+            if (bookingState.reservationId) {
+                await releaseCurrentReservation();
+            }
+        });
     </script>
 }

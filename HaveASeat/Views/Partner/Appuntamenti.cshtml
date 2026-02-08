@@ -367,29 +367,36 @@
         </button>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Filtro Data -->
-        <div class="form-control">
-            <label class="label">
-                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Data</span>
-            </label>
-            <input type="date" id="filterDate" class="input input-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+    <!-- Navigatore Periodo -->
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+        <input type="hidden" id="filterDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        <select id="filterPeriodo" class="select select-bordered select-sm bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
+            <option value="giorno">Giorno</option>
+            <option value="settimana">Settimana</option>
+            <option value="mese">Mese</option>
+            <option value="custom">Personalizzato</option>
+        </select>
+        <div class="flex items-center gap-2">
+            <button onclick="navigatePeriod(-1)" class="btn btn-sm btn-ghost btn-circle">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <span id="periodLabel" class="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[160px] text-center"></span>
+            <button onclick="navigatePeriod(1)" class="btn btn-sm btn-ghost btn-circle">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
+        <button onclick="goToToday()" class="btn btn-sm btn-outline btn-primary">Oggi</button>
+    </div>
 
-        <!-- Filtro Range Date -->
-        <div class="form-control">
-            <label class="label">
-                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Periodo</span>
-            </label>
-            <select id="filterPeriodo" class="select select-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
-                <option value="giorno">Oggi</option>
-                <option value="domani">Domani</option>
-                <option value="settimana">Questa Settimana</option>
-                <option value="mese">Questo Mese</option>
-                <option value="custom">Personalizzato</option>
-            </select>
-        </div>
+    <!-- Date personalizzate (nascoste di default) -->
+    <div id="customDateRange" class="flex items-center gap-2 mb-4 hidden">
+        <input type="date" id="dateFrom" class="input input-bordered input-sm bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
+        <span class="text-gray-600 dark:text-gray-400">—</span>
+        <input type="date" id="dateTo" class="input input-bordered input-sm bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
+        <button onclick="filterAppointments()" class="btn btn-sm btn-primary">Applica</button>
+    </div>
 
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Filtro Servizio -->
         <div class="form-control">
             <label class="label">
@@ -397,7 +404,6 @@
             </label>
             <select id="filterServizio" class="select select-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
                 <option value="">Tutti i servizi</option>
-                <!-- Popolato dinamicamente -->
             </select>
         </div>
 
@@ -408,7 +414,6 @@
             </label>
             <select id="filterDipendente" class="select select-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
                 <option value="">Tutti i dipendenti</option>
-                <!-- Popolato dinamicamente -->
             </select>
         </div>
 
@@ -420,18 +425,6 @@
             <div class="relative">
                 <input type="text" id="searchCliente" class="input input-bordered w-full pr-10 bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" placeholder="Nome o telefono..." />
                 <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            </div>
-        </div>
-
-        <!-- Date personalizzate (nascoste di default) -->
-        <div id="customDateRange" class="form-control col-span-2 hidden">
-            <label class="label">
-                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Periodo Personalizzato</span>
-            </label>
-            <div class="flex gap-2">
-                <input type="date" id="dateFrom" class="input input-bordered flex-1 bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
-                <span class="self-center text-gray-600 dark:text-gray-400">a</span>
-                <input type="date" id="dateTo" class="input input-bordered flex-1 bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
             </div>
         </div>
     </div>
@@ -564,9 +557,10 @@
              initializeViews();
         loadAppointments();
         setupEventListeners();
-        
+
         // Imposta la data di oggi come default
         document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+        updatePeriodLabel();
     });
 
     let currentStatusFilter = '';
@@ -578,8 +572,9 @@
                 document.getElementById('customDateRange').classList.remove('hidden');
             } else {
                 document.getElementById('customDateRange').classList.add('hidden');
-                updateDateFromPeriod(this.value);
             }
+            updatePeriodLabel();
+            filterAppointments();
         });
 
         // Ricerca in tempo reale
@@ -652,24 +647,62 @@
         document.getElementById('countCancellati').textContent = cancellati;
     }
 
-    function updateDateFromPeriod(period) {
+    function navigatePeriod(direction) {
         const filterDate = document.getElementById('filterDate');
-        const today = new Date();
-        
-        switch(period) {
+        const periodo = document.getElementById('filterPeriodo').value;
+        const date = new Date(filterDate.value);
+
+        switch(periodo) {
             case 'giorno':
-                filterDate.value = today.toISOString().split('T')[0];
-                break;
-            case 'domani':
-                const tomorrow = new Date(today);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                filterDate.value = tomorrow.toISOString().split('T')[0];
+                date.setDate(date.getDate() + direction);
                 break;
             case 'settimana':
-                // Mantieni la data corrente ma il filtro considererà tutta la settimana
+                date.setDate(date.getDate() + (7 * direction));
                 break;
             case 'mese':
-                // Mantieni la data corrente ma il filtro considererà tutto il mese
+                date.setMonth(date.getMonth() + direction);
+                break;
+        }
+
+        filterDate.value = date.toISOString().split('T')[0];
+        updatePeriodLabel();
+        filterAppointments();
+    }
+
+    function goToToday() {
+        document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
+        updatePeriodLabel();
+        filterAppointments();
+    }
+
+    function updatePeriodLabel() {
+        const filterDate = new Date(document.getElementById('filterDate').value);
+        const periodo = document.getElementById('filterPeriodo').value;
+        const label = document.getElementById('periodLabel');
+        const giorni = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+        const mesi = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+
+        switch(periodo) {
+            case 'giorno':
+                const today = new Date();
+                if (filterDate.toDateString() === today.toDateString()) {
+                    label.textContent = `Oggi, ${filterDate.getDate()} ${mesi[filterDate.getMonth()]}`;
+                } else {
+                    label.textContent = `${giorni[filterDate.getDay()]} ${filterDate.getDate()} ${mesi[filterDate.getMonth()]}`;
+                }
+                break;
+            case 'settimana':
+                const weekStart = new Date(filterDate);
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+                const weekEnd = new Date(weekStart);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                label.textContent = `${weekStart.getDate()} ${mesi[weekStart.getMonth()].substring(0,3)} - ${weekEnd.getDate()} ${mesi[weekEnd.getMonth()].substring(0,3)} ${weekEnd.getFullYear()}`;
+                break;
+            case 'mese':
+                label.textContent = `${mesi[filterDate.getMonth()]} ${filterDate.getFullYear()}`;
+                break;
+            case 'custom':
+                label.textContent = 'Periodo personalizzato';
                 break;
         }
     }
@@ -758,32 +791,29 @@
     function matchDateFilter(appDate, filterDate, periodo) {
         const appointmentDate = new Date(appDate);
         const selectedDate = new Date(filterDate);
-        
+
         switch(periodo) {
             case 'giorno':
                 return appointmentDate.toDateString() === selectedDate.toDateString();
-            
-            case 'domani':
-                const tomorrow = new Date(selectedDate);
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                return appointmentDate.toDateString() === tomorrow.toDateString();
-            
+
             case 'settimana':
                 const weekStart = new Date(selectedDate);
                 weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekEnd.getDate() + 6);
+                weekEnd.setHours(23, 59, 59);
                 return appointmentDate >= weekStart && appointmentDate <= weekEnd;
-            
+
             case 'mese':
                 return appointmentDate.getMonth() === selectedDate.getMonth() &&
                        appointmentDate.getFullYear() === selectedDate.getFullYear();
-            
+
             case 'custom':
                 const dateFrom = new Date(document.getElementById('dateFrom').value);
                 const dateTo = new Date(document.getElementById('dateTo').value);
+                dateTo.setHours(23, 59, 59);
                 return appointmentDate >= dateFrom && appointmentDate <= dateTo;
-            
+
             default:
                 return true;
         }
@@ -834,8 +864,13 @@
         container.innerHTML = filteredAppointments.map(app => `
             <div class="appointment-card cursor-pointer" onclick="showAppointmentDetails('${app.id}')">
                 <div class="flex justify-between items-start mb-3">
-                    <div class="text-lg font-semibold dark:text-gray-100">
-                        ${app.orarioInizio} - ${app.orarioFine}
+                    <div>
+                        <div class="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">
+                            <i class="fas fa-calendar-day mr-1"></i>${formatDateIT(app.data)}
+                        </div>
+                        <div class="text-lg font-semibold dark:text-gray-100">
+                            ${app.orarioInizio} - ${app.orarioFine}
+                        </div>
                     </div>
                     <span class="status-badge status-${getStatusClass(app.stato)}">
                         ${getStatusLabel(app.stato)}
@@ -927,6 +962,9 @@
                 <div class="appointment-card ml-8 cursor-pointer" onclick="showAppointmentDetails('${app.id}')">
                     <div class="flex justify-between items-start mb-2">
                         <div>
+                            <div class="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">
+                                ${formatDateIT(app.data)}
+                            </div>
                             <div class="font-semibold text-lg dark:text-gray-100">
                                 ${app.orarioInizio} - ${app.orarioFine}
                             </div>
@@ -945,6 +983,11 @@
                 </div>
             </div>
         `).join('');
+    }
+
+    function formatDateIT(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     function getStatusClass(stato) {
@@ -1138,6 +1181,7 @@
             allBtn.classList.add('bg-purple-600', 'text-white');
         }
 
+        updatePeriodLabel();
         filterAppointments();
     }
 
@@ -1167,7 +1211,7 @@
     function getFilterStartDate() {
         const periodo = document.getElementById('filterPeriodo').value;
         const filterDate = new Date(document.getElementById('filterDate').value);
-        
+
         switch(periodo) {
             case 'settimana':
                 filterDate.setDate(filterDate.getDate() - filterDate.getDay() + 1);
@@ -1178,18 +1222,15 @@
             case 'custom':
                 return document.getElementById('dateFrom').value;
         }
-        
+
         return filterDate.toISOString().split('T')[0];
     }
 
     function getFilterEndDate() {
         const periodo = document.getElementById('filterPeriodo').value;
         const filterDate = new Date(document.getElementById('filterDate').value);
-        
+
         switch(periodo) {
-            case 'domani':
-                filterDate.setDate(filterDate.getDate() + 1);
-                break;
             case 'settimana':
                 filterDate.setDate(filterDate.getDate() - filterDate.getDay() + 7);
                 break;
@@ -1200,7 +1241,7 @@
             case 'custom':
                 return document.getElementById('dateTo').value;
         }
-        
+
         return filterDate.toISOString().split('T')[0];
     }
 

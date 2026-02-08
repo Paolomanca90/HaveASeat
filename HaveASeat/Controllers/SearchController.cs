@@ -15,12 +15,21 @@ namespace HaveASeat.Controllers
 		private readonly ApplicationDbContext _context;
 		private readonly ILogger<SearchController> _logger;
 		private readonly ISlotService _slotService;
+		private readonly ISlotReservationService _slotReservationService;
+		private readonly IBookingService _bookingService;
 
-		public SearchController(ApplicationDbContext context, ILogger<SearchController> logger, ISlotService slotService)
+		public SearchController(
+			ApplicationDbContext context,
+			ILogger<SearchController> logger,
+			ISlotService slotService,
+			ISlotReservationService slotReservationService,
+			IBookingService bookingService)
 		{
 			_context = context;
 			_logger = logger;
 			_slotService = slotService;
+			_slotReservationService = slotReservationService;
+			_bookingService = bookingService;
 		}
 
 		[HttpGet]
@@ -221,6 +230,127 @@ namespace HaveASeat.Controllers
 				return Json(new { success = false, message = "Errore nel caricamento degli orari" });
 			}
 		}
+
+		#region Slot Reservation Endpoints (Sistema di blocco temporaneo)
+
+		/// <summary>
+		/// Ottiene gli slot con informazioni sullo stato di reservation
+		/// </summary>
+		[HttpGet]
+		public async Task<IActionResult> GetSlotsWithStatus(Guid saloneId, DateTime data, Guid? dipendenteId = null, Guid? servizioId = null)
+		{
+			try
+			{
+				var sessionId = GetOrCreateSessionId();
+				var slots = await _slotReservationService.GetSlotsWithStatusAsync(saloneId, data, dipendenteId, servizioId, sessionId);
+				return Json(new { success = true, slots, sessionId });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore nel caricamento slot con stato per salone {SaloneId}", saloneId);
+				return Json(new { success = false, message = "Errore nel caricamento degli orari" });
+			}
+		}
+
+		/// <summary>
+		/// Blocca temporaneamente uno slot (10 minuti)
+		/// </summary>
+		[HttpPost]
+		public async Task<IActionResult> ReserveSlot([FromBody] ReserveSlotRequest request)
+		{
+			try
+			{
+				// Imposta session e user ID
+				request.SessionId = GetOrCreateSessionId();
+				request.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				var result = await _slotReservationService.ReserveSlotAsync(request);
+				return Json(result);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore durante la reservation dello slot");
+				return Json(SlotReservationResult.Fail(SlotReservationErrorCode.DatabaseError, "Errore durante la prenotazione"));
+			}
+		}
+
+		/// <summary>
+		/// Rilascia una reservation attiva
+		/// </summary>
+		[HttpPost]
+		public async Task<IActionResult> ReleaseReservation([FromBody] ReleaseReservationRequest request)
+		{
+			try
+			{
+				var sessionId = GetOrCreateSessionId();
+				var success = await _slotReservationService.ReleaseReservationAsync(request.ReservationId, sessionId);
+				return Json(new { success, message = success ? "Slot rilasciato" : "Impossibile rilasciare lo slot" });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore durante il rilascio della reservation");
+				return Json(new { success = false, message = "Errore durante il rilascio" });
+			}
+		}
+
+		/// <summary>
+		/// Ottiene lo stato di una reservation
+		/// </summary>
+		[HttpGet]
+		public async Task<IActionResult> GetReservationStatus(Guid reservationId)
+		{
+			try
+			{
+				var sessionId = GetOrCreateSessionId();
+				var status = await _slotReservationService.GetReservationStatusAsync(reservationId, sessionId);
+				return Json(status);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore durante il controllo stato reservation");
+				return Json(new ReservationStatusResponse { IsActive = false, Message = "Errore" });
+			}
+		}
+
+		/// <summary>
+		/// Conferma una reservation e crea l'appuntamento
+		/// </summary>
+		[HttpPost]
+		public async Task<IActionResult> ConfirmReservation([FromBody] ConfirmReservationRequest request)
+		{
+			try
+			{
+				request.SessionId = GetOrCreateSessionId();
+				request.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				var result = await _slotReservationService.ConfirmReservationAsync(request);
+				return Json(result);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore durante la conferma della reservation");
+				return Json(new BookingResponseDto { Success = false, Message = "Errore durante la conferma" });
+			}
+		}
+
+		/// <summary>
+		/// Ottiene o crea un ID sessione per tracciare le reservation
+		/// </summary>
+		private string GetOrCreateSessionId()
+		{
+			const string SessionKey = "SlotReservationSessionId";
+			var sessionId = HttpContext.Session.GetString(SessionKey);
+
+			if (string.IsNullOrEmpty(sessionId))
+			{
+				sessionId = Guid.NewGuid().ToString();
+				HttpContext.Session.SetString(SessionKey, sessionId);
+			}
+
+			return sessionId;
+		}
+
+		#endregion
 
 		// METODO AGGIORNATO: CreateBooking con gestione degli slot dinamici
 		[HttpPost]
@@ -627,10 +757,118 @@ namespace HaveASeat.Controllers
 
 		#endregion
 
-		// Metodo UpdateBooking corretto per il SearchController
-		// Sostituisci il metodo esistente con questa versione corretta
+		#region Booking Management Endpoints
 
-		public async Task<BookingResponseDto> UpdateBookingAsync(UpdateBookingDto request, string userId)
+		[HttpGet]
+		[Authorize]
+		public async Task<IActionResult> GetBookingDetails(Guid id)
+		{
+			try
+			{
+				var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+				var details = await _bookingService.GetBookingDetailsAsync(id, userId);
+
+				if (details == null)
+				{
+					return NotFound(new { success = false, message = "Prenotazione non trovata" });
+				}
+
+				return Json(details);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore recupero dettagli prenotazione {Id}", id);
+				return StatusCode(500, new { success = false, message = "Errore durante il recupero dei dettagli" });
+			}
+		}
+
+		[HttpPost]
+		[Authorize]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> CancelBooking(Guid id, string? motivo = null)
+		{
+			try
+			{
+				var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+				var canCancel = await _bookingService.CanCancelBookingAsync(id, userId);
+				if (!canCancel)
+				{
+					return Json(new { success = false, message = "Non è possibile cancellare questa prenotazione. Verifica che sia stata prenotata da te e che manchino almeno 24 ore." });
+				}
+
+				var result = await _bookingService.CancelBookingAsync(id, userId, motivo);
+
+				if (result)
+				{
+					return Json(new { success = true, message = "Prenotazione cancellata con successo" });
+				}
+
+				return Json(new { success = false, message = "Errore durante la cancellazione della prenotazione" });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore cancellazione prenotazione {Id}", id);
+				return StatusCode(500, new { success = false, message = "Errore durante la cancellazione" });
+			}
+		}
+
+		[HttpPost]
+		[Authorize]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> UpdateBooking([FromBody] UpdateBookingDto request)
+		{
+			try
+			{
+				var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (string.IsNullOrEmpty(userId))
+				{
+					return Unauthorized(new { success = false, message = "Utente non autenticato" });
+				}
+
+				var result = await _bookingService.UpdateBookingAsync(request, userId);
+				return Json(result);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore modifica prenotazione {Id}", request.AppuntamentoId);
+				return StatusCode(500, new BookingResponseDto { Success = false, Message = "Errore durante la modifica" });
+			}
+		}
+
+		[HttpPost]
+		[Authorize]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> AddReview([FromBody] AddReviewDto request)
+		{
+			try
+			{
+				var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+				if (string.IsNullOrEmpty(userId))
+				{
+					return Unauthorized(new { success = false, message = "Utente non autenticato" });
+				}
+
+				var result = await _bookingService.AddReviewAsync(request, userId);
+
+				if (result)
+				{
+					return Json(new { success = true, message = "Recensione aggiunta con successo!" });
+				}
+
+				return Json(new { success = false, message = "Impossibile aggiungere la recensione. Verifica che l'appuntamento sia completato." });
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore aggiunta recensione per appuntamento {Id}", request.AppuntamentoId);
+				return StatusCode(500, new { success = false, message = "Errore durante l'invio della recensione" });
+			}
+		}
+
+		#endregion
+
+		// Metodo legacy UpdateBooking - mantenuto per compatibilità interna
+		private async Task<BookingResponseDto> UpdateBookingInternalAsync(UpdateBookingDto request, string userId)
 		{
 			using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -845,8 +1083,7 @@ namespace HaveASeat.Controllers
 									Messaggio = "La tua prenotazione è stata modificata con successo"
 								};
 
-								// Assumendo che il BookingService abbia un metodo per inviare notifiche
-								// await _bookingService.SendBookingNotificationAsync(notifica);
+								await _bookingService.SendBookingNotificationAsync(notifica);
 							}
 							catch (Exception ex)
 							{
