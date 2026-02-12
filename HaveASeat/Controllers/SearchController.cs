@@ -161,6 +161,39 @@ namespace HaveASeat.Controllers
 		}
 
 		[HttpGet]
+		public async Task<IActionResult> Profilo(Guid id)
+		{
+			try
+			{
+				var salone = await _context.Salone
+					.Include(s => s.SalonePersonalizzazione)
+					.Include(s => s.Immagini)
+					.Include(s => s.Servizi)
+					.Include(s => s.Dipendenti)
+						.ThenInclude(d => d.ApplicationUser)
+					.Include(s => s.Dipendenti)
+						.ThenInclude(d => d.ServiziOfferti)
+							.ThenInclude(ds => ds.Servizio)
+					.Include(s => s.Recensioni)
+						.ThenInclude(r => r.ApplicationUser)
+					.Include(s => s.Orari)
+					.FirstOrDefaultAsync(s => s.SaloneId == id && s.Stato == HaveASeat.Utilities.Enum.Stato.Attivo);
+
+				if (salone == null)
+				{
+					return NotFound("Salone non trovato");
+				}
+
+				return View(salone);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, "Errore nel caricamento profilo salone {SaloneId}", id);
+				return View("Error");
+			}
+		}
+
+		[HttpGet]
 		public async Task<IActionResult> Suggestions(string q, int limit = 5)
 		{
 			if (string.IsNullOrWhiteSpace(q) || q.Length < 2)

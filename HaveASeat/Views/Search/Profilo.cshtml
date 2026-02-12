@@ -1,0 +1,737 @@
+@model HaveASeat.Models.Salone
+
+@{
+    Layout = null;
+    var personalizzazione = Model.SalonePersonalizzazione;
+    var coverImage = Model.Immagini?.FirstOrDefault(i => i.IsCover);
+    var galleryImages = Model.Immagini?.Where(i => !i.IsCover && !i.IsLogo).Take(6).ToList() ?? new List<HaveASeat.Models.Immagine>();
+
+    var colorePrimario = personalizzazione?.ColorePrimario ?? "#7c3aed";
+    var coloreSecondario = personalizzazione?.ColoreSecondario ?? "#ec4899";
+    var coloreAccento = personalizzazione?.ColoreAccento ?? "#f59e0b";
+    var layoutTipo = personalizzazione?.LayoutTipo ?? "moderno";
+
+    var mostraGalleria = personalizzazione?.MostraGalleria ?? true;
+    var mostraTeam = personalizzazione?.MostraTeam ?? true;
+    var mostraServizi = personalizzazione?.MostraServizi ?? true;
+    var mostraRecensioni = personalizzazione?.MostraRecensioni ?? true;
+    var mostraContatti = personalizzazione?.MostraContatti ?? true;
+}
+
+<!DOCTYPE html>
+<html lang="it" class="h-full">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@Model.Nome - HaveASeat</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '@colorePrimario',
+                        secondary: '@coloreSecondario',
+                        accent: '@coloreAccento'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+
+        .custom-popup .leaflet-popup-content-wrapper { border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .custom-popup .leaflet-popup-tip { background: white; }
+        .leaflet-control-zoom a { transition: all 0.2s ease; }
+        .leaflet-control-zoom a:hover { background: @colorePrimario !important; color: white !important; }
+        .leaflet-control-attribution { display: none; }
+        .leaflet-marker-icon { background: none; border: none; }
+
+        .hero-gradient { background: linear-gradient(135deg, @colorePrimario 0%, @coloreSecondario 100%); }
+        .btn-primary { background-color: @coloreAccento; border-color: @coloreAccento; }
+        .btn-primary:hover { background-color: color-mix(in srgb, @coloreAccento 85%, black); border-color: color-mix(in srgb, @coloreAccento 85%, black); }
+        .text-primary { color: @colorePrimario; }
+        .text-secondary { color: @coloreSecondario; }
+        .text-accent { color: @coloreAccento; }
+        .bg-primary { background-color: @colorePrimario; }
+        .bg-secondary { background-color: @coloreSecondario; }
+        .bg-accent { background-color: @coloreAccento; }
+        .border-primary { border-color: @colorePrimario; }
+
+        .section { padding-top: 5rem; padding-bottom: 5rem; }
+
+        @if (layoutTipo == "classico")
+        {
+            <text>
+            .layout-classic .section { padding: 5rem 0; }
+            .layout-classic .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+            .layout-classic h2 { text-align: center; margin-bottom: 3rem; }
+            </text>
+        }
+        else if (layoutTipo == "magazine")
+        {
+            <text>
+            .layout-magazine .section { padding: 4rem 0; }
+            .layout-magazine .container { padding: 0 1rem; }
+            .layout-magazine .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+            </text>
+        }
+        else
+        {
+            <text>
+            .layout-modern .section { padding: 6rem 0; }
+            .layout-modern .container { max-width: 1400px; margin: 0 auto; padding: 0 1rem; }
+            </text>
+        }
+    </style>
+</head>
+
+<body class="layout-@layoutTipo">
+    <!-- Header/Navigation -->
+    <header class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4">
+            <nav class="flex items-center justify-between py-4">
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-500 hover:text-primary transition-colors mr-2" title="Torna alla Home">
+                        <i class="fas fa-arrow-left text-lg"></i>
+                    </a>
+                    @if (!string.IsNullOrEmpty(personalizzazione?.LogoUrl))
+                    {
+                        <img src="@personalizzazione.LogoUrl" alt="@Model.Nome" class="h-12 w-auto">
+                    }
+                    else
+                    {
+                        <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fas fa-cut text-white text-xl"></i>
+                        </div>
+                    }
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">@Model.Nome</h1>
+                        @if (!string.IsNullOrEmpty(personalizzazione?.Slogan))
+                        {
+                            <p class="text-sm text-gray-600">@personalizzazione.Slogan</p>
+                        }
+                    </div>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-6">
+                    @if (mostraServizi && Model.Servizi.Any())
+                    {
+                        <a href="#servizi" class="text-gray-700 hover:text-primary transition-colors">Servizi</a>
+                    }
+                    @if (mostraTeam && Model.Dipendenti.Any())
+                    {
+                        <a href="#team" class="text-gray-700 hover:text-primary transition-colors">Team</a>
+                    }
+                    @if (mostraGalleria && galleryImages.Any())
+                    {
+                        <a href="#galleria" class="text-gray-700 hover:text-primary transition-colors">Galleria</a>
+                    }
+                    @if (mostraContatti)
+                    {
+                        <a href="#contatti" class="text-gray-700 hover:text-primary transition-colors">Contatti</a>
+                    }
+                    <a href="/Search/Details/@Model.SaloneId" class="btn-primary text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transition-all">
+                        Prenota Ora
+                    </a>
+                </div>
+
+                <button class="md:hidden text-gray-700" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </nav>
+            <!-- Mobile menu -->
+            <div id="mobileMenu" class="hidden md:hidden pb-4 border-t border-gray-200 pt-4">
+                <div class="flex flex-col space-y-3">
+                    @if (mostraServizi && Model.Servizi.Any())
+                    {
+                        <a href="#servizi" class="text-gray-700 hover:text-primary transition-colors">Servizi</a>
+                    }
+                    @if (mostraTeam && Model.Dipendenti.Any())
+                    {
+                        <a href="#team" class="text-gray-700 hover:text-primary transition-colors">Team</a>
+                    }
+                    @if (mostraGalleria && galleryImages.Any())
+                    {
+                        <a href="#galleria" class="text-gray-700 hover:text-primary transition-colors">Galleria</a>
+                    }
+                    @if (mostraContatti)
+                    {
+                        <a href="#contatti" class="text-gray-700 hover:text-primary transition-colors">Contatti</a>
+                    }
+                    <a href="/Search/Details/@Model.SaloneId" class="btn-primary text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transition-all text-center">
+                        Prenota Ora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white relative overflow-hidden">
+        @if (coverImage != null)
+        {
+            <div class="absolute inset-0">
+                <img src="@coverImage.Percorso" alt="@Model.Nome" class="w-full h-full object-cover">
+                <div class="absolute inset-0 hero-gradient opacity-80"></div>
+            </div>
+        }
+
+        <div class="relative container mx-auto px-4 py-20 lg:py-32">
+            <div class="max-w-3xl">
+                <h2 class="text-4xl lg:text-6xl font-bold mb-6">
+                    Benvenuto da @Model.Nome
+                </h2>
+                @if (!string.IsNullOrEmpty(personalizzazione?.Slogan))
+                {
+                    <p class="text-xl lg:text-2xl mb-8 opacity-90">@personalizzazione.Slogan</p>
+                }
+                else
+                {
+                    <p class="text-xl lg:text-2xl mb-8 opacity-90">
+                        Scopri l'esperienza di bellezza che fa per te
+                    </p>
+                }
+
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="/Search/Details/@Model.SaloneId" class="btn-primary text-white px-8 py-4 rounded-full text-lg font-medium hover:shadow-xl transition-all inline-flex items-center justify-center">
+                        <i class="fas fa-calendar-alt mr-2"></i>
+                        Prenota Appuntamento
+                    </a>
+                    @if (mostraServizi && Model.Servizi.Any())
+                    {
+                        <a href="#servizi" class="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-medium hover:bg-white hover:text-primary transition-all text-center">
+                            Scopri i Servizi
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Social Links -->
+        @if (!string.IsNullOrEmpty(personalizzazione?.InstagramUrl) || !string.IsNullOrEmpty(personalizzazione?.FacebookUrl) || !string.IsNullOrEmpty(personalizzazione?.TiktokUrl))
+        {
+            <div class="absolute bottom-8 right-8 flex space-x-4">
+                @if (!string.IsNullOrEmpty(personalizzazione?.InstagramUrl))
+                {
+                    <a href="@personalizzazione.InstagramUrl" target="_blank" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white hover:bg-opacity-30 transition-all">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                }
+                @if (!string.IsNullOrEmpty(personalizzazione?.FacebookUrl))
+                {
+                    <a href="@personalizzazione.FacebookUrl" target="_blank" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white hover:bg-opacity-30 transition-all">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                }
+                @if (!string.IsNullOrEmpty(personalizzazione?.TiktokUrl))
+                {
+                    <a href="@personalizzazione.TiktokUrl" target="_blank" class="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white hover:bg-opacity-30 transition-all">
+                        <i class="fab fa-tiktok"></i>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+
+    <!-- Servizi Section -->
+    @if (mostraServizi && Model.Servizi.Any())
+    {
+        <section id="servizi" class="section bg-gray-50 mt-0">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">I Nostri Servizi</h2>
+                    <p class="text-xl text-gray-600">Trattamenti di bellezza personalizzati per te</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    @foreach (var servizio in Model.Servizi.Take(6))
+                    {
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                            <div class="p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-xl font-semibold text-gray-800">@servizio.Nome</h3>
+                                    @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                                    {
+                                        <span class="bg-red-500 text-white px-2 py-1 rounded-full text-sm font-medium">PROMO</span>
+                                    }
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(servizio.Descrizione))
+                                {
+                                    <p class="text-gray-600 mb-4">@servizio.Descrizione</p>
+                                }
+
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        @if (servizio.IsPromotion && servizio.DataFinePromozione > DateTime.Now)
+                                        {
+                                            <span class="text-2xl font-bold text-accent">€@servizio.PrezzoPromozione.ToString("F2")</span>
+                                            <span class="text-lg text-gray-400 line-through">€@servizio.Prezzo.ToString("F2")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-2xl font-bold text-primary">€@servizio.Prezzo.ToString("F2")</span>
+                                        }
+                                    </div>
+                                    <span class="text-sm text-gray-500">@servizio.Durata min</span>
+                                </div>
+
+                                <a href="/Search/Details/@Model.SaloneId?servizioId=@servizio.ServizioId" class="w-full mt-4 btn-primary text-white py-2 rounded-lg font-medium hover:shadow-lg transition-all block text-center">
+                                    Prenota Servizio
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- Team Section -->
+    @if (mostraTeam && Model.Dipendenti.Any())
+    {
+        <section id="team" class="section bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Il Nostro Team</h2>
+                    <p class="text-xl text-gray-600">Professionisti esperti al tuo servizio</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    @foreach (var dipendente in Model.Dipendenti.Take(6))
+                    {
+                        <div class="text-center">
+                            <div class="w-32 h-32 mx-auto mb-4 bg-gray-200 rounded-full overflow-hidden">
+                                @if (!string.IsNullOrEmpty(dipendente.ApplicationUser.ImmagineUser))
+                                {
+                                    <img src="@dipendente.ApplicationUser.ImmagineUser" alt="@dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome" class="w-full h-full object-cover">
+                                }
+                                else
+                                {
+                                    <div class="w-full h-full bg-primary flex items-center justify-center text-white text-2xl font-bold">
+                                        @dipendente.ApplicationUser.Nome?.FirstOrDefault()@dipendente.ApplicationUser.Cognome?.FirstOrDefault()
+                                    </div>
+                                }
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">
+                                @dipendente.ApplicationUser.Nome @dipendente.ApplicationUser.Cognome
+                            </h3>
+                            @if (dipendente.ServiziOfferti.Any())
+                            {
+                                <p class="text-gray-600 mb-4">
+                                    Specialista in @string.Join(", ", dipendente.ServiziOfferti.Take(3).Select(s => s.Servizio.Nome))
+                                </p>
+                            }
+                            <a href="/Search/Details/@Model.SaloneId?dipendenteId=@dipendente.DipendenteId" class="btn-primary text-white px-6 py-2 rounded-full font-medium hover:shadow-lg transition-all inline-block">
+                                Prenota con @dipendente.ApplicationUser.Nome
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- Galleria Section -->
+    @if (mostraGalleria && galleryImages.Any())
+    {
+        <section id="galleria" class="section bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">La Nostra Galleria</h2>
+                    <p class="text-xl text-gray-600">Scopri l'ambiente accogliente del nostro salone</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var immagine in galleryImages)
+                    {
+                        <div class="aspect-square bg-gray-200 rounded-xl overflow-hidden hover:shadow-xl transition-shadow cursor-pointer" onclick="openImageModal('@immagine.Percorso')">
+                            <img src="@immagine.Percorso" alt="Galleria @Model.Nome" class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- Recensioni Section -->
+    @if (mostraRecensioni && Model.Recensioni.Any())
+    {
+        <section id="recensioni" class="section bg-white">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Cosa Dicono i Nostri Clienti</h2>
+                    <p class="text-xl text-gray-600">Le testimonianze di chi ha scelto @Model.Nome</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    @foreach (var recensione in Model.Recensioni.Take(6).OrderByDescending(r => r.Voto))
+                    {
+                        <div class="bg-white rounded-xl shadow-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold mr-4">
+                                    @recensione.ApplicationUser.Nome?.FirstOrDefault()@recensione.ApplicationUser.Cognome?.FirstOrDefault()
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">@recensione.ApplicationUser.Nome @recensione.ApplicationUser.Cognome</h4>
+                                    <div class="flex items-center">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            <i class="fas fa-star @(i <= recensione.Voto ? "text-yellow-400" : "text-gray-300")"></i>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 italic">"@recensione.Commento"</p>
+                            <p class="text-sm text-gray-500 mt-4">@recensione.DataCreazione.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- Contatti Section -->
+    @if (mostraContatti)
+    {
+        <section id="contatti" class="section bg-gray-50">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">Contattaci</h2>
+                    <p class="text-xl text-gray-600">Siamo qui per te</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="space-y-8">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-800 mb-2">Dove Siamo</h3>
+                                <p class="text-gray-600">
+                                    @Model.Indirizzo<br>
+                                    @Model.CAP @Model.Citta (@Model.Provincia)<br>
+                                    @Model.Regione
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center text-white">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-800 mb-2">Telefono</h3>
+                                <p class="text-gray-600">
+                                    <a href="tel:@Model.Telefono" class="hover:text-primary transition-colors">@Model.Telefono</a>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-accent rounded-lg flex items-center justify-center text-white">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-800 mb-2">Email</h3>
+                                <p class="text-gray-600">
+                                    <a href="mailto:@Model.Email" class="hover:text-primary transition-colors">@Model.Email</a>
+                                </p>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.SitoWeb))
+                        {
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-white">
+                                    <i class="fas fa-globe"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Sito Web</h3>
+                                    <p class="text-gray-600">
+                                        <a href="@Model.SitoWeb" target="_blank" class="hover:text-primary transition-colors">@Model.SitoWeb</a>
+                                    </p>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.Orari.Any())
+                        {
+                            <div class="flex items-start space-x-4">
+                                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center text-white">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Orari di Apertura</h3>
+                                    <div class="space-y-1">
+                                        @foreach (var orario in Model.Orari.OrderBy(o => o.Giorno))
+                                        {
+                                            <div class="flex justify-between text-gray-600">
+                                                <span>@orario.Giorno.ToString():</span>
+                                                @if (orario.IsDayOff)
+                                                {
+                                                    <span class="text-red-500 ml-4">Chiuso</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="ml-4">@orario.Apertura.ToString(@"hh\:mm") - @orario.Chiusura.ToString(@"hh\:mm")</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="relative">
+                        <div id="openStreetMap" class="w-full h-96 rounded-xl overflow-hidden shadow-lg"></div>
+
+                        <div id="mapFallback" class="absolute inset-0 bg-gray-200 rounded-xl hidden items-center justify-center text-gray-500">
+                            <div class="text-center p-6">
+                                <i class="fas fa-map-marked-alt text-4xl mb-4"></i>
+                                <p class="text-lg font-semibold mb-2">Mappa non disponibile</p>
+                                <p class="text-sm mb-4">@Model.Indirizzo, @Model.Citta</p>
+                                <button onclick="apriIndicazioni()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                    Visualizza su Google Maps
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 max-w-xs z-[999]">
+                            <h4 class="font-bold text-gray-800 mb-2">Come Raggiungerci</h4>
+                            <p class="text-sm text-gray-600 mb-3">
+                                @Model.Indirizzo<br>
+                                @Model.CAP @Model.Citta
+                            </p>
+                            <button onclick="apriIndicazioni()" class="w-full bg-primary text-white py-2 px-4 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                                <i class="fas fa-directions mr-1"></i> Ottieni Indicazioni
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+
+    <!-- CTA Prenota -->
+    <section class="hero-gradient text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-3xl lg:text-4xl font-bold mb-4">Pronto a prenotare?</h2>
+            <p class="text-xl opacity-90 mb-8">Scegli il servizio e prenota il tuo appuntamento in pochi click</p>
+            <a href="/Search/Details/@Model.SaloneId" class="bg-white text-gray-800 px-10 py-4 rounded-full text-lg font-semibold hover:shadow-xl transition-all inline-flex items-center">
+                <i class="fas fa-calendar-check mr-2"></i>
+                Prenota Ora
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white">
+        <div class="container mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-4 mb-4">
+                        @if (!string.IsNullOrEmpty(personalizzazione?.LogoUrl))
+                        {
+                            <img src="@personalizzazione.LogoUrl" alt="@Model.Nome" class="h-10 w-auto">
+                        }
+                        else
+                        {
+                            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                                <i class="fas fa-cut text-white"></i>
+                            </div>
+                        }
+                        <h3 class="text-xl font-bold">@Model.Nome</h3>
+                    </div>
+                    @if (!string.IsNullOrEmpty(personalizzazione?.Slogan))
+                    {
+                        <p class="text-gray-300 mb-4">@personalizzazione.Slogan</p>
+                    }
+                    <p class="text-gray-400">
+                        @Model.Indirizzo<br>
+                        @Model.CAP @Model.Citta (@Model.Provincia)
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contatti</h4>
+                    <div class="space-y-2">
+                        <p class="text-gray-300">
+                            <i class="fas fa-phone mr-2"></i>
+                            <a href="tel:@Model.Telefono" class="hover:text-primary transition-colors">@Model.Telefono</a>
+                        </p>
+                        <p class="text-gray-300">
+                            <i class="fas fa-envelope mr-2"></i>
+                            <a href="mailto:@Model.Email" class="hover:text-primary transition-colors">@Model.Email</a>
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Seguici</h4>
+                    <div class="flex space-x-4">
+                        @if (!string.IsNullOrEmpty(personalizzazione?.InstagramUrl))
+                        {
+                            <a href="@personalizzazione.InstagramUrl" target="_blank" class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center text-white hover:bg-primary transition-colors">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                        }
+                        @if (!string.IsNullOrEmpty(personalizzazione?.FacebookUrl))
+                        {
+                            <a href="@personalizzazione.FacebookUrl" target="_blank" class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center text-white hover:bg-primary transition-colors">
+                                <i class="fab fa-facebook"></i>
+                            </a>
+                        }
+                        @if (!string.IsNullOrEmpty(personalizzazione?.TiktokUrl))
+                        {
+                            <a href="@personalizzazione.TiktokUrl" target="_blank" class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center text-white hover:bg-primary transition-colors">
+                                <i class="fab fa-tiktok"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center">
+                <p class="text-gray-400">&copy; @DateTime.Now.Year @Model.Nome. Tutti i diritti riservati.</p>
+                <p class="text-gray-500 text-sm mt-2">Powered by HaveASeat</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal immagini -->
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="max-w-4xl max-h-full relative">
+            <img id="modalImage" src="" alt="" class="max-w-full max-h-full object-contain">
+            <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white text-2xl hover:text-gray-300">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script>
+        function apriIndicazioni() {
+            const destination = encodeURIComponent('@Model.Indirizzo, @Model.Citta, @Model.Provincia, @Model.CAP');
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${destination}`, '_blank');
+        }
+
+        function initOpenStreetMap() {
+            const simpleAddress = '@Model.Citta, @Model.Provincia, Italia';
+
+            setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(simpleAddress)}&limit=1&countrycodes=it`, {
+                    headers: { 'User-Agent': 'HaveASeat/1.0' }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        createMap(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                        setTimeout(() => geocodeFullAddress(), 200);
+                    } else {
+                        createMapFallback();
+                    }
+                })
+                .catch(() => createMapFallback());
+            }, 200);
+        }
+
+        function geocodeFullAddress() {
+            const fullAddress = '@Model.Indirizzo, @Model.Citta, @Model.Provincia, @Model.CAP, Italia';
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}&limit=1&countrycodes=it`, {
+                headers: { 'User-Agent': 'HaveASeat/1.0' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.length > 0 && window.salonMap) {
+                    const lat = parseFloat(data[0].lat);
+                    const lon = parseFloat(data[0].lon);
+                    window.salonMap.setView([lat, lon], 16);
+                    if (window.salonMarker) window.salonMarker.setLatLng([lat, lon]);
+                }
+            })
+            .catch(() => {});
+        }
+
+        function createMapFallback() {
+            const cities = { 'roma': [41.9028,12.4964], 'milano': [45.4642,9.19], 'napoli': [40.8518,14.2681], 'torino': [45.0703,7.6869], 'firenze': [43.7696,11.2558], 'bologna': [44.4949,11.3426] };
+            const coords = cities['@Model.Citta'.toLowerCase()] || [41.9028, 12.4964];
+            createMap(coords[0], coords[1]);
+        }
+
+        function createMap(lat, lon) {
+            try {
+                if (window.salonMap) window.salonMap.remove();
+                window.salonMap = L.map('openStreetMap', { center: [lat, lon], zoom: 15, zoomControl: false });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(window.salonMap);
+
+                const icon = L.divIcon({
+                    html: '<div style="background:linear-gradient(135deg,@colorePrimario,@coloreSecondario);color:white;width:40px;height:40px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 3px 10px rgba(0,0,0,0.3)"><span style="transform:rotate(45deg);font-size:16px">📍</span></div>',
+                    iconSize: [40, 40], iconAnchor: [20, 35], popupAnchor: [0, -35]
+                });
+
+                window.salonMarker = L.marker([lat, lon], { icon }).addTo(window.salonMap);
+                L.control.zoom({ position: 'bottomright' }).addTo(window.salonMap);
+            } catch (e) {
+                document.getElementById('openStreetMap').style.display = 'none';
+                document.getElementById('mapFallback').classList.remove('hidden');
+                document.getElementById('mapFallback').style.display = 'flex';
+            }
+        }
+
+        // Init
+        let retries = 0;
+        function initMap() {
+            if (typeof L === 'undefined') {
+                if (retries++ < 3) setTimeout(initMap, 500);
+                return;
+            }
+            initOpenStreetMap();
+        }
+        document.addEventListener('DOMContentLoaded', () => setTimeout(initMap, 200));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                const t = document.querySelector(this.getAttribute('href'));
+                if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        function openImageModal(src) {
+            document.getElementById('modalImage').src = src;
+            document.getElementById('imageModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImageModal(); });
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(0)'; } });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        document.querySelectorAll('.section > div').forEach(el => {
+            el.style.opacity = '0'; el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

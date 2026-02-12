@@ -367,36 +367,32 @@
         </button>
     </div>
 
-    <!-- Navigatore Periodo -->
-    <div class="flex flex-wrap items-center gap-3 mb-4">
-        <input type="hidden" id="filterDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
-        <select id="filterPeriodo" class="select select-bordered select-sm bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
-            <option value="giorno">Giorno</option>
-            <option value="settimana">Settimana</option>
-            <option value="mese">Mese</option>
-            <option value="custom">Personalizzato</option>
-        </select>
-        <div class="flex items-center gap-2">
-            <button onclick="navigatePeriod(-1)" class="btn btn-sm btn-ghost btn-circle">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <span id="periodLabel" class="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-[160px] text-center"></span>
-            <button onclick="navigatePeriod(1)" class="btn btn-sm btn-ghost btn-circle">
-                <i class="fas fa-chevron-right"></i>
-            </button>
+    <input type="hidden" id="filterDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Filtro Periodo -->
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Periodo</span>
+                <span id="periodLabel" class="label-text-alt text-xs font-semibold text-purple-600 dark:text-purple-400"></span>
+            </label>
+            <div class="flex items-center gap-1">
+                <select id="filterPeriodo" class="select select-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600">
+                    <option value="oggi">Oggi</option>
+                    <option value="giorno">Giorno</option>
+                    <option value="settimana">Settimana</option>
+                    <option value="mese">Mese</option>
+                    <option value="custom">Personalizzato</option>
+                </select>
+                <button id="btnPrevPeriod" onclick="navigatePeriod(-1)" class="btn btn-sm btn-ghost btn-square flex-shrink-0" title="Precedente">
+                    <i class="fas fa-chevron-left text-xs"></i>
+                </button>
+                <button id="btnNextPeriod" onclick="navigatePeriod(1)" class="btn btn-sm btn-ghost btn-square flex-shrink-0" title="Successivo">
+                    <i class="fas fa-chevron-right text-xs"></i>
+                </button>
+            </div>
         </div>
-        <button onclick="goToToday()" class="btn btn-sm btn-outline btn-primary">Oggi</button>
-    </div>
 
-    <!-- Date personalizzate (nascoste di default) -->
-    <div id="customDateRange" class="flex items-center gap-2 mb-4 hidden">
-        <input type="date" id="dateFrom" class="input input-bordered input-sm bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
-        <span class="text-gray-600 dark:text-gray-400">—</span>
-        <input type="date" id="dateTo" class="input input-bordered input-sm bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
-        <button onclick="filterAppointments()" class="btn btn-sm btn-primary">Applica</button>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Filtro Servizio -->
         <div class="form-control">
             <label class="label">
@@ -426,6 +422,22 @@
                 <input type="text" id="searchCliente" class="input input-bordered w-full pr-10 bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" placeholder="Nome o telefono..." />
                 <i class="fas fa-search absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
             </div>
+        </div>
+    </div>
+
+    <!-- Date personalizzate (nascoste di default) -->
+    <div id="customDateRange" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 hidden">
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">Da</span>
+            </label>
+            <input type="date" id="dateFrom" class="input input-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
+        </div>
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text text-gray-700 dark:text-gray-300 font-medium">A</span>
+            </label>
+            <input type="date" id="dateTo" class="input input-bordered w-full bg-white dark:bg-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600" />
         </div>
     </div>
 
@@ -568,11 +580,12 @@
     function setupEventListeners() {
         // Cambio periodo
         document.getElementById('filterPeriodo').addEventListener('change', function() {
-            if (this.value === 'custom') {
-                document.getElementById('customDateRange').classList.remove('hidden');
-            } else {
-                document.getElementById('customDateRange').classList.add('hidden');
-            }
+            const isCustom = this.value === 'custom';
+            document.getElementById('customDateRange').classList.toggle('hidden', !isCustom);
+            document.getElementById('btnPrevPeriod').classList.toggle('hidden', isCustom);
+            document.getElementById('btnNextPeriod').classList.toggle('hidden', isCustom);
+            // Reset alla data odierna quando si cambia tipo di periodo
+            document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
             updatePeriodLabel();
             filterAppointments();
         });
@@ -649,10 +662,16 @@
 
     function navigatePeriod(direction) {
         const filterDate = document.getElementById('filterDate');
-        const periodo = document.getElementById('filterPeriodo').value;
+        const periodoEl = document.getElementById('filterPeriodo');
+        const periodo = periodoEl.value;
         const date = new Date(filterDate.value);
 
         switch(periodo) {
+            case 'oggi':
+                // Navigare per giorno, ma passare a modalità "giorno"
+                periodoEl.value = 'giorno';
+                date.setDate(date.getDate() + direction);
+                break;
             case 'giorno':
                 date.setDate(date.getDate() + direction);
                 break;
@@ -669,27 +688,20 @@
         filterAppointments();
     }
 
-    function goToToday() {
-        document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
-        updatePeriodLabel();
-        filterAppointments();
-    }
-
     function updatePeriodLabel() {
         const filterDate = new Date(document.getElementById('filterDate').value);
         const periodo = document.getElementById('filterPeriodo').value;
         const label = document.getElementById('periodLabel');
-        const giorni = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+        const giorni = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
         const mesi = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
 
         switch(periodo) {
-            case 'giorno':
+            case 'oggi':
                 const today = new Date();
-                if (filterDate.toDateString() === today.toDateString()) {
-                    label.textContent = `Oggi, ${filterDate.getDate()} ${mesi[filterDate.getMonth()]}`;
-                } else {
-                    label.textContent = `${giorni[filterDate.getDay()]} ${filterDate.getDate()} ${mesi[filterDate.getMonth()]}`;
-                }
+                label.textContent = `Oggi, ${today.getDate()} ${mesi[today.getMonth()]}`;
+                break;
+            case 'giorno':
+                label.textContent = `${giorni[filterDate.getDay()]} ${filterDate.getDate()} ${mesi[filterDate.getMonth()]}`;
                 break;
             case 'settimana':
                 const weekStart = new Date(filterDate);
@@ -702,7 +714,7 @@
                 label.textContent = `${mesi[filterDate.getMonth()]} ${filterDate.getFullYear()}`;
                 break;
             case 'custom':
-                label.textContent = 'Periodo personalizzato';
+                label.textContent = '';
                 break;
         }
     }
@@ -793,6 +805,9 @@
         const selectedDate = new Date(filterDate);
 
         switch(periodo) {
+            case 'oggi':
+                return appointmentDate.toDateString() === new Date().toDateString();
+
             case 'giorno':
                 return appointmentDate.toDateString() === selectedDate.toDateString();
 
@@ -1163,7 +1178,7 @@
 
     function resetFilters() {
         document.getElementById('filterDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('filterPeriodo').value = 'giorno';
+        document.getElementById('filterPeriodo').value = 'oggi';
         document.getElementById('filterServizio').value = '';
         document.getElementById('filterDipendente').value = '';
         document.getElementById('searchCliente').value = '';
@@ -1213,6 +1228,8 @@
         const filterDate = new Date(document.getElementById('filterDate').value);
 
         switch(periodo) {
+            case 'oggi':
+                return new Date().toISOString().split('T')[0];
             case 'settimana':
                 filterDate.setDate(filterDate.getDate() - filterDate.getDay() + 1);
                 break;
@@ -1231,6 +1248,8 @@
         const filterDate = new Date(document.getElementById('filterDate').value);
 
         switch(periodo) {
+            case 'oggi':
+                return new Date().toISOString().split('T')[0];
             case 'settimana':
                 filterDate.setDate(filterDate.getDate() - filterDate.getDay() + 7);
                 break;
