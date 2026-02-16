@@ -33,9 +33,9 @@ namespace HaveASeat.Models
 
 		// Relazioni di navigazione
 		public Servizio? Servizio { get; set; }
-		public Salone Salone { get; set; } = new Salone();
-		public ApplicationUser ApplicationUser { get; set; } = new ApplicationUser();
-		public Slot Slot { get; set; } = new Slot();
+		public Salone? Salone { get; set; }
+		public ApplicationUser? ApplicationUser { get; set; }
+		public Slot? Slot { get; set; }
 		public Dipendente? Dipendente { get; set; } // Dipendente assegnato all'appuntamento (opzionale)
 
 		// NUOVE PROPRIETÀ HELPER per il calcolo della durata

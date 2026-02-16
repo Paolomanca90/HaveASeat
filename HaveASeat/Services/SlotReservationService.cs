@@ -279,15 +279,29 @@ namespace HaveASeat.Services
                 // Trova o crea lo slot nel database
                 var slot = await FindOrCreateSlotAsync(reservation.SaloneId, reservation.OraInizio, reservation.OraFine);
 
-                // Crea l'appuntamento
+                // Carica le entità correlate per evitare che EF Core aggiunga phantom entities dai default del modello
+                var salone = await _context.Salone.FindAsync(reservation.SaloneId);
+                var servizio = reservation.ServizioId.HasValue
+                    ? await _context.Servizio.FindAsync(reservation.ServizioId.Value)
+                    : null;
+                var dipendente = reservation.DipendenteId.HasValue
+                    ? await _context.Dipendente.FindAsync(reservation.DipendenteId.Value)
+                    : null;
+
+                // Crea l'appuntamento con tutte le navigation properties per evitare phantom entities
                 var appuntamento = new Appuntamento
                 {
                     AppuntamentoId = Guid.NewGuid(),
                     SaloneId = reservation.SaloneId,
+                    Salone = salone!,
                     ApplicationUserId = cliente.Id,
+                    ApplicationUser = cliente,
                     SlotId = slot.SlotId,
+                    Slot = slot,
                     DipendenteId = reservation.DipendenteId,
+                    Dipendente = dipendente,
                     ServizioId = reservation.ServizioId,
+                    Servizio = servizio,
                     Data = reservation.Data,
                     Note = request.Note ?? "",
                     Stato = StatoAppuntamento.Prenotato
@@ -396,6 +410,8 @@ namespace HaveASeat.Services
                 var salone = await _context.Salone
                     .Include(s => s.Orari)
                     .Include(s => s.Servizi)
+                    .Include(s => s.Dipendenti)
+                        .ThenInclude(d => d.Orari)
                     .FirstOrDefaultAsync(s => s.SaloneId == saloneId);
 
                 if (salone == null)
@@ -403,13 +419,43 @@ namespace HaveASeat.Services
                     return new List<SlotStatusDto>();
                 }
 
-                // Ottieni orario del salone per il giorno
+                // Ottieni orario per il giorno: prima controlla il dipendente, poi fallback al salone
                 var dayOfWeek = data.DayOfWeek;
-                var orarioSalone = salone.Orari.FirstOrDefault(o => o.Giorno == dayOfWeek);
+                TimeSpan apertura;
+                TimeSpan chiusura;
 
-                if (orarioSalone == null || orarioSalone.IsDayOff)
+                if (dipendenteId.HasValue)
                 {
-                    return new List<SlotStatusDto>();
+                    var dipendente = salone.Dipendenti.FirstOrDefault(d => d.DipendenteId == dipendenteId.Value);
+                    var orarioDipendente = dipendente?.Orari.FirstOrDefault(o => o.Giorno == dayOfWeek);
+
+                    if (orarioDipendente != null)
+                    {
+                        if (orarioDipendente.IsDayOff)
+                            return new List<SlotStatusDto>();
+
+                        apertura = orarioDipendente.Apertura;
+                        chiusura = orarioDipendente.Chiusura;
+                    }
+                    else
+                    {
+                        // Fallback agli orari del salone
+                        var orarioSalone = salone.Orari.FirstOrDefault(o => o.Giorno == dayOfWeek);
+                        if (orarioSalone == null || orarioSalone.IsDayOff)
+                            return new List<SlotStatusDto>();
+
+                        apertura = orarioSalone.Apertura;
+                        chiusura = orarioSalone.Chiusura;
+                    }
+                }
+                else
+                {
+                    var orarioSalone = salone.Orari.FirstOrDefault(o => o.Giorno == dayOfWeek);
+                    if (orarioSalone == null || orarioSalone.IsDayOff)
+                        return new List<SlotStatusDto>();
+
+                    apertura = orarioSalone.Apertura;
+                    chiusura = orarioSalone.Chiusura;
                 }
 
                 // Ottieni durata del servizio (default 30 min)
@@ -425,9 +471,9 @@ namespace HaveASeat.Services
 
                 // Genera slot dinamici
                 var slots = new List<SlotStatusDto>();
-                var currentTime = orarioSalone.Apertura;
+                var currentTime = apertura;
 
-                while (currentTime.Add(TimeSpan.FromMinutes(durataServizio)) <= orarioSalone.Chiusura)
+                while (currentTime.Add(TimeSpan.FromMinutes(durataServizio)) <= chiusura)
                 {
                     var oraFine = currentTime.Add(TimeSpan.FromMinutes(durataServizio));
 

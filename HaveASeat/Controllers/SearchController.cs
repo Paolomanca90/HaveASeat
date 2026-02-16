@@ -503,18 +503,20 @@ namespace HaveASeat.Controllers
 				var viewModel = new BookingConfirmationViewModel
 				{
 					AppuntamentoId = appuntamento.AppuntamentoId,
-					NomeSalone = appuntamento.Salone.Nome,
-					IndirizzoSalone = $"{appuntamento.Salone.Indirizzo}, {appuntamento.Salone.Citta}",
-					TelefonoSalone = appuntamento.Salone.Telefono,
+					NomeSalone = appuntamento.Salone?.Nome ?? "Salone",
+					IndirizzoSalone = appuntamento.Salone != null
+						? $"{appuntamento.Salone.Indirizzo}, {appuntamento.Salone.Citta}"
+						: "",
+					TelefonoSalone = appuntamento.Salone?.Telefono ?? "",
 					NomeServizio = appuntamento.Servizio?.Nome ?? "Servizio non specificato",
 					DataAppuntamento = appuntamento.Data,
 					OrarioAppuntamento = $"{appuntamento.OraInizio:HH\\:mm} - {appuntamento.OraFine:HH\\:mm}",
 					NomeDipendente = appuntamento.Dipendente != null ?
-						$"{appuntamento.Dipendente.ApplicationUser.Nome} {appuntamento.Dipendente.ApplicationUser.Cognome}" : null,
+						$"{appuntamento.Dipendente.ApplicationUser?.Nome} {appuntamento.Dipendente.ApplicationUser?.Cognome}" : null,
 					PrezzoTotale = appuntamento.Servizio?.PrezzoEffettivo ?? 0,
 					Note = appuntamento.Note,
 					IsGuestBooking = !User.Identity.IsAuthenticated,
-					EmailConferma = appuntamento.ApplicationUser.Email
+					EmailConferma = appuntamento.ApplicationUser?.Email ?? ""
 				};
 
 				return View(viewModel);

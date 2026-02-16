@@ -1679,6 +1679,15 @@
             updateStepIndicator();
             updateContinueButton();
 
+            // Se siamo nello step data/ora, carica gli slot per la data preimpostata
+            const dateTimeStep = bookingState.showStaffSelection ? 3 : 2;
+            if (bookingState.currentStep === dateTimeStep) {
+                const dateInput = document.getElementById('bookingDate');
+                if (dateInput && dateInput.value) {
+                    loadAvailableSlots();
+                }
+            }
+
             // Auto-scroll
             setTimeout(() => {
                 document.querySelector('#bookingFlow')?.scrollIntoView({
