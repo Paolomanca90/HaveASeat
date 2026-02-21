@@ -156,39 +156,61 @@
     </div>
     @if (!User.IsInRole("Partner"))
     {
-        <footer class="footer sm:footer-horizontal bg-base-200 text-base-content p-10 mt-auto">
-            <nav>
-                <h6 class="footer-title">Services</h6>
-                <a class="link link-hover">Branding</a>
-                <a class="link link-hover">Design</a>
-                <a class="link link-hover">Marketing</a>
-                <a class="link link-hover">Advertisement</a>
-            </nav>
-            <nav>
-                <h6 class="footer-title">Company</h6>
-                <a href="/Home/ChiSiamo" class="link link-hover">Chi Siamo</a>
-                <a class="link link-hover">Contact</a>
-                <a class="link link-hover">Jobs</a>
-                <a class="link link-hover">Press kit</a>
-            </nav>
-            <nav>
-                <h6 class="footer-title">Legal</h6>
-                <a class="link link-hover">Terms of use</a>
-                <a class="link link-hover">Privacy policy</a>
-                <a class="link link-hover">Cookie policy</a>
-            </nav>
-            <form>
-                <h6 class="footer-title">Newsletter</h6>
-                <fieldset class="w-80">
-                    <label>Enter your email address</label>
-                    <div class="join">
-                        <input type="text"
-                               placeholder="username@site.com"
-                               class="input input-bordered join-item" />
-                        <button class="btn btn-primary border-none join-item bg-[#7C3AED] text-white">Subscribe</button>
+        <footer class="bg-gray-900 text-gray-300 mt-auto">
+            <div class="container mx-auto px-4 py-12">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Brand -->
+                    <div>
+                        <a href="/" class="text-2xl font-bold text-purple-400 mb-4 block">BeautyBook</a>
+                        <p class="text-gray-400 text-sm mb-4">
+                            La piattaforma per scoprire e prenotare i migliori saloni di bellezza e benessere vicino a te.
+                        </p>
+                        <div class="flex space-x-3">
+                            <a href="#" class="w-9 h-9 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fab fa-instagram text-sm"></i>
+                            </a>
+                            <a href="#" class="w-9 h-9 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fab fa-facebook text-sm"></i>
+                            </a>
+                            <a href="#" class="w-9 h-9 bg-gray-800 hover:bg-purple-600 rounded-lg flex items-center justify-center transition-colors">
+                                <i class="fab fa-tiktok text-sm"></i>
+                            </a>
+                        </div>
                     </div>
-                </fieldset>
-            </form>
+
+                    <!-- Esplora -->
+                    <div>
+                        <h6 class="text-white font-semibold mb-4">Esplora</h6>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="/Search" class="hover:text-purple-400 transition-colors">Cerca Saloni</a></li>
+                            <li><a href="/GiftCard/Index" class="hover:text-purple-400 transition-colors">Gift Card</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Per i professionisti -->
+                    <div>
+                        <h6 class="text-white font-semibold mb-4">Per i Professionisti</h6>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="/Home/ForPartner" class="hover:text-purple-400 transition-colors">Diventa Partner</a></li>
+                            <li><a href="/Auth/Login" class="hover:text-purple-400 transition-colors">Accedi come Partner</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Info -->
+                    <div>
+                        <h6 class="text-white font-semibold mb-4">Informazioni</h6>
+                        <ul class="space-y-2 text-sm">
+                            <li><a href="/Home/ChiSiamo" class="hover:text-purple-400 transition-colors">Chi Siamo</a></li>
+                            <li><a href="/Home/Privacy" class="hover:text-purple-400 transition-colors">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-800 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500">
+                    <p>&copy; @DateTime.Now.Year BeautyBook. Tutti i diritti riservati.</p>
+                    <p class="mt-2 sm:mt-0">Made with <i class="fas fa-heart text-purple-500 text-xs"></i> in Italia</p>
+                </div>
+            </div>
         </footer>
     }
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

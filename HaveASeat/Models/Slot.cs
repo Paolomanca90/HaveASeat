@@ -10,7 +10,7 @@
 		public int Capacita { get; set; } = 1;
 		public string Note { get; set; } = string.Empty;
 		public bool IsAttivo { get; set; } = true;
-		public Salone Salone { get; set; } = new Salone();
+		public Salone? Salone { get; set; }
 		public List<Appuntamento> Appuntamenti { get; set; } = new List<Appuntamento>();
 	}
 }

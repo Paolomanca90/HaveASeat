@@ -497,11 +497,21 @@
                                 <div>
                                     <h3 class="text-xl font-semibold text-gray-800 mb-2">Orari di Apertura</h3>
                                     <div class="space-y-1">
-                                        @foreach (var orario in Model.Orari.OrderBy(o => o.Giorno))
+                                        @{
+                                            var giorniItPrev = new Dictionary<DayOfWeek, string> {
+                                                { DayOfWeek.Monday, "Lunedì" }, { DayOfWeek.Tuesday, "Martedì" },
+                                                { DayOfWeek.Wednesday, "Mercoledì" }, { DayOfWeek.Thursday, "Giovedì" },
+                                                { DayOfWeek.Friday, "Venerdì" }, { DayOfWeek.Saturday, "Sabato" },
+                                                { DayOfWeek.Sunday, "Domenica" }
+                                            };
+                                            var ordineGiorniPrev = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
+                                        }
+                                        @foreach (var giorno in ordineGiorniPrev)
                                         {
+                                            var orario = Model.Orari.FirstOrDefault(o => o.Giorno == giorno);
                                             <div class="flex justify-between text-gray-600">
-                                                <span>@orario.Giorno.ToString():</span>
-                                                @if (orario.IsDayOff)
+                                                <span>@giorniItPrev[giorno]:</span>
+                                                @if (orario == null || orario.IsDayOff)
                                                 {
                                                     <span class="text-red-500">Chiuso</span>
                                                 }

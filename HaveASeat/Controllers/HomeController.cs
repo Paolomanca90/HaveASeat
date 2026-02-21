@@ -72,8 +72,8 @@ namespace HaveASeat.Controllers
 					VotiDisplay = s.Recensioni.Any() ? s.Recensioni.Average(r => r.Voto).ToString("F1") : "Nuovo",
 					PrezzoRange = s.Servizi.Any() ?
 						(s.Servizi.Min(serv => serv.PrezzoEffettivo) == s.Servizi.Max(serv => serv.PrezzoEffettivo) ?
-							$"�{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}" :
-							$"�{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}-{s.Servizi.Max(serv => serv.PrezzoEffettivo):F0}") :
+							$"€{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}" :
+							$"€{s.Servizi.Min(serv => serv.PrezzoEffettivo):F0}-{s.Servizi.Max(serv => serv.PrezzoEffettivo):F0}") :
 						"Su richiesta"
 				}).ToList();
 

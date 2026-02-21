@@ -254,10 +254,12 @@
             <div class="space-y-3">
                 @{
                     var giorni = new[] { "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica" };
+                    // DayOfWeek: Sunday=0, Monday=1, ..., Saturday=6 → ordine italiano: Lun=1, Mar=2, ..., Dom=0
+                    var dayOrder = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
                 }
                 @for (int i = 0; i < 7; i++)
                 {
-                    var orario = Model.Orari.FirstOrDefault(o => (int)o.Giorno == i);
+                    var orario = Model.Orari.FirstOrDefault(o => o.Giorno == dayOrder[i]);
                     <div class="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
                         <span class="font-medium text-gray-700 dark:text-gray-300">@giorni[i]</span>
                         @if (orario != null)
@@ -652,11 +654,6 @@
 
     // Schedule management
     function editSchedule() {
-        Swal.fire({
-            title: '🕐 Modifica Orari',
-            text: 'Reindirizzamento alla configurazione orari...',
-            icon: 'info',
-            confirmButtonColor: '#10b981'
-        });
+        window.location.href = `/Partner/OrariSalone/@Model.SaloneId`;
     }
 </script>

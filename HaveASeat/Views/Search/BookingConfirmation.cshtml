@@ -187,13 +187,45 @@
                         <!-- Note -->
                         @if (!string.IsNullOrEmpty(Model.Note))
                         {
-                            <div>
+                            <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Note</h3>
                                 <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                                     <p class="text-yellow-800 dark:text-yellow-200">@Model.Note</p>
                                 </div>
                             </div>
                         }
+
+                        <!-- Promemoria -->
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                <i class="fas fa-lightbulb text-blue-500 mr-2"></i>
+                                Promemoria
+                            </h3>
+                            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                <ul class="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                        <span>Arriva 10-15 minuti prima dell'appuntamento</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                        <span>Porta un documento di identità se richiesto</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                        <span>Per modifiche o cancellazioni, contatta il salone</span>
+                                    </li>
+                                    @if (Model.IsGuestBooking)
+                                    {
+                                        <li class="flex items-start">
+                                            <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
+                                            <span>Controlla la tua email per la conferma</span>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -205,55 +237,26 @@
                 <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Azioni</h3>
                     <div class="space-y-3">
-                        <button onclick="window.print()" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-colors print-hidden">
-                            <i class="fas fa-print mr-2"></i>
-                            Stampa Conferma
-                        </button>
-
-                        <button onclick="addToCalendar()" class="w-full border border-purple-600 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-4 py-3 rounded-lg font-medium transition-colors print-hidden">
+                        <button id="btnAddCalendar" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-colors print-hidden">
                             <i class="fas fa-calendar-plus mr-2"></i>
                             Aggiungi al Calendario
                         </button>
 
-                        <a href="tel:@Model.TelefonoSalone" class="block w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-3 rounded-lg font-medium transition-colors text-center print-hidden">
+                        <a href="tel:@Model.TelefonoSalone" class="block w-full border border-purple-600 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-4 py-3 rounded-lg font-medium transition-colors text-center print-hidden">
                             <i class="fas fa-phone mr-2"></i>
                             Chiama il Salone
                         </a>
 
-                        <button onclick="getDirections()" class="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-3 rounded-lg font-medium transition-colors print-hidden">
+                        <button id="btnDirections" class="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-3 rounded-lg font-medium transition-colors print-hidden">
                             <i class="fas fa-directions mr-2"></i>
                             Indicazioni Stradali
                         </button>
-                    </div>
-                </div>
 
-                <!-- Promemoria -->
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
-                    <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4">
-                        <i class="fas fa-lightbulb mr-2"></i>
-                        Promemoria
-                    </h3>
-                    <ul class="space-y-2 text-sm text-blue-800 dark:text-blue-200">
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
-                            <span>Arriva 10-15 minuti prima dell'appuntamento</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
-                            <span>Porta un documento di identità se richiesto</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
-                            <span>Per modifiche o cancellazioni, contatta il salone</span>
-                        </li>
-                        @if (Model.IsGuestBooking)
-                        {
-                            <li class="flex items-start">
-                                <i class="fas fa-check text-blue-500 mr-2 mt-0.5 flex-shrink-0"></i>
-                                <span>Controlla la tua email per la conferma</span>
-                            </li>
-                        }
-                    </ul>
+                        <button onclick="window.print()" class="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 py-3 rounded-lg font-medium transition-colors print-hidden">
+                            <i class="fas fa-print mr-2"></i>
+                            Stampa Conferma
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Politiche -->
@@ -320,64 +323,75 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Dati dal server
+        var appId = '@Model.AppuntamentoId';
+        var nomeServizio = '@Html.Raw(Model.NomeServizio?.Replace("'", "\\'") ?? "")';
+        var nomeSalone = '@Html.Raw(Model.NomeSalone?.Replace("'", "\\'") ?? "")';
+        var indirizzoSalone = '@Html.Raw(Model.IndirizzoSalone?.Replace("'", "\\'") ?? "")';
+        var dataStr = '@Model.DataAppuntamento.ToString("yyyy-MM-dd")';
+        var orarioStr = '@Model.OrarioAppuntamento';
+        var orariParts = orarioStr.split(' - ');
+        var oraInizio = orariParts[0] || '00:00';
+        var oraFine = orariParts[1] || '00:00';
+
         // Aggiungi al calendario
-        function addToCalendar() {
-            const title = encodeURIComponent('Appuntamento - @Model.NomeServizio');
-            const details = encodeURIComponent('Appuntamento presso @Model.NomeSalone per @Model.NomeServizio');
-            const location = encodeURIComponent('@Model.IndirizzoSalone');
+        document.getElementById('btnAddCalendar').addEventListener('click', function () {
+            var title = encodeURIComponent('Appuntamento - ' + nomeServizio);
+            var details = encodeURIComponent('Appuntamento presso ' + nomeSalone + ' per ' + nomeServizio);
+            var location = encodeURIComponent(indirizzoSalone);
 
-            // Converti data e ora in formato UTC
-            const startDate = new Date('@Model.DataAppuntamento.ToString("yyyy-MM-dd")T@Model.OrarioAppuntamento.Split(" - ")[0]:00');
-            const endDate = new Date('@Model.DataAppuntamento.ToString("yyyy-MM-dd")T@Model.OrarioAppuntamento.Split(" - ")[1]:00');
+            var startDate = new Date(dataStr + 'T' + oraInizio + ':00');
+            var endDate = new Date(dataStr + 'T' + oraFine + ':00');
 
-            const startDateUTC = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-            const endDateUTC = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            var startDateUTC = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+            var endDateUTC = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
-            // URL per Google Calendar
-            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDateUTC}/${endDateUTC}&details=${details}&location=${location}`;
+            var googleCalendarUrl = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + title + '&dates=' + startDateUTC + '/' + endDateUTC + '&details=' + details + '&location=' + location;
 
-            // Mostra opzioni calendario
             Swal.fire({
                 title: 'Aggiungi al Calendario',
-                html: `
-                    <div class="space-y-3">
-                        <a href="${googleCalendarUrl}" target="_blank" class="block w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-                            <i class="fab fa-google mr-2"></i>Google Calendar
-                        </a>
-                        <button onclick="downloadICS()" class="block w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">
-                            <i class="fas fa-download mr-2"></i>Scarica file ICS
-                        </button>
-                    </div>
-                `,
+                html:
+                    '<div class="space-y-3">' +
+                    '<a href="' + googleCalendarUrl + '" target="_blank" class="block w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors text-center">' +
+                    '<i class="fab fa-google mr-2"></i>Google Calendar</a>' +
+                    '<button id="btnDownloadICS" class="block w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors">' +
+                    '<i class="fas fa-download mr-2"></i>Scarica file ICS (Apple, Outlook)</button>' +
+                    '</div>',
                 showConfirmButton: false,
                 showCancelButton: true,
-                cancelButtonText: 'Chiudi'
+                cancelButtonText: 'Chiudi',
+                didOpen: function () {
+                    document.getElementById('btnDownloadICS').addEventListener('click', function () {
+                        downloadICS();
+                    });
+                }
             });
-        }
+        });
 
         // Genera file ICS
         function downloadICS() {
-            const startDate = new Date('@Model.DataAppuntamento.ToString("yyyy-MM-dd")T@Model.OrarioAppuntamento.Split(" - ")[0]:00');
-            const endDate = new Date('@Model.DataAppuntamento.ToString("yyyy-MM-dd")T@Model.OrarioAppuntamento.Split(" - ")[1]:00');
+            var startDate = new Date(dataStr + 'T' + oraInizio + ':00');
+            var endDate = new Date(dataStr + 'T' + oraFine + ':00');
 
-            const formatDate = (date) => {
+            var formatDate = function (date) {
                 return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
             };
 
-            const icsContent = [
+            var icsContent = [
                 'BEGIN:VCALENDAR',
                 'VERSION:2.0',
                 'PRODID:-//BeautyBook//BeautyBook//EN',
                 'BEGIN:VEVENT',
-                `UID:${@Model.AppuntamentoId}@@beautybook.com`,
-                `DTSTAMP:${formatDate(new Date())}`,
-                `DTSTART:${formatDate(startDate)}`,
-                `DTEND:${formatDate(endDate)}`,
-                'SUMMARY:Appuntamento - @Model.NomeServizio',
-                'DESCRIPTION:Appuntamento presso @Model.NomeSalone per @Model.NomeServizio',
-                'LOCATION:@Model.IndirizzoSalone',
+                'UID:' + appId + '@@beautybook.com',
+                'DTSTAMP:' + formatDate(new Date()),
+                'DTSTART:' + formatDate(startDate),
+                'DTEND:' + formatDate(endDate),
+                'SUMMARY:Appuntamento - ' + nomeServizio,
+                'DESCRIPTION:Appuntamento presso ' + nomeSalone + ' per ' + nomeServizio,
+                'LOCATION:' + indirizzoSalone,
                 'STATUS:CONFIRMED',
                 'BEGIN:VALARM',
                 'TRIGGER:-PT30M',
@@ -388,42 +402,37 @@
                 'END:VCALENDAR'
             ].join('\r\n');
 
-            const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-            const link = document.createElement('a');
+            var blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+            var link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
-            link.download = 'appuntamento_@(Model.AppuntamentoId.ToString().Substring(0, 8).ToLower()).ics';
+            link.download = 'appuntamento_' + appId.substring(0, 8).toLowerCase() + '.ics';
             link.click();
 
             Swal.close();
         }
 
         // Indicazioni stradali
-        function getDirections() {
-            const address = encodeURIComponent('@Model.IndirizzoSalone');
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${address}`, '_blank');
-        }
-
-        // Auto-focus su print per utenti desktop
-        document.addEventListener('DOMContentLoaded', function() {
-            // Aggiungi animazione di entrata
-            const elements = document.querySelectorAll('.booking-card, .bg-white, .bg-blue-50, .bg-yellow-50, .bg-purple-50');
-            elements.forEach((el, index) => {
-                el.style.opacity = '0';
-                el.style.transform = 'translateY(20px)';
-                setTimeout(() => {
-                    el.style.transition = 'all 0.6s ease';
-                    el.style.opacity = '1';
-                    el.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
-
-            // Scroll smooth al top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('btnDirections').addEventListener('click', function () {
+            var address = encodeURIComponent(indirizzoSalone);
+            window.open('https://www.google.com/maps/dir/?api=1&destination=' + address, '_blank');
         });
 
-        // Personalizza stampa
-        window.addEventListener('beforeprint', function() {
-            document.title = 'Conferma Prenotazione - @Model.NomeSalone';
+        // Animazione di entrata
+        var elements = document.querySelectorAll('.booking-card, .bg-white, .bg-yellow-50, .bg-purple-50');
+        elements.forEach(function (el, index) {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            setTimeout(function () {
+                el.style.transition = 'all 0.6s ease';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, index * 100);
         });
-    </script>
-}
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('beforeprint', function () {
+        document.title = 'Conferma Prenotazione - @Model.NomeSalone';
+    });
+</script>

@@ -66,7 +66,7 @@ namespace HaveASeat.Data
 
 			builder.Entity<Orario>()
 				.HasOne(o => o.Salone)
-				.WithMany()
+				.WithMany(s => s.Orari)
 				.HasForeignKey(o => o.SaloneId)
 				.OnDelete(DeleteBehavior.NoAction);
 

@@ -1954,5 +1954,144 @@ namespace HaveASeat.Controllers
 			return View(selectedSalone);
 		}
         #endregion
+
+        #region Orari Salone
+        // GET: Partner/OrariSalone
+        [HttpGet]
+        public async Task<IActionResult> OrariSalone(Guid id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            var salone = await _context.Salone
+                .Include(s => s.Orari)
+                .FirstOrDefaultAsync(s => s.SaloneId == id && s.ApplicationUserId == userId);
+
+            if (salone == null)
+            {
+                return NotFound();
+            }
+
+            // Assicurati che ci siano orari per tutti i 7 giorni
+            var giorniEsistenti = salone.Orari.Select(o => (int)o.Giorno).ToHashSet();
+            var nuoviOrari = new List<Orario>();
+
+            for (int giorno = 0; giorno < 7; giorno++)
+            {
+                if (!giorniEsistenti.Contains(giorno))
+                {
+                    var nuovoOrario = new Orario
+                    {
+                        OrarioId = Guid.NewGuid(),
+                        SaloneId = salone.SaloneId,
+                        Giorno = (DayOfWeek)giorno,
+                        IsDayOff = true,
+                        Apertura = TimeSpan.FromHours(9),
+                        Chiusura = TimeSpan.FromHours(18)
+                    };
+                    nuoviOrari.Add(nuovoOrario);
+                }
+            }
+
+            // Salva i nuovi orari nel DB se necessario
+            if (nuoviOrari.Any())
+            {
+                _context.Orario.AddRange(nuoviOrari);
+                await _context.SaveChangesAsync();
+                // Ricarica il salone con tutti gli orari
+                salone = await _context.Salone
+                    .Include(s => s.Orari)
+                    .FirstOrDefaultAsync(s => s.SaloneId == id);
+            }
+
+            return View(salone);
+        }
+
+        // POST: Partner/OrariSalone
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> OrariSalone(Guid id, [FromForm] ScheduleForm form)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return NotFound();
+            }
+
+            var salone = await _context.Salone
+                .Include(s => s.Orari)
+                .FirstOrDefaultAsync(s => s.SaloneId == id && s.ApplicationUserId == userId);
+
+            if (salone == null)
+            {
+                return NotFound();
+            }
+
+            try
+            {
+                // Rimuovi tutti gli orari esistenti
+                if (salone.Orari.Any())
+                {
+                    _context.Orario.RemoveRange(salone.Orari);
+                }
+
+                // Crea nuovi orari per ogni giorno della settimana (valori DayOfWeek: 0=Sun, 1=Mon, ..., 6=Sat)
+                var nuoviOrari = new List<Orario>();
+                for (int dow = 0; dow < 7; dow++)
+                {
+                    var isWorkDay = form.WorkDays?.Contains(dow) == true;
+
+                    var orario = new Orario
+                    {
+                        OrarioId = Guid.NewGuid(),
+                        SaloneId = salone.SaloneId,
+                        Giorno = (DayOfWeek)dow,
+                        IsDayOff = !isWorkDay
+                    };
+
+                    if (isWorkDay)
+                    {
+                        var aperturaKey = $"apertura_{dow}";
+                        var chiusuraKey = $"chiusura_{dow}";
+
+                        if (form.Orari.ContainsKey(aperturaKey) && form.Orari.ContainsKey(chiusuraKey) &&
+                            TimeSpan.TryParse(form.Orari[aperturaKey], out var apertura) &&
+                            TimeSpan.TryParse(form.Orari[chiusuraKey], out var chiusura))
+                        {
+                            orario.Apertura = apertura;
+                            orario.Chiusura = chiusura;
+                        }
+                        else
+                        {
+                            orario.Apertura = TimeSpan.FromHours(9);
+                            orario.Chiusura = TimeSpan.FromHours(18);
+                        }
+                    }
+
+                    nuoviOrari.Add(orario);
+                }
+
+                _context.Orario.AddRange(nuoviOrari);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Orari del salone aggiornati con successo!";
+                return RedirectToAction("ManageSede", new { id });
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("", "Errore durante l'aggiornamento degli orari: " + ex.Message);
+                return View(salone);
+            }
+        }
+
+        // Modello per il form degli orari
+        public class ScheduleForm
+        {
+            public List<int> WorkDays { get; set; } = new List<int>();
+            public Dictionary<string, string> Orari { get; set; } = new Dictionary<string, string>();
+        }
+        #endregion
     }
 }

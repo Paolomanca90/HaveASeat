@@ -8,6 +8,6 @@
 		public TimeSpan Apertura { get; set; }
 		public TimeSpan Chiusura { get; set; }
 		public bool IsDayOff { get; set; }
-		public Salone Salone { get; set; } = new Salone();
+		public Salone? Salone { get; set; }
 	}
 }
